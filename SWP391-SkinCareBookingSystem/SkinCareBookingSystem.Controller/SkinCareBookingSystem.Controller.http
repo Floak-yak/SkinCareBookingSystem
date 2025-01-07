@@ -1,0 +1,6 @@
+@SkinCareBookingSystem.Controller_HostAddress = http://localhost:5062
+
+GET {{SkinCareBookingSystem.Controller_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
