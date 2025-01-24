@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkinCareBookingSystem.Repos
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkinCareBookingSystem.Service", "SkinCareBookingSystem.Service\SkinCareBookingSystem.Service.csproj", "{932C154E-4D02-4522-879A-1C9FBA2FCFC4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkinCareBookingSystem.Entity", "SkinCareBookingSystem.Entity\SkinCareBookingSystem.Entity.csproj", "{D7631716-98D5-4C95-98CD-7D0147C4AC38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkinCareBookingSystem.BusinessObject", "SkinCareBookingSystem.Entity\SkinCareBookingSystem.BusinessObject.csproj", "{D7631716-98D5-4C95-98CD-7D0147C4AC38}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkinCareBookingSystem.Controller", "SkinCareBookingSystem.Controller\SkinCareBookingSystem.Controller.csproj", "{B3E1CC67-8550-4D35-904C-D413B288F0C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkinCareBookingSystem.Controller", "SkinCareBookingSystem.Controller\SkinCareBookingSystem.Controller.csproj", "{B3E1CC67-8550-4D35-904C-D413B288F0C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

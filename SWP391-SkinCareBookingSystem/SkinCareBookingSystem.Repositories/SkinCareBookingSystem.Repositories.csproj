@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SkinCareBookingSystem.Entity\SkinCareBookingSystem.Entity.csproj" />
+    <ProjectReference Include="..\SkinCareBookingSystem.Entity\SkinCareBookingSystem.BusinessObject.csproj" />
   </ItemGroup>
 
 </Project>
