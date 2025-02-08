@@ -6,11 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SkinCareBookingSystem.Controller.Data
+namespace SkinCareBookingSystem.Repositories.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options){}
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         #region DbSet
         public DbSet<User> Users { get; set; }
@@ -21,7 +21,7 @@ namespace SkinCareBookingSystem.Controller.Data
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<TestInformation> TestInformations { get; set; }
-        public DbSet<Booking> Bookings {  get; set; }    
+        public DbSet<Booking> Bookings { get; set; }
         public DbSet<ScheduleLog> ScheduleLogs { get; set; }
         public DbSet<BookingServiceSchedule> BookingServiceSchedules { get; set; }
         #endregion
@@ -58,6 +58,12 @@ namespace SkinCareBookingSystem.Controller.Data
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Post>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Posts)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<TestInformation>()
                 .HasOne(ti => ti.User)
                 .WithMany(u => u.TestInformationHistory)
@@ -77,9 +83,9 @@ namespace SkinCareBookingSystem.Controller.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<BookingServiceSchedule>()
-                .HasKey(bss => new 
-                { 
-                    bss.ScheduleLogId, 
+                .HasKey(bss => new
+                {
+                    bss.ScheduleLogId,
                     bss.BookingId,
                     bss.ServiceId
                 });

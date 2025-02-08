@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Controller.Data;
+using SkinCareBookingSystem.Repositories.Data;
 using System.Text;
 using System.Text.Json.Serialization;
 

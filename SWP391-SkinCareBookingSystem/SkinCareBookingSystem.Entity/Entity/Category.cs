@@ -12,6 +12,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string CategoryName { get; set; }
         
         #region Relationship
+        public ICollection<Post> Posts { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
         public ICollection<Product> Products { get; set; }
