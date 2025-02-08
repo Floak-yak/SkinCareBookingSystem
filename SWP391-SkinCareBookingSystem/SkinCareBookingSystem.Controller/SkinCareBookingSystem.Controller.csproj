@@ -22,8 +22,4 @@
     <ProjectReference Include="..\SkinCareBookingSystem.Service\SkinCareBookingSystem.Service.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

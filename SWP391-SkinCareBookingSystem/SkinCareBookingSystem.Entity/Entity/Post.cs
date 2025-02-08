@@ -13,6 +13,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public DateTime DatePost { get; set; }
         public string ImageLink { get; set; }
         public bool IsApproved { get; set; }
+        public PostStatus PostStatus { get; set; }
 
         #region Relationship
         public Category Category { get; set; }
@@ -21,5 +22,12 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int UserId { get; set; }
         public User User { get; set; }
         #endregion
+    }
+
+    public enum PostStatus
+    {
+        Approved = 1,
+        Pending = 0,
+        Rejected = -1,
     }
 }
