@@ -24,6 +24,7 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<ScheduleLog> ScheduleLogs { get; set; }
         public DbSet<BookingServiceSchedule> BookingServiceSchedules { get; set; }
+        public DbSet<Image> Images { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -107,6 +108,21 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .WithMany(sl => sl.BookingServiceSchedules)
                 .HasForeignKey(bss => bss.ScheduleLogId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Image>()
+                .HasOne(i => i.Content)
+                .WithOne(c => c.Image)
+                .HasForeignKey<Content>(c => c.Id);
+
+            modelBuilder.Entity<Image>()
+                .HasOne(i => i.Product)
+                .WithOne(p => p.Image)
+                .HasForeignKey<Product>(p => p.Id);
+
+            modelBuilder.Entity<Image>()
+                .HasOne(i => i.Post)
+                .WithOne(p => p.Image)
+                .HasForeignKey<Post>(p => p.Id);
         }
     }
 }
