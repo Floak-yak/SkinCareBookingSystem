@@ -19,8 +19,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\SkinCareBookingSystem.Entity\SkinCareBookingSystem.BusinessObject.csproj" />
-  </ItemGroup>
-
 </Project>
