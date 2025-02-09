@@ -247,7 +247,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("ScheduleLogs");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Service", b =>
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -358,7 +358,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Service", "Service")
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "Service")
                         .WithMany("BookingServiceSchedules")
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -519,7 +519,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("BookingServiceSchedules");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Service", b =>
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.Navigation("BookingServiceSchedules");
                 });

@@ -12,7 +12,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int BookingId { get; set; }
         public int ScheduleLogId { get; set; }
     
-        public Service Service { get; set; }
+        public SkincareService Service { get; set; }
         public Booking Booking { get; set; }
         public ScheduleLog ScheduleLog { get; set; }
     }
