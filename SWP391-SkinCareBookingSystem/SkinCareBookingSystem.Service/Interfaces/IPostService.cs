@@ -20,7 +20,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         /// <param name="datePost"></param>
         /// <param name="imgageLink"></param>
         /// <returns></returns>
-        public Task<bool> UpdatePost(string title, int categoryId, string imageLink);
+        public Task<bool> UpdatePost(int postId, string title, int categoryId, string imageLink);
         public Task<bool> ChangePostStatus(int postId, PostStatus postStatus);
         public Task<bool> CreatePost(int userId, string title, List<Content> contents, int categoryId, DateTime datePost, string imageLink);
     }
