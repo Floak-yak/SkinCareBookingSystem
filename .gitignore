@@ -23,7 +23,10 @@ obj/
 *.user
 *.userosscache
 *.sln.docstates
-
+#Migration
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

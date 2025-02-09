@@ -48,9 +48,50 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             _context.Contents.Update(content);
         }
 
-        public Task<bool> UpdatePosition(int contentId, int position)
+
+        /// <summary>
+        /// Insert after the object
+        /// </summary>
+        /// <param name="contentId"></param>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdatePosition(int contentId, int position)
         {
-            throw new NotImplementedException();
+            Content content = await GetContentByIdAsync(contentId);
+            
+            if (content is null)
+                return false;
+            
+            int contentOldPosition = content.Position;
+            List<Content> listContent = await _context.Contents.Where(c => c.PostId == content.PostId).OrderBy(c => c.Position).ToListAsync();
+
+            if (position > content.Position)
+                foreach (Content item in listContent)
+                {
+                    if (item.Position < contentOldPosition && item.Id != contentId)
+                        continue;
+                    else
+                        item.Position -= 1;
+                    if (contentId == item.PostId)
+                        content.Position = position;
+                    if (item.Position > position)
+                        break;
+                }
+            else
+                foreach (Content item in listContent)
+                {
+                    if (item.Position < contentOldPosition && item.Id != contentId)
+                        continue;
+                    else
+                        item.Position += 1;
+                    if (contentId == item.PostId)
+                        content.Position = position;
+                    if (item.Position > contentOldPosition)
+                        break;
+                }
+
+            _context.Contents.UpdateRange(listContent);
+            return await SaveChange();
         }
     }
 }
