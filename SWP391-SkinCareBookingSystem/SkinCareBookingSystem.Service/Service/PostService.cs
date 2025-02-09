@@ -12,10 +12,12 @@ namespace SkinCareBookingSystem.Service.Service
     public class PostService : IPostService
     {
         private readonly IPostRepository _postRepository;
+        private readonly IImageService _imageService;
 
-        public PostService(IPostRepository postRepository)
+        public PostService(IPostRepository postRepository, IImageService imageService)
         {
             _postRepository = postRepository;
+            _imageService = imageService;
         }
 
         public async Task<bool> ChangePostStatus(int postId, PostStatus postStatus)
@@ -45,8 +47,10 @@ namespace SkinCareBookingSystem.Service.Service
             if (user is null || category is null)
                 return false;
 
-            //Uploadlink to Cloudinary
-            Image image = new();
+            if (!await _imageService.StoreImage(imageLink))
+                return false;
+
+            Image image = await _imageService.GetImageByDescription(Path.GetFileName(imageLink));
 
             Post post = new()
             {
@@ -80,9 +84,9 @@ namespace SkinCareBookingSystem.Service.Service
             return _postRepository.GetPostByIdAsync(postId);    
         }
 
-        public async Task<bool> UpdatePost(string title, int categoryId, string imageLink)
+        public async Task<bool> UpdatePost(int postId, string title, int categoryId, string imageLink)
         {
-            Post post = await _postRepository.GetPostByTitle(title);
+            Post post = await _postRepository.GetPostByIdAsync(postId);
 
             if (post is null)
                 return false;
@@ -98,13 +102,14 @@ namespace SkinCareBookingSystem.Service.Service
 
             if (!string.IsNullOrEmpty(imageLink))
             {
-                //Check link working or not
-                Image image = new();
-                post.Image = image;
+                if (!await _imageService.StoreImage(imageLink))
+                    return false;
+                post.Image = await _imageService
+                    .GetImageByDescription(Path.GetFileName(imageLink));
             }
             
             _postRepository.UpdatePost(post);
             return await _postRepository.SaveChange();
         }
     }
-}
+} 
