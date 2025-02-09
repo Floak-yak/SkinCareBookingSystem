@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SkinCareBookingSystem.Repositories.Data;
+using SkinCareBookingSystem.Repositories.Interfaces;
+using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Interfaces;
+using SkinCareBookingSystem.Service.Service;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -10,6 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(option => option.UseSqlServer(GetConnectionString()));
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IPostContentSerivce, PostContentSerivce>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IPostContentRepository, PostContentRepository>();
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 string? GetConnectionString()
 {

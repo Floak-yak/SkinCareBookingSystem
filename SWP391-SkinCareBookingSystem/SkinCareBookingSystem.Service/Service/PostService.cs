@@ -28,10 +28,10 @@ namespace SkinCareBookingSystem.Service.Service
             return await _postRepository.SaveChange();
         }
 
-        public async Task<bool> CreatePost(int userId, string title, List<Content> contents, int categoryId, DateTime datePost, string imgageLink)
+        public async Task<bool> CreatePost(int userId, string title, List<Content> contents, int categoryId, DateTime datePost, string imageLink)
         {
             if (string.IsNullOrEmpty(title) || contents is null ||
-                string.IsNullOrEmpty(imgageLink) || datePost == DateTime.MinValue) 
+                string.IsNullOrEmpty(imageLink) || datePost == DateTime.MinValue) 
                 return false;
 
             if (await _postRepository.IsTitleExist(title)) 
@@ -46,6 +46,7 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
 
             //Uploadlink to Cloudinary
+            Image image = new();
 
             Post post = new()
             {
@@ -54,8 +55,8 @@ namespace SkinCareBookingSystem.Service.Service
                 Contents = contents,
                 CategoryId = categoryId,
                 DatePost = datePost,
-                ImageLink = imgageLink,
-                IsApproved = false,
+                Image = image,
+                PostStatus = 0,
                 Category = category,
                 User = user
             };
@@ -79,24 +80,29 @@ namespace SkinCareBookingSystem.Service.Service
             return _postRepository.GetPostByIdAsync(postId);    
         }
 
-        public async Task<bool> UpdatePost(string title, int categoryId, string imgageLink)
+        public async Task<bool> UpdatePost(string title, int categoryId, string imageLink)
         {
-            if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(imgageLink))
-                return false;
-
             Post post = await _postRepository.GetPostByTitle(title);
 
             if (post is null)
                 return false;
 
-            post.Title = title;
-            if (await _postRepository.IsTitleExist(title))
-                return false;
+            if (!string.IsNullOrEmpty(title))
+            {
+                if (await _postRepository.IsTitleExist(title))
+                    return false;
+                post.Title = title;
+            }
 
             post.CategoryId = categoryId; // Check is category exist
-            
-            post.ImageLink = imgageLink; 
 
+            if (!string.IsNullOrEmpty(imageLink))
+            {
+                //Check link working or not
+                Image image = new();
+                post.Image = image;
+            }
+            
             _postRepository.UpdatePost(post);
             return await _postRepository.SaveChange();
         }
