@@ -12,7 +12,7 @@ using SkinCareBookingSystem.Repositories.Data;
 namespace SkinCareBookingSystem.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250208092135_init")]
+    [Migration("20250209033548_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -250,7 +250,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("ScheduleLogs");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Service", b =>
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -361,7 +361,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Service", "Service")
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "Service")
                         .WithMany("BookingServiceSchedules")
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -522,7 +522,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("BookingServiceSchedules");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Service", b =>
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.Navigation("BookingServiceSchedules");
                 });
