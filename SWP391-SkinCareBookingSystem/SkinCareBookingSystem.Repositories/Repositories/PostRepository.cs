@@ -31,14 +31,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<List<Post>> GetAllPostsAsync() =>
             await _context.Posts
-            .Include(p => p.Contents)
+            .Include(p => p.Contents.OrderBy(c => c.Position))
             .Include(p => p.User)
             .Include(p => p.Category)
             .ToListAsync();
 
         public async Task<Post> GetPostByIdAsync(int postId) =>
             await _context.Posts
-            .Include(p => p.Contents)
+            .Include(p => p.Contents.OrderBy(c => c.Position))
             .Include(p => p.User)
             .Include(p => p.Category)
             .FirstOrDefaultAsync(p => p.Id == postId);
@@ -60,7 +60,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public void UpdatePost(Post post)
         {
-            _context.Update(post);
+            _context.Posts.Update(post);
         }
     }
 }

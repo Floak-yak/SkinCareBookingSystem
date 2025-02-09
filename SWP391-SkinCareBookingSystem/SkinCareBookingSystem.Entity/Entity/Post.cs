@@ -11,8 +11,6 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int Id { get; set; }
         public string Title { get; set; }
         public DateTime DatePost { get; set; }
-        public string ImageLink { get; set; }
-        public bool IsApproved { get; set; }
         public PostStatus PostStatus { get; set; }
 
         #region Relationship
@@ -21,6 +19,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public ICollection<Content> Contents { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+        public Image Image {  get; set; }
         #endregion
     }
 

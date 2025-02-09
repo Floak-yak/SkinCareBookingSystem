@@ -11,10 +11,10 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int Id { get; set; }
         public string ContentOfPost { get; set; }
         public ContentType ContentType { get; set; }
-        public int StackPosition { get; set; }
-        public string ImageLink { get; set; }
+        public int Position { get; set; }
         
         #region Relationship
+        public Image Image { get; set; }
         public int PostId { get; set; }
         public Post Post { get; set; }
         #endregion
