@@ -1,0 +1,20 @@
+﻿using SkinCareBookingSystem.BusinessObject.Entity;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SkinCareBookingSystem.Repositories.Interfaces
+{
+    public interface IBookingRepository
+    {
+        public Task<Booking> GetBookingByIdAsync(int bookingId);
+        public Task<List<Booking>> GetBookingsByUserIdAsync(int userId);
+        public Task<List<Booking>> GetBookingsAsync();
+        public Task<bool> DeleteBooking(int bookingId);
+        public void UpdateBooking(Booking booking);
+        public void CreateBooking(Booking booking);
+        public Task<bool> SaveChange();
+    }
+}
