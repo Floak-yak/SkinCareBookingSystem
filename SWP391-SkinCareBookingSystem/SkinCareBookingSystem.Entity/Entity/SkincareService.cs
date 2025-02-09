@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.BusinessObject.Entity
 {
-    public class Service
+    public class SkincareService
     {
         public int Id { get; set; }
         public string ServiceName { get; set; }

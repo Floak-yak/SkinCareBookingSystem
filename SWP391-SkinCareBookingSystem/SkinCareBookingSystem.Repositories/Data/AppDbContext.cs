@@ -19,7 +19,7 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
-        public DbSet<Service> Services { get; set; }
+        public DbSet<SkincareService> SkincareServices { get; set; }
         public DbSet<TestInformation> TestInformations { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<ScheduleLog> ScheduleLogs { get; set; }
