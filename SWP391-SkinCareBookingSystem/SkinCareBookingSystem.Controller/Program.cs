@@ -18,6 +18,8 @@ builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<IPostContentSerivce, PostContentSerivce>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IPostContentRepository, PostContentRepository>();
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 string? GetConnectionString()
 {
