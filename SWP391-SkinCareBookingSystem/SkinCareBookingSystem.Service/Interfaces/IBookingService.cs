@@ -13,7 +13,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<List<Booking>> GetBookingsByUserIdAsync(int userId);
         public Task<List<Booking>> GetBookingsAsync();
         public Task<bool> DeleteBooking(int bookingId);
-        public Task<bool> UpdateBooking(Booking booking);
-        public Task<bool> CreateBooking(DateTime CreatedTime, DateTime Date);
+        public Task<bool> UpdateBooking(int bookingId, string serviceName);
+        public Task<bool> CreateBooking(DateTime Date, string serviceName, int userId);
     }
 }
