@@ -10,6 +10,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
     public interface IUserRepository
     {
         public Task<List<User>> GetUsers();
+        public Task<User> GetUserByEmail(string email);
         public Task<User> GetUserById(int userId);
         public Task<User> GetUserByName(string userName);
         public void Create(User user);

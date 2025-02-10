@@ -22,6 +22,11 @@ builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISkincareServiceRepository, SkincareServiceRepository>();
+builder.Services.AddScoped<ISkincareServicesService, SkincareServicesService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 string? GetConnectionString()
 {
@@ -99,7 +104,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
+
+app.UseCors();
 
 app.MapControllers();
 
