@@ -267,7 +267,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Services");
+                    b.ToTable("SkincareServices");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
