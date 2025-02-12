@@ -1,25 +1,79 @@
 ﻿using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Repositories.Repositories;
 using SkinCareBookingSystem.Service.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Mail;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using SkinCareBookingSystem.Repositories.Repositories;
 
 namespace SkinCareBookingSystem.Service.Service
 {
     public class UserService : IUserService
     {
+        private readonly IConfiguration _config;
+        private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IUserRepository _userRepository;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config)
         {
+            _config = config;
+            _passwordHasher = passwordHasher;
             _userRepository = userRepository;
+        }
+
+        public Task<bool> ChangePassword(string oldPassword, string newPassword)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<string> GenerateToken(User user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            JwtSecurityToken token = new JwtSecurityToken(_config["Jwt:Issuer"]
+                    , _config["Jwt:Audience"]
+                    , new Claim[]
+                    {
+                        new(ClaimTypes.Name, user.FullName),
+                        new(ClaimTypes.Role, user.Role.ToString()),
+                    },
+                    expires: DateTime.Now.AddMinutes(60),
+                    signingCredentials: credentials
+                );
+
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return tokenString;
+        }
+
+        public async Task<string> GenerateToken(User user, int extraDayExpired)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            JwtSecurityToken token = new JwtSecurityToken(_config["Jwt:Issuer"]
+                    , _config["Jwt:Audience"]
+                    , new Claim[]
+                    {
+                        new(ClaimTypes.Name, user.FullName),
+                        new(ClaimTypes.Role, user.Role.ToString()),
+                        new(ClaimTypes.Email, user.Email),
+                    },
+                    expires: DateTime.Now.AddDays(extraDayExpired),
+                    signingCredentials: credentials
+                );
+            
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return tokenString;
         }
 
         public async Task<List<User>> GetUsers() =>
@@ -28,7 +82,8 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<User> Login(string email, string password)
         {
             User user = await _userRepository.GetUserByEmail(email);
-            if (user is null || !user.Password.Equals(password))
+            if (user is null || !user.IsVerified 
+                || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password) != PasswordVerificationResult.Success)
                 return null;
             return user;
         }
@@ -37,7 +92,7 @@ namespace SkinCareBookingSystem.Service.Service
         {
             if (string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(password)
                 || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(PhoneNumber)
-                || YearOfBirth.Year > DateTime.UtcNow.Year 
+                || YearOfBirth.Year > DateTime.UtcNow.Year
                 || DateTime.UtcNow.Year - YearOfBirth.Year > 120)
                 return false;
 
@@ -45,51 +100,138 @@ namespace SkinCareBookingSystem.Service.Service
             if (!Regex.IsMatch(email, emailPattern))
                 return false;
 
+            if (await _userRepository.GetUserByEmail(email) != null) 
+                return false;
+
             User user = new()
             {
                 Role = role,
                 Email = email,
                 FullName = fullName,
-                Password = password,
-                YearOfBirth = YearOfBirth,  
+                YearOfBirth = YearOfBirth,
                 PhoneNumber = PhoneNumber,
+                IsVerified = false,
             };
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, password);
+            user.VerifyToken = await GenerateToken(user, 3);
 
             _userRepository.Create(user);
 
             if (await _userRepository.SaveChange())
             {
-                SendEmail(email);
+                SendEmail(user.Email, user.FullName, user.VerifyToken);
                 return true;
             }
             return false;
         }
 
-        public void SendEmail(string customerEmail)
+        public Task<string> ResetPassword()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async void SendEmail(string customerEmail, string userName, string token)
         {
             // Sender's email and password (use App Password if 2FA is enabled)
-            string senderEmail = "your-email@gmail.com";
-            string senderPassword = "your-app-password";
+            string senderEmail = "mysteam666phk@gmail.com";
+            string senderPassword = "jbtxpjiqkhzfalzb";
 
             // Receiver's email
-            string receiverEmail = "receiver-email@example.com";
+            string receiverEmail = customerEmail;
+            string htmlTemplate = @"
+<!DOCTYPE html>
+<html lang=""vi"">
+<head>
+  <meta charset=""UTF-8"">
+  <title>Xác nhận đăng ký</title>
+  <style type=""text/css"">
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #dddddd;
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #dddddd;
+    }
+    .header h1 {
+      margin: 0;
+      color: #f9b37a;
+    }
+    .content {
+      padding: 20px 0;
+      line-height: 1.5;
+      color: #333333;
+    }
+    .content p {
+      margin: 10px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #f9b37a;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #777777;
+      border-top: 1px solid #dddddd;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class=""container"">
+    <!-- Phần header -->
+    <div class=""header"">
+      <h1>Skincare Booking System</h1>
+    </div>
+    <!-- Phần nội dung chính -->
+    <div class=""content"">
+      <p>Chào {0},</p>
+      <p>Cảm ơn bạn đã đăng ký sử dụng dịch vụ của chúng tôi.</p>
+      <p>Để hoàn tất việc đăng ký, vui lòng nhấn vào nút xác nhận bên dưới:</p>
+      <p style=""text-align: center;"">
+        <a href=""{1}"" class=""btn"">Xác nhận Email</a>
+      </p>
+      <p>Nếu bạn không thực hiện đăng ký, hãy bỏ qua email này.</p>
+      <p>Trân trọng,<br>Đội ngũ Skincare Booking System</p>
+    </div>
+    <!-- Phần footer -->
+    <div class=""footer"">
+      <p>&copy; 2025 Skincare Booking System. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>";
+            string verifyUrl = "https://localhost:7101/api/User/Verify?token=" + token;
+            string emailBody = htmlTemplate.Replace("{0}", "Khiem");
+            emailBody = emailBody.Replace("{1}", verifyUrl);
+            //Get error when using string.Format
 
             // Setup the email message
             MailMessage mail = new MailMessage();
             mail.From = new MailAddress(senderEmail);
             mail.To.Add(receiverEmail);
             mail.IsBodyHtml = true;
-            mail.Subject = "Test Email from C#";
-            mail.Body = @"
-                    <html>
-                    <body style='font-family:Arial, sans-serif; color:#333;'>
-                        <h2 style='color:#007BFF;'>Hello, This is a Test Email!</h2>
-                        <p>Here is an <strong>HTML-formatted</strong> email sent from a <span style='color:green;'>C# program</span>.</p>
-                        <hr>
-                        <p style='font-size:14px;'>Best Regards,<br><strong>Your C# App</strong></p>
-                    </body>
-                    </html>";
-            
+            mail.Subject = "Verify Account Email";
+            mail.Body = emailBody;
+
             // Configure SMTP client
             SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587);
             smtp.Credentials = new NetworkCredential(senderEmail, senderPassword);
@@ -98,6 +240,43 @@ namespace SkinCareBookingSystem.Service.Service
             // Send the email
             smtp.Send(mail);
             Console.WriteLine("Email sent successfully!");
+        }
+
+        public async Task<bool> VerifyAccount(string token)
+        {
+            if (string.IsNullOrEmpty(token)) 
+                return false;
+
+            JwtSecurityToken tokenSecurityToken = new JwtSecurityTokenHandler()
+                .ReadJwtToken(token);
+
+            if (tokenSecurityToken is null)
+                return false;
+
+            var expUnixTime = tokenSecurityToken.Payload.Exp;
+
+            if(expUnixTime is null)
+                return false;
+
+            DateTime expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime.Value).UtcDateTime;
+
+            if (expDateTime < DateTime.UtcNow)
+                return false;
+
+            string email = tokenSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email).Value;
+            var role = tokenSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            string fullName = tokenSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+
+            User user = await _userRepository.GetUserByNameByEmailByRole(email, (Role)Enum.Parse(typeof(Role), role), fullName);
+
+            if (user is null) 
+                return false;
+
+            user.IsVerified = true;
+
+            _userRepository.Update(user);
+
+            return await _userRepository.SaveChange();
         }
     }
 }

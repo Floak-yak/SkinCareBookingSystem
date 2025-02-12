@@ -13,8 +13,10 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string FullName { get; set; }
         public DateTime YearOfBirth { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
         public string PhoneNumber { get; set; }
+        public string VerifyToken { get; set; }
+        public bool IsVerified { get; set; }
 
         #region Relationship
         public ICollection<TestInformation>? TestInformationHistory { get; set; }
