@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SkinCareBookingSystem.BusinessObject.Dto;
 using SkinCareBookingSystem.BusinessObject.Entity;
@@ -15,12 +14,10 @@ namespace SkinCareBookingSystem.Controller.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IConfiguration _config;
         private readonly IUserService _userService;
 
-        public UserController(IConfiguration config, IUserService userService)
+        public UserController(IUserService userService)
         {
-            _config = config;
             _userService = userService;
         }
 
@@ -36,43 +33,31 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (user is null)
                 return Unauthorized();
 
-            var token = GenerateJSONWebToken(user);
+            var token = await _userService.GenerateToken(user);
 
             return Ok(token);
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] LoginReqeust request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var user = await _userService.Login(request.Email, request.Password);
+            if (request is null)
+                return BadRequest(new ArgumentNullException().Message) ;
 
-            if (user is null)
-                return Unauthorized();
+            if (!await _userService.Register((Role)4, request.Email, request.Password, request.FullName, request.YearOfBirth, request.PhoneNumber))
+                return BadRequest("Register fail");
 
-            var token = GenerateJSONWebToken(user);
-
-            return Ok(token);
+            return Ok("Register success");
         }
 
-        private string GenerateJSONWebToken(User user)
+        [HttpPut("Verify")]
+        public async Task<IActionResult> VerifyAccount(string token)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"]
-                    , _config["Jwt:Audience"]
-                    , new Claim[]
-                    {
-                        new(ClaimTypes.Name, user.FullName),
-                        new(ClaimTypes.Role, user.Role.ToString()),
-                    },
-                    expires: DateTime.Now.AddMinutes(120),
-                    signingCredentials: credentials
-                );
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return tokenString;
+            if (string.IsNullOrEmpty(token))
+                return BadRequest("Can't find token");
+            if (!await _userService.VerifyAccount(token))
+                return BadRequest("Verify fail");
+            return Ok("Verify success");
         }
     }
 }
