@@ -18,5 +18,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<bool> Delete(int userId);
         public Task<bool> SaveChange();
         public Task<bool> IsUserExist(string userName);
+        public Task<User> GetUserByNameByEmailByRole(string email, Role role, string userName);
     }
 }

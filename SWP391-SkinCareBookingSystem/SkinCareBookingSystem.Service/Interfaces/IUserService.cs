@@ -12,5 +12,11 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<User> Login(string email, string password);
         Task<List<User>> GetUsers();    
         Task<bool> Register(Role role, string email, string password, string fullName, DateTime YearOfBirth, string PhoneNumber);
+        Task<bool> VerifyAccount(string token);
+        Task<string> ResetPassword();
+        Task<bool> ChangePassword(string oldPassword, string newPassword);
+        public Task<string> GenerateToken(User user);
+        public Task<string> GenerateToken(User user, int extraDayExpired);
+        public void SendEmail(string email, string userName, string token);
     }
 }
