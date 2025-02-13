@@ -28,9 +28,14 @@ namespace SkinCareBookingSystem.Service.Service
             _userRepository = userRepository;
         }
 
-        public Task<bool> ChangePassword(string oldPassword, string newPassword)
+        public async Task<bool> ChangePassword(int userId, string oldPassword, string newPassword)
         {
-            throw new NotImplementedException();
+            User user = await _userRepository.GetUserById(userId);
+            if (await Login(user.Email, oldPassword) is null)
+                return false;
+            user.PasswordHash = _passwordHasher.HashPassword(user, newPassword);
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
         }
 
         public async Task<string> GenerateToken(User user)

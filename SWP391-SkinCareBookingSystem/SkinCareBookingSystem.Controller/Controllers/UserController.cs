@@ -71,5 +71,17 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
             return Ok("Reset success");
         }
+
+        [HttpPut("ChangePassword")]
+        public async Task<IActionResult> ChangePassword(int userId, string oldPassword, string newPassword)
+        {
+            if (string.IsNullOrEmpty(oldPassword) || string.IsNullOrEmpty(newPassword))
+                return BadRequest("OldPassword, newPassword must no be empty");
+            if (!await _userService.ChangePassword(userId, oldPassword, newPassword))
+            {
+                return BadRequest("Change password fail");
+            }
+            return Ok("Change password success");
+        }
     }
 }
