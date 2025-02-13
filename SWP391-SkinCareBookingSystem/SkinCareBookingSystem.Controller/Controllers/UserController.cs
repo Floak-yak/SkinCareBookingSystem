@@ -50,7 +50,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Register success");
         }
 
-        [HttpPut("Verify")]
+        [HttpPost("Verify")]
         public async Task<IActionResult> VerifyAccount(string token)
         {
             if (string.IsNullOrEmpty(token))
@@ -58,6 +58,30 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (!await _userService.VerifyAccount(token))
                 return BadRequest("Verify fail");
             return Ok("Verify success");
+        }
+
+        [HttpPut("ResetPassword")]
+        public async Task<IActionResult> ResetPassword(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest("Can't find email");
+            if (!await _userService.ResetPassword(email))
+            {
+                return BadRequest("Reset fail");
+            }
+            return Ok("Reset success");
+        }
+
+        [HttpPut("ChangePassword")]
+        public async Task<IActionResult> ChangePassword(int userId, string oldPassword, string newPassword)
+        {
+            if (string.IsNullOrEmpty(oldPassword) || string.IsNullOrEmpty(newPassword))
+                return BadRequest("OldPassword, newPassword must no be empty");
+            if (!await _userService.ChangePassword(userId, oldPassword, newPassword))
+            {
+                return BadRequest("Change password fail");
+            }
+            return Ok("Change password success");
         }
     }
 }
