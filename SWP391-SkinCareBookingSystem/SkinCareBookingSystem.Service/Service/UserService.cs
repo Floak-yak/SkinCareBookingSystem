@@ -126,9 +126,21 @@ namespace SkinCareBookingSystem.Service.Service
             return false;
         }
 
-        public Task<string> ResetPassword()
+        public async Task<bool> ResetPassword(string email)
         {
-            throw new NotImplementedException();
+            User user = await _userRepository.GetUserByEmail(email);
+            if (user is null)
+                return false;
+            int newPassword = new Random().Next(10000000, 99999999);
+            
+            user.PasswordHash = _passwordHasher.HashPassword(user, newPassword.ToString());
+
+            if (await _userRepository.SaveChange())
+            {
+                SendEmail(email, user.FullName, newPassword);
+                return true;
+            }            
+            return false;
         }
 
         public async void SendEmail(string customerEmail, string userName, string token)
@@ -222,6 +234,113 @@ namespace SkinCareBookingSystem.Service.Service
             string verifyUrl = "https://localhost:7101/api/User/Verify?token=" + token;
             string emailBody = htmlTemplate.Replace("{0}", "Khiem");
             emailBody = emailBody.Replace("{1}", verifyUrl);
+            //Get error when using string.Format
+
+            // Setup the email message
+            MailMessage mail = new MailMessage();
+            mail.From = new MailAddress(senderEmail);
+            mail.To.Add(receiverEmail);
+            mail.IsBodyHtml = true;
+            mail.Subject = "Verify Account Email";
+            mail.Body = emailBody;
+
+            // Configure SMTP client
+            SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587);
+            smtp.Credentials = new NetworkCredential(senderEmail, senderPassword);
+            smtp.EnableSsl = true;
+
+            // Send the email
+            smtp.Send(mail);
+            Console.WriteLine("Email sent successfully!");
+        }
+
+        public async void SendEmail(string customerEmail, string userName, int newPassword)
+        {
+            // Sender's email and password (use App Password if 2FA is enabled)
+            string senderEmail = "mysteam666phk@gmail.com";
+            string senderPassword = "jbtxpjiqkhzfalzb";
+
+            // Receiver's email
+            string receiverEmail = customerEmail;
+            string htmlTemplate = @"
+<!DOCTYPE html>
+<html lang=""vi"">
+<head>
+  <meta charset=""UTF-8"">
+  <title>Xác nhận đăng ký</title>
+  <style type=""text/css"">
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #dddddd;
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #dddddd;
+    }
+    .header h1 {
+      margin: 0;
+      color: #f9b37a;
+    }
+    .content {
+      padding: 20px 0;
+      line-height: 1.5;
+      color: #333333;
+    }
+    .content p {
+      margin: 10px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #f9b37a;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #777777;
+      border-top: 1px solid #dddddd;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class=""container"">
+    <!-- Phần header -->
+    <div class=""header"">
+      <h1>Skincare Booking System</h1>
+    </div>
+    <!-- Phần nội dung chính -->
+    <div class=""content"">
+      <p>Chào {0},</p>
+      <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.</p>
+      <p>Mật khẩu mới của tài khoảng bạn là:</p>
+      <h1> {1} </h1>
+      <p>Trân trọng,<br>Đội ngũ Skincare Booking System</p>
+    </div>
+    <!-- Phần footer -->
+    <div class=""footer"">
+      <p>&copy; 2025 Skincare Booking System. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>";
+            string emailBody = htmlTemplate.Replace("{0}", "Khiem");
+            emailBody = emailBody.Replace("{1}", newPassword.ToString());
             //Get error when using string.Format
 
             // Setup the email message
