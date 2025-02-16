@@ -1,5 +1,5 @@
-﻿using SkinCareBookingSystem.BusinessObject.Dto;
-using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,5 +25,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<bool> ChangePostStatus(int postId, PostStatus postStatus);
         public Task<bool> CreatePost(int userId, string title, List<CreatePostContentRequest> contents, int categoryId, string imageLink);
         public Task<bool> CreatePostWithoutContent(int userId, string title, int categoryId, string imageLink);
+        public Task<List<Post>> Search(string seachText);
+        public Task<List<Post>> Search(int categoryId);
     }
 }

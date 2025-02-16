@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SkinCareBookingSystem.BusinessObject.Dto
+namespace SkinCareBookingSystem.Service.Dto
 {
     public class LoginReqeust
     {

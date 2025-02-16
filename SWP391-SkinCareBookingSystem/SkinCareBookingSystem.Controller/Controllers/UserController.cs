@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using SkinCareBookingSystem.BusinessObject.Dto;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 using System.IdentityModel.Tokens.Jwt;
