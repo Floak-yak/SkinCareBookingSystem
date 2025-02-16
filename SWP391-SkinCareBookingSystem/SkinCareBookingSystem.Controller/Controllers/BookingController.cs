@@ -35,7 +35,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             Booking booking = await _bookingService.CreateBooking(Date, serviceName, userId);
             if (booking is null)
                 return BadRequest("Create fail");
-            return Ok(booking);
+            return Ok(_transactionService.CreateTransaction(booking));
         }
     }
 }
