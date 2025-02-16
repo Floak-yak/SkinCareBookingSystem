@@ -24,6 +24,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Booking>? Bookings { get; set; }
         public ICollection<Schedule>? Schedules { get; set; }
+        public ICollection<Transaction>? Transactions { get; set; }
         #endregion
     }
 

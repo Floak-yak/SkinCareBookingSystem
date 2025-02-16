@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SkinCareBookingSystem.BusinessObject.Dto;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 
@@ -7,6 +9,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PostController : ControllerBase
     {
         private readonly IPostService _postService;
@@ -56,6 +59,24 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (!await _postService.CreatePostWithoutContent(request.UserId, request.Title, request.CategoryId, request.imageLink))
                 return BadRequest("Create fail");
             return Ok("Create Success");
+        }
+
+        [HttpGet("CategoryId")]
+        public async Task<IActionResult> SearchPostByCategoryId(int CategoryId)
+        {
+            List<Post> products = await _postService.Search(CategoryId);
+            if (products is null)
+                return NotFound();
+            return Ok(products);
+        }
+
+        [HttpGet("IncludeName")]
+        public async Task<IActionResult> SearchPostByName(string text)
+        {
+            List<Post> products = await _postService.Search(text);
+            if (products is null)
+                return NotFound();
+            return Ok(products);
         }
     }
 }

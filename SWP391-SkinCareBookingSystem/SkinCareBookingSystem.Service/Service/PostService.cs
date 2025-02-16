@@ -1,7 +1,7 @@
-﻿using SkinCareBookingSystem.BusinessObject.Dto;
-using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -132,6 +132,12 @@ namespace SkinCareBookingSystem.Service.Service
         {
             return _postRepository.GetPostByIdAsync(postId);    
         }
+
+        public async Task<List<Post>> Search(string seachText) =>
+            await _postRepository.Search(seachText);
+
+        public async Task<List<Post>> Search(int categoryId) =>
+            await _postRepository.Search(categoryId);
 
         public async Task<bool> UpdatePost(int postId, string title, int categoryId, string imageLink)
         {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SkinCareBookingSystem.BusinessObject.Dto;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Net.payOS;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Data;
 using SkinCareBookingSystem.Repositories.Interfaces;
@@ -30,6 +31,19 @@ builder.Services.AddScoped<ISkincareServiceRepository, SkincareServiceRepository
 builder.Services.AddScoped<ISkincareServicesService, SkincareServicesService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+IConfiguration configurationPayOs = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();
+
+PayOS payOS = new PayOS(configurationPayOs["Environment:PAYOS_CLIENT_ID"] ?? throw new Exception("Cannot find environment"),
+                    configurationPayOs["Environment:PAYOS_API_KEY"] ?? throw new Exception("Cannot find environment"),
+                    configurationPayOs["Environment:PAYOS_CHECKSUM_KEY"] ?? throw new Exception("Cannot find environment"));
+
+builder.Services.AddSingleton(payOS);
 
 string? GetConnectionString()
 {

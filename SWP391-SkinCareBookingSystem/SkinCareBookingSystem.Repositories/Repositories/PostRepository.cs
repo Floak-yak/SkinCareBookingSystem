@@ -58,6 +58,16 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<List<Post>> Search(string seachText) =>
+            await _context.Posts
+                .Where(p => p.Title.Contains(seachText))
+                .ToListAsync();
+
+        public async Task<List<Post>> Search(int categoryId) =>
+            await _context.Posts
+                .Where(p => p.CategoryId == categoryId)
+                .ToListAsync();
+
         public void UpdatePost(Post post)
         {
             _context.Posts.Update(post);

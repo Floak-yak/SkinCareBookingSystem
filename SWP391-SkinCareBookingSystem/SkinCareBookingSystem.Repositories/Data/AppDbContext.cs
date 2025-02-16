@@ -25,10 +25,17 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<ScheduleLog> ScheduleLogs { get; set; }
         public DbSet<BookingServiceSchedule> BookingServiceSchedules { get; set; }
         public DbSet<Image> Images { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.User)
+                .WithMany(u => u.Transactions)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.User)
                 .WithMany(u => u.Bookings)
