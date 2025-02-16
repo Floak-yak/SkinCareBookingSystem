@@ -12,22 +12,26 @@ namespace SkinCareBookingSystem.Service.Service
 {
     public class BookingService : IBookingService
     {
+        private readonly IUserRepository _userRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly ISkincareServiceRepository _skincareServiceRepository;
 
-        public BookingService(IBookingRepository bookingRepository, ISkincareServiceRepository skincareServiceRepository)
+        public BookingService(IBookingRepository bookingRepository, ISkincareServiceRepository skincareServiceRepository, IUserRepository userRepository)
         {
+            _userRepository = userRepository;
             _bookingRepository = bookingRepository;
             _skincareServiceRepository = skincareServiceRepository;
         }
-        public async Task<bool> CreateBooking(DateTime Date, string serviceName, int userId)
+        public async Task<Booking> CreateBooking(DateTime Date, string serviceName, int userId)
         {
             SkincareService skincareService = await _skincareServiceRepository
                 .GetServiceByname(serviceName);
             if (skincareService is null)
-                return false;
+                return null;
 
-            User user = new();//GetUserById
+            User user = await _userRepository.GetUserById(userId);
+            if (user is null)
+                return null;
 
             BookingServiceSchedule bookingService = new()
             {
@@ -47,7 +51,12 @@ namespace SkinCareBookingSystem.Service.Service
             booking.BookingServiceSchedules.Add(bookingService);
 
             _bookingRepository.CreateBooking(booking);
-            return await _bookingRepository.SaveChange();
+            if (!await _bookingRepository.SaveChange())
+            {
+                return null;
+            }
+
+            return booking;
         }
 
         public async Task<bool> DeleteBooking(int bookingId) =>
@@ -62,22 +71,24 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<List<Booking>> GetBookingsByUserIdAsync(int userId) =>
             await _bookingRepository.GetBookingsByUserIdAsync(userId);
 
-        public async Task<bool> UpdateBooking(int bookingId, string serviceName)
+        public async Task<Booking> UpdateBooking(int bookingId, string serviceName)
         {
             Booking booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
             if (booking is null)
-                return false;
+                return null;
             SkincareService skincareService = await _skincareServiceRepository
                 .GetServiceByname(serviceName);
             if (skincareService is null)
-                return false;
+                return null;
             booking.TotalPrice = skincareService.Price;
             booking.BookingServiceSchedules
                 .FirstOrDefault(b => b.Service != null).Service = skincareService;
             booking.BookingServiceSchedules
                 .FirstOrDefault(b => b.Service != null).ServiceId = skincareService.Id;
             _bookingRepository.UpdateBooking(booking);
-            return await _bookingRepository.SaveChange();
+            if (!await _bookingRepository.SaveChange())
+                return null;
+            return booking;
         }
     }
 }

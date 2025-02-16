@@ -17,5 +17,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<bool> SaveChange();
         public Task<Post> GetPostByTitle(string title);
         public Task<bool> IsTitleExist(string title);
+        public Task<List<Post>> Search(string seachText);
+        public Task<List<Post>> Search(int categoryId);
     }
 }
