@@ -81,5 +81,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.Users.AnyAsync(u => u.FullName.Equals(userName));
         }
+
+        public async Task<User> GetUserByEmail(string email) =>
+            await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+
+        public async Task<User> GetUserByNameByEmailByRole(string email, Role role, string userName) =>
+            await _context.Users
+                .Where(u => u.Email.Equals(email) && u.Role.Equals(role) 
+                    && u.FullName.Equals(userName))
+            .SingleOrDefaultAsync();
     }
 }

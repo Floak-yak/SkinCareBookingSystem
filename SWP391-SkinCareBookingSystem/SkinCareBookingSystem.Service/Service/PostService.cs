@@ -1,5 +1,7 @@
 ﻿using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
+using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,11 +13,15 @@ namespace SkinCareBookingSystem.Service.Service
 {
     public class PostService : IPostService
     {
+        private readonly IUserRepository _userRepository;
+        private readonly ICategoryRepository _categoryRepository;
         private readonly IPostRepository _postRepository;
         private readonly IImageService _imageService;
 
-        public PostService(IPostRepository postRepository, IImageService imageService)
+        public PostService(IPostRepository postRepository, IImageService imageService, ICategoryRepository categoryRepository, IUserRepository userRepository)
         {
+            _userRepository = userRepository;
+            _categoryRepository = categoryRepository;
             _postRepository = postRepository;
             _imageService = imageService;
         }
@@ -30,21 +36,65 @@ namespace SkinCareBookingSystem.Service.Service
             return await _postRepository.SaveChange();
         }
 
-        public async Task<bool> CreatePost(int userId, string title, List<Content> contents, int categoryId, DateTime datePost, string imageLink)
+        public async Task<bool> CreatePost(int userId, string title, List<CreatePostContentRequest> contents, int categoryId, string imageLink)
         {
             if (string.IsNullOrEmpty(title) || contents is null ||
-                string.IsNullOrEmpty(imageLink) || datePost == DateTime.MinValue) 
+                string.IsNullOrEmpty(imageLink)) 
                 return false;
 
             if (await _postRepository.IsTitleExist(title)) 
                 return false;
 
-            //Check category
+            User user = await _userRepository.GetUserById(userId);
+            if (user is null)
+                return false;
 
-            User user = new(); //GetUserById
-            Category category = new Category(); //GetCategoryByCategoryId
+            Category category = await _categoryRepository.GetCategoryById(userId);
+            if (category is null)
+                return false;
 
-            if (user is null || category is null)
+            if (!await _imageService.StoreImage(imageLink))
+                return false;
+
+            Image image = await _imageService.GetImageByDescription(Path.GetFileName(imageLink));
+
+            List<Content> listContent = new();
+            foreach (var content in contents)
+            {
+                listContent.Add(new Content() { });
+            }
+
+            Post post = new()
+            {
+                UserId = userId,
+                Title = title,
+                Contents = listContent,
+                CategoryId = categoryId,
+                DatePost = DateTime.UtcNow,
+                Image = image,
+                PostStatus = 0,
+                Category = category,
+                User = user
+            };
+
+            _postRepository.CreatePost(post);
+            return await _postRepository.SaveChange();
+        }
+
+        public async Task<bool> CreatePostWithoutContent(int userId, string title, int categoryId, string imageLink)
+        {
+            if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(imageLink))
+                return false;
+
+            if (await _postRepository.IsTitleExist(title))
+                return false;
+
+            User user = await _userRepository.GetUserById(userId);
+            if (user is null)
+                return false;
+
+            Category category = await _categoryRepository.GetCategoryById(userId);
+            if (category is null)
                 return false;
 
             if (!await _imageService.StoreImage(imageLink))
@@ -56,9 +106,8 @@ namespace SkinCareBookingSystem.Service.Service
             {
                 UserId = userId,
                 Title = title,
-                Contents = contents,
                 CategoryId = categoryId,
-                DatePost = datePost,
+                DatePost = DateTime.UtcNow,
                 Image = image,
                 PostStatus = 0,
                 Category = category,
@@ -83,6 +132,12 @@ namespace SkinCareBookingSystem.Service.Service
         {
             return _postRepository.GetPostByIdAsync(postId);    
         }
+
+        public async Task<List<Post>> Search(string seachText) =>
+            await _postRepository.Search(seachText);
+
+        public async Task<List<Post>> Search(int categoryId) =>
+            await _postRepository.Search(categoryId);
 
         public async Task<bool> UpdatePost(int postId, string title, int categoryId, string imageLink)
         {

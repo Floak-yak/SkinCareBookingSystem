@@ -267,7 +267,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Services");
+                    b.ToTable("SkincareServices");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
@@ -314,7 +314,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Password")
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -324,6 +327,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
+
+                    b.Property<string>("VerifyToken")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("YearOfBirth")
                         .HasColumnType("datetime2");
