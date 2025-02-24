@@ -69,43 +69,6 @@ namespace SkinCareBookingSystem.Service.Service
             return await _categoryRepository.Delete(categoryId);
         }
 
-        public async Task<bool> NotifyCategoryChange(string email, string categoryName)
-        {
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(categoryName))
-                return false;
-
-            try
-            {
-                string senderEmail = _config["EmailSettings:SenderEmail"];
-                string senderPassword = _config["EmailSettings:SenderPassword"];
-
-                string subject = "Category Update Notification";
-                string body = $"The category '{categoryName}' has been updated successfully.";
-
-                MailMessage mail = new MailMessage()
-                {
-                    From = new MailAddress(senderEmail),
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = false
-                };
-                mail.To.Add(email);
-
-                SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587)
-                {
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true
-                };
-
-                smtp.Send(mail);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public Task<Category> GetCategoryByName(string categoryName)
         {
             throw new NotImplementedException();

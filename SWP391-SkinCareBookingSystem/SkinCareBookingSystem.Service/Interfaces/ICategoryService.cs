@@ -13,6 +13,5 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<bool> UpdateCategory(int categoryId, string newCategoryName);
         Task<bool> DeleteCategory(int categoryId);
         Task<bool> IsCategoryExist(string categoryName);
-        Task<bool> NotifyCategoryChange(string email, string categoryName);
     }
 }
