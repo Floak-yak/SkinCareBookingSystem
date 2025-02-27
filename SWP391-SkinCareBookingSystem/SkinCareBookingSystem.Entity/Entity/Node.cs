@@ -8,14 +8,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
 {
     public class Node
     {
-        public string Question { get; set; }
-        public Dictionary<string, Node> Next { get; set; }
-        public string Recommendation { get; set; }
-
-        public Node(string question)
-        {
-            Question = question;
-            Next = new Dictionary<string, Node>();
-        }
+        public string Id { get; set; }
+        public string Content { get; set; }
+        public Dictionary<string, string> Choices { get; set; } = new Dictionary<string, string>();
     }
 }
