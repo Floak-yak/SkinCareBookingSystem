@@ -43,6 +43,46 @@ namespace SkinCareBookingSystem.Service.Service
             return await _userRepository.SaveChange();
         }
 
+        public async Task<CreateAccountResponse> CreateAccount(Role role, string email, string fullName, DateTime YearOfBirth, string PhoneNumber)
+        {
+            if (string.IsNullOrEmpty(fullName)  || string.IsNullOrEmpty(email) 
+                || string.IsNullOrEmpty(PhoneNumber)
+                || YearOfBirth.Year > DateTime.UtcNow.Year
+                || DateTime.UtcNow.Year - YearOfBirth.Year > 120)
+                return null;
+
+            string emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+            if (!Regex.IsMatch(email, emailPattern))
+                return null;
+
+            if (await _userRepository.GetUserByEmail(email) != null)
+                return null;
+
+            User user = new()
+            {
+                Role = role,
+                Email = email,
+                FullName = fullName,
+                YearOfBirth = YearOfBirth,
+                PhoneNumber = PhoneNumber,
+                IsVerified = true,                
+            };
+
+            string password = new Random().Next(11234500, 2131232312).ToString();
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, password);
+
+            _userRepository.Create(user);
+
+            if (await _userRepository.SaveChange())
+            {                
+                var result = _mapper.Map<CreateAccountResponse>(user);
+                result.Password = password;
+                return result;
+            }
+            return null;
+        }
+
         public async Task<string> GenerateToken(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
