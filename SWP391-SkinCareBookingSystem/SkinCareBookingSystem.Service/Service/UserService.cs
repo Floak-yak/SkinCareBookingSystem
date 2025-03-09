@@ -12,6 +12,9 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SkinCareBookingSystem.Repositories.Repositories;
+using AutoMapper;
+using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.User;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -20,12 +23,14 @@ namespace SkinCareBookingSystem.Service.Service
         private readonly IConfiguration _config;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config)
+        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper)
         {
             _config = config;
             _passwordHasher = passwordHasher;
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public async Task<bool> ChangePassword(int userId, string oldPassword, string newPassword)
@@ -49,6 +54,8 @@ namespace SkinCareBookingSystem.Service.Service
                     {
                         new(ClaimTypes.Name, user.FullName),
                         new(ClaimTypes.Role, user.Role.ToString()),
+                        new(ClaimTypes.Email, user.Email),
+                        new(ClaimTypes.MobilePhone, user.PhoneNumber),
                     },
                     expires: DateTime.Now.AddMinutes(60),
                     signingCredentials: credentials
@@ -81,8 +88,17 @@ namespace SkinCareBookingSystem.Service.Service
             return tokenString;
         }
 
-        public async Task<List<User>> GetUsers() =>
-            await _userRepository.GetUsers();
+        public async Task<List<UserResponse>> GetCustomers() =>
+            _mapper.Map<List<UserResponse>>(await _userRepository.GetCustomers());
+
+        public async Task<List<UserResponse>> GetSkinTherapists() =>
+            _mapper.Map<List<UserResponse>>(await _userRepository.GetSkinTherapists());
+
+        public async Task<List<UserResponse>> GetStaffs() =>
+            _mapper.Map<List<UserResponse>>(await _userRepository.GetStaffs());
+
+        public async Task<List<ViewUser>> GetUsers() =>
+            _mapper.Map<List<ViewUser>>(await _userRepository.GetUsers());
 
         public async Task<User> Login(string email, string password)
         {
@@ -364,6 +380,16 @@ namespace SkinCareBookingSystem.Service.Service
             // Send the email
             smtp.Send(mail);
             Console.WriteLine("Email sent successfully!");
+        }
+
+        public async Task<bool> UpdateRole(int userId, Role role)
+        {
+            User user = await _userRepository.GetUserById(userId);
+            if (user is null)
+                return false;
+            user.Role = role;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
         }
 
         public async Task<bool> VerifyAccount(string token)

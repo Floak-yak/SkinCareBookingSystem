@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.User;
 
 namespace SkinCareBookingSystem.Service.Mapper
 {
@@ -11,6 +12,7 @@ namespace SkinCareBookingSystem.Service.Mapper
             CreateMap<User, ViewUser>().ReverseMap();
             CreateMap<GetBookingsResponse, Booking>().ReverseMap();
             CreateMap<GetProductResponse, Product>().ReverseMap();
+            CreateMap<User, UserResponse>().ReverseMap();
         }
     }
 }

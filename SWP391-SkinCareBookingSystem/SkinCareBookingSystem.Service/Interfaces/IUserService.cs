@@ -1,4 +1,6 @@
 ﻿using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.User;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +12,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
     public interface IUserService
     {
         Task<User> Login(string email, string password);
-        Task<List<User>> GetUsers();    
+        Task<List<ViewUser>> GetUsers();    
         Task<bool> Register(Role role, string email, string password, string fullName, DateTime YearOfBirth, string PhoneNumber);
         Task<bool> VerifyAccount(string token);
         Task<bool> ResetPassword(string email);
@@ -19,5 +21,9 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<string> GenerateToken(User user, int extraDayExpired);
         public void SendEmail(string email, string userName, string token);
         public void SendEmail(string email, string userName, int newPassword);
+        public Task<bool> UpdateRole(int userId ,Role role);
+        public Task<List<UserResponse>> GetStaffs();
+        public Task<List<UserResponse>> GetCustomers();
+        public Task<List<UserResponse>> GetSkinTherapists();
     }
 }

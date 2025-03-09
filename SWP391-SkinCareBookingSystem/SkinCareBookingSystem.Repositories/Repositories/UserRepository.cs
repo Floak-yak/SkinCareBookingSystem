@@ -90,5 +90,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 .Where(u => u.Email.Equals(email) && u.Role.Equals(role) 
                     && u.FullName.Equals(userName))
             .SingleOrDefaultAsync();
+
+        public async Task<List<User>> GetStaffs() =>
+            await _context.Users.Where(u => u.IsVerified && u.Role == Role.Staff).ToListAsync();
+
+        public async Task<List<User>> GetCustomers() =>
+            await _context.Users.Where(u => u.IsVerified && u.Role == Role.Customer).ToListAsync();
+
+        public async Task<List<User>> GetSkinTherapists() =>
+            await _context.Users.Where(u => u.IsVerified && u.Role == Role.SkinTherapist).ToListAsync();
     }
 }

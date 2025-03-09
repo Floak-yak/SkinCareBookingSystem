@@ -13,6 +13,9 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<User> GetUserByEmail(string email);
         public Task<User> GetUserById(int userId);
         public Task<User> GetUserByName(string userName);
+        public Task<List<User>> GetStaffs();
+        public Task<List<User>> GetCustomers();
+        public Task<List<User>> GetSkinTherapists();
         public void Create(User user);
         public void Update(User user);
         public Task<bool> Delete(int userId);

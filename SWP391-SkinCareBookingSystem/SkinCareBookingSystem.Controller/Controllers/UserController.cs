@@ -25,6 +25,18 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> GetUsers() =>
             Ok(await _userService.GetUsers());
 
+        [HttpGet("GetStaffs")]
+        public async Task<IActionResult> GetStaffs() =>
+            Ok(await _userService.GetStaffs());
+
+        [HttpGet("GetSkinTherapists")]
+        public async Task<IActionResult> GetSkinTherapists() =>
+            Ok(await _userService.GetSkinTherapists());
+
+        [HttpGet("GetCustomers")]
+        public async Task<IActionResult> GetCustomers() =>
+            Ok(await _userService.GetCustomers());
+
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginReqeust request)
         {
@@ -50,8 +62,18 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Register success");
         }
 
+        [HttpPut]
+        public async Task<IActionResult> UpdateRole([FromQuery] int userId, int role)
+        {
+            if (role < 1 || role > 4)
+                return BadRequest("Invalid role");
+            if (!await _userService.UpdateRole(userId, (Role)role))
+                return BadRequest("Update fail");
+            return Ok("Update success");
+        }
+
         [HttpPost("Verify")]
-        public async Task<IActionResult> VerifyAccount(string token)
+        public async Task<IActionResult> VerifyAccount([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))
                 return BadRequest("Can't find token");
