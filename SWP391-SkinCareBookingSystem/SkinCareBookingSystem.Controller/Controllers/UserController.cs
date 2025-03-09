@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.User;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 using System.IdentityModel.Tokens.Jwt;
@@ -60,6 +61,15 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return BadRequest("Register fail");
 
             return Ok("Register success");
+        }
+
+        [HttpPost("CreateAccount")]
+        public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
+        {
+            if (request is null)
+                return BadRequest(new ArgumentNullException().Message);           
+
+            return Ok(await _userService.CreateAccount((Role)request.Role, request.Email, request.FullName, request.YearOfBirth, request.PhoneNumber));
         }
 
         [HttpPut]
