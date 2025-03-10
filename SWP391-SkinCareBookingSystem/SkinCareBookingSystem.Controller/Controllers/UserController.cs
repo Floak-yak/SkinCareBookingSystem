@@ -12,7 +12,6 @@ using System.Text;
 namespace SkinCareBookingSystem.Controller.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
