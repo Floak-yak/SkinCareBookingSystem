@@ -8,7 +8,6 @@ using SkinCareBookingSystem.Service.Service;
 namespace SkinCareBookingSystem.Controller.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     public class BookingController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
