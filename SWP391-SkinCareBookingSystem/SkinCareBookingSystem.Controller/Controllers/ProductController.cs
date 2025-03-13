@@ -74,5 +74,20 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return NotFound();
             return Ok(products);
         }
-    }
+
+		[HttpPost("AddProduct")]
+		public async Task<IActionResult> AddProducts([FromBody] List<Product> products)
+		{
+			if (products is null)
+				return NotFound();
+
+			return Ok(await _productService.AddProducts(products));
+		}
+
+		[HttpDelete("RemoveProduct")]
+		public async Task<IActionResult> RemoveProduct([FromQuery] int productId)
+		{
+			return Ok(await _productService.RemoveProduct(productId));
+		}
+	}
 }

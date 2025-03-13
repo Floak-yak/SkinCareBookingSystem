@@ -10,12 +10,19 @@ using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.Repositories.Repositories
 {
-    public class ProductRepository : IProductRepository
+	public class ProductRepository : IProductRepository
     {
         private readonly AppDbContext _context;
 
         public ProductRepository(AppDbContext context) => _context = context;
-        public async Task<List<Product>> Search(string productName) => 
+
+		public void CreateProduct(Product product) =>
+            _context.Products.Add(product);
+
+		public void CreateProducts(List<Product> products) =>
+            _context.Products.AddRange(products);
+
+		public async Task<List<Product>> Search(string productName) => 
             await _context.Products
                 .Where(p => p.ProductName.Contains(productName))
                 .OrderBy(p => p.CreatedDate)
@@ -48,5 +55,16 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             await _context.Products
                 .OrderByDescending(p => p.Price)
                 .ToListAsync();
-    }
+		public async Task<bool> SaveChange() =>
+			await _context.SaveChangesAsync() > 0;
+
+		public async Task<bool> RemoveProduct(Product product)
+		{
+			_context.Products.Remove(product);
+			return await SaveChange();
+		}
+
+        public async Task<Product> GetProductById(int productId) =>
+            await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+	}
 }
