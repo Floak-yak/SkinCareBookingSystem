@@ -47,7 +47,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
             var token = await _userService.GenerateToken(user);
 
-            return Ok(token);
+            LoginResponse response = new() { Token = token, UserId = user.Id };
+
+            return Ok(response);
         }
 
         [HttpPost("Register")]
@@ -81,7 +83,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Update success");
         }
 
-        [HttpPost("Verify")]
+        [HttpPut("Verify")]
         public async Task<IActionResult> VerifyAccount([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))
