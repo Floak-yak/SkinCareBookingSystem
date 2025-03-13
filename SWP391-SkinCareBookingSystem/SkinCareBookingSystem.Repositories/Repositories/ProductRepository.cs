@@ -57,5 +57,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 .ToListAsync();
 		public async Task<bool> SaveChange() =>
 			await _context.SaveChangesAsync() > 0;
+
+		public async Task<bool> RemoveProduct(Product product)
+		{
+			_context.Products.Remove(product);
+			return await SaveChange();
+		}
+
+        public async Task<Product> GetProductById(int productId) =>
+            await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 	}
 }

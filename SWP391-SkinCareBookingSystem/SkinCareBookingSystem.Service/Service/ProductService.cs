@@ -32,6 +32,13 @@ namespace SkinCareBookingSystem.Service.Service
 			return await _productRepository.SaveChange();
 		}
 
+		public async Task<bool> RemoveProduct(int productId)
+		{
+			Product product = await _productRepository.GetProductById(productId);
+            if (product == null) return false;
+            return await _productRepository.RemoveProduct(product);
+		}
+
 		public async Task<List<Product>> Search(string productName) =>
             await _productRepository.Search(productName);
 

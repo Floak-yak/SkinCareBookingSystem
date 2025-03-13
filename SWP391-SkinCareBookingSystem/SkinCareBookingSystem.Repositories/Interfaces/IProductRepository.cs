@@ -13,10 +13,12 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<List<Product>> Search(Decimal minPrice, Decimal maxPrice);
         public Task<List<Product>> Search(Decimal underPrice);
         public Task<List<Product>> Search(int categoryId);
+        public Task<Product> GetProductById(int productId);
         public Task<List<Product>> SearchDescPrice();
         public Task<List<Product>> SearchAscPrice();
         public void CreateProduct(Product product);
         public void CreateProducts(List<Product> products);
+        public Task<bool> RemoveProduct(Product product);
 		public Task<bool> SaveChange();
 	}
 }

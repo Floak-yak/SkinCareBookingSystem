@@ -83,5 +83,11 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
 			return Ok(await _productService.AddProducts(products));
 		}
+
+		[HttpDelete("RemoveProduct")]
+		public async Task<IActionResult> RemoveProduct([FromQuery] int productId)
+		{
+			return Ok(await _productService.RemoveProduct(productId));
+		}
 	}
 }
