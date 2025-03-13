@@ -113,6 +113,14 @@ builder.Services.AddSwaggerGen(option =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowAll",
+		policy => policy.AllowAnyOrigin()
+						.AllowAnyMethod()
+						.AllowAnyHeader());
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -128,7 +136,7 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.UseCors();
+app.UseCors("AllowAll");
 
 app.MapControllers();
 
