@@ -16,34 +16,31 @@ namespace SkinCareBookingSystem.Service.Service
             _surveyRepository = surveyRepository;
         }
 
-        public string StartSurvey()
+        public (string question, Dictionary<string, string> choices) GetQuestion(string questionId)
         {
             var surveyTree = _surveyRepository.LoadSurvey();
-            string currentNodeId = "Q1";
-            var result = "";
+            
+            if (!surveyTree.ContainsKey(questionId))
+                return (null, null);
 
-            while (surveyTree.ContainsKey(currentNodeId))
-            {
-                var node = surveyTree[currentNodeId];
-                result += node.Content + "\n";
+            var node = surveyTree[questionId];
+            return (node.Content, node.Choices);
+        }
 
-                if (node.Choices.Count == 0) break;
+        public string GetNextQuestionId(string currentQuestionId, string choice)
+        {
+            var surveyTree = _surveyRepository.LoadSurvey();
+            
+            if (!surveyTree.ContainsKey(currentQuestionId))
+                return null;
 
-                foreach (var choice in node.Choices)
-                {
-                    result += $"- {choice.Key}\n";
-                }
+            var node = surveyTree[currentQuestionId];
+            return node.Choices.ContainsKey(choice) ? node.Choices[choice] : null;
+        }
 
-                currentNodeId = node.Choices["Có"];
-            }
-
-            if (surveyTree.ContainsKey(currentNodeId))
-            {
-                result += surveyTree[currentNodeId].Content;
-            }
-
-            return result;
+        public bool IsEndQuestion(string questionId)
+        {
+            return questionId.StartsWith("RESULT_");
         }
     }
-
 }

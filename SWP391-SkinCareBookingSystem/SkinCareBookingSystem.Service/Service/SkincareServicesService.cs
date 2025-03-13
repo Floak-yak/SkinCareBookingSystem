@@ -23,17 +23,24 @@ namespace SkinCareBookingSystem.Service.Service
         {
             try
             {
-                if(string.IsNullOrEmpty(serviceName) || workTime == DateTime.MinValue || price <= 0)
+                if (string.IsNullOrEmpty(serviceName) || serviceName.Length > 100)
                     return false;
-                if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
+                if (price <= 0 || price > 1000000)
+                    return false;
+
+                if (workTime == DateTime.MinValue || workTime.TimeOfDay.TotalHours > 3.5)
+                    return false;
+
+                if (await _skincareServicesRepository.IsServiceExist(serviceName))
                     return false;
                 
                 SkincareService skincareServices = new()
                 {
-                    ServiceName = serviceName,
+                    ServiceName = serviceName.Trim(),
                     Price = price,
                     WorkTime = workTime
                 };
+
                 _skincareServicesRepository.Create(skincareServices);
                 return await _skincareServicesRepository.SaveChange();
             }
@@ -121,8 +128,14 @@ namespace SkinCareBookingSystem.Service.Service
                     return false;
                 if (!string.IsNullOrEmpty(serviceName))
                 {
-                    if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
+                    serviceName = serviceName.Trim();
+                    if (serviceName.Length > 100)
                         return false;
+                    
+                    var existingService = await _skincareServicesRepository.GetServiceByname(serviceName);
+                    if (existingService != null && existingService.Id != id)
+                        return false;
+                    
                     skincareService.ServiceName = serviceName;
                 }
                 if (price <= 0)

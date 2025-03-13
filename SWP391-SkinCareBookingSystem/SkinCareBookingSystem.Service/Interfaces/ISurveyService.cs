@@ -8,6 +8,8 @@ namespace SkinCareBookingSystem.Service.Interfaces
 {
     public interface ISurveyService
     {
-        public string StartSurvey();
+        (string question, Dictionary<string, string> choices) GetQuestion(string questionId);
+        string GetNextQuestionId(string currentQuestionId, string choice);
+        bool IsEndQuestion(string questionId);
     }
 }
