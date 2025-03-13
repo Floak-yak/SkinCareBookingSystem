@@ -5,7 +5,6 @@ using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 using SkinCareBookingSystem.Service.Interfaces;
 
-
 [Route("api/[controller]")]
 [ApiController]
 public class SurveyController : ControllerBase
@@ -13,19 +12,32 @@ public class SurveyController : ControllerBase
     private readonly ISurveyService _surveyService;
     private readonly ISurveyRepository _surveyRepository;
 
-
     public SurveyController(ISurveyService surveyService, ISurveyRepository surveyRepository)
     {
         _surveyService = surveyService;
         _surveyRepository = surveyRepository;
     }
 
-    [HttpGet("start")]
-    public ActionResult<string> StartSurvey()
+    [HttpGet("question/{questionId}")]
+    public ActionResult<object> GetQuestion(string questionId)
     {
-        var result = _surveyService.StartSurvey();
-        return Ok(result);
+        var (question, choices) = _surveyService.GetQuestion(questionId);
+        if (question == null)
+            return NotFound("Question not found");
+
+        return Ok(new { question, choices });
     }
+
+    [HttpGet("next")]
+    public ActionResult<string> GetNextQuestion([FromQuery] string currentQuestionId, [FromQuery] string choice)
+    {
+        var nextQuestionId = _surveyService.GetNextQuestionId(currentQuestionId, choice);
+        if (nextQuestionId == null)
+            return NotFound("Invalid question or choice");
+
+        return Ok(nextQuestionId);
+    }
+
     [HttpPost("update")]
     public IActionResult UpdateSurvey([FromBody] Node updatedNode)
     {
@@ -40,5 +52,4 @@ public class SurveyController : ControllerBase
 
         return NotFound("Không tìm thấy câu hỏi.");
     }
-
 }
