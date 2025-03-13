@@ -33,9 +33,14 @@ namespace SkinCareBookingSystem.Service.Service
             if (user is null)
                 return null;
 
+            // Get a random skin therapist
+            User therapist = await _bookingRepository.GetRandomSkinTherapistAsync();
+            if (therapist is null)
+                return null;
+
             BookingServiceSchedule bookingService = new()
             {
-                ServiceId = userId,
+                ServiceId = skincareService.Id,
                 Service = skincareService,
             };
 
