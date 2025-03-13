@@ -26,7 +26,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<bool> Delete(int id)
         {
             Category category = await GetCategoryById(id);
-            if (category == null) 
+            if (category == null)
                 return false;
             _context.Categories.Remove(category);
             return await Savechange();
@@ -60,9 +60,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<bool> IsCategoryExist(string categoryName)
         {
-            if (await GetCategoryByName(categoryName) is null)
-                return false;
-            return true;
+            return await GetCategoryByName(categoryName) != null;
         }
 
         public async Task<bool> Savechange()

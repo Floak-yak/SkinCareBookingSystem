@@ -36,5 +36,23 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return BadRequest("Create fail");
             return Ok(_transactionService.CreateTransaction(booking));
         }
+
+        [HttpPut("UpdateDate")]
+        public async Task<IActionResult> UpdateBookingDate(int bookingId, int userId, DateTime newDate)
+        {
+            bool result = await _bookingService.UpdateBookingDate(bookingId, userId, newDate);
+            if (!result)
+                return BadRequest("Update booking date failed");
+            return Ok("Booking date updated successfully");
+        }
+
+        [HttpDelete("Cancel")]
+        public async Task<IActionResult> CancelBooking(int bookingId, int userId)
+        {
+            bool result = await _bookingService.CancelBooking(bookingId, userId);
+            if (!result)
+                return BadRequest("Cancel booking failed.");
+            return Ok("Booking cancelled successfully");
+        }
     }
 }

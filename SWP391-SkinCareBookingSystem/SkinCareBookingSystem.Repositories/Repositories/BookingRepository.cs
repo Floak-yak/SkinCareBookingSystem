@@ -30,6 +30,19 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<Booking> GetBookingByIdAsync(int bookingId) =>
             await _context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
 
+        public async Task<User> GetRandomSkinTherapistAsync()
+        {
+            var therapists = await _context.Users
+                .Where(u => u.Role == Role.SkinTherapist && u.IsVerified)
+                .ToListAsync();
+
+            if (!therapists.Any())
+                return null;
+
+            var random = new Random();
+            return therapists[random.Next(therapists.Count)];
+        }
+
         public async Task<List<Booking>> GetBookingsAsync() =>
             await _context.Bookings
             .Include(b => b.BookingServiceSchedules)

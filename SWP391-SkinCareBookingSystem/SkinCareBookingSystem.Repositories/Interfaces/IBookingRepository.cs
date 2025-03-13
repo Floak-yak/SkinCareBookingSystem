@@ -16,5 +16,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public void UpdateBooking(Booking booking);
         public void CreateBooking(Booking booking);
         public Task<bool> SaveChange();
+        public Task<User> GetRandomSkinTherapistAsync();
     }
 }
