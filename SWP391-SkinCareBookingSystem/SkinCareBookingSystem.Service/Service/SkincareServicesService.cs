@@ -128,8 +128,14 @@ namespace SkinCareBookingSystem.Service.Service
                     return false;
                 if (!string.IsNullOrEmpty(serviceName))
                 {
-                    if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
+                    serviceName = serviceName.Trim();
+                    if (serviceName.Length > 100)
                         return false;
+                    
+                    var existingService = await _skincareServicesRepository.GetServiceByname(serviceName);
+                    if (existingService != null && existingService.Id != id)
+                        return false;
+                    
                     skincareService.ServiceName = serviceName;
                 }
                 if (price <= 0)
