@@ -49,8 +49,8 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<bool> IsTitleExist(string title)
         {
             if (await GetPostByTitle(title) is null)
-                return true;
-            return false;
+                return false;
+            return true;
         }
 
         public async Task<bool> SaveChange()
