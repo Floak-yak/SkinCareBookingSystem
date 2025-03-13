@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.BusinessObject.Entity
 {
-	public class PostContentProductImage
+	public class ImageRelationShip
 	{
 		public int ImageId { get; set; }
 		public Image Image { get; set; }
@@ -17,5 +17,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
 		public Content Content { get; set; }
 		public int PostId { get; set; }
 		public Post Post { get; set; }
+		public int UserId { get; set; }	
+		public User User { get; set; }
 	}
 }
