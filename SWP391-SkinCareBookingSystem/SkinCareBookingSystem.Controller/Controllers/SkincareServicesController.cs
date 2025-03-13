@@ -50,7 +50,22 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> CreateService([FromBody] SkincareServiceCreateDTO request)
         {
             if (request is null)
-                return BadRequest(new ArgumentNullException().Message);
+                return BadRequest("Request body cannot be null");
+
+            if (string.IsNullOrEmpty(request.ServiceName))
+                return BadRequest("Service name cannot be empty");
+            if (request.ServiceName.Length > 100)
+                return BadRequest("Service name cannot exceed 100 characters");
+
+            if (request.Price <= 0)
+                return BadRequest("Price must be greater than 0");
+            if (request.Price > 1000000)
+                return BadRequest("Price cannot exceed 1,000,000");
+
+            if (request.WorkTime == DateTime.MinValue)
+                return BadRequest("Work time cannot be empty");
+            if (request.WorkTime.TimeOfDay.TotalHours > 3.5)
+                return BadRequest("Work time cannot exceed 3.5 hours");
 
             if (!await _skincareServicesService.Create(
                 request.ServiceName,
@@ -58,7 +73,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 request.WorkTime))
                 return BadRequest("Create service failed");
 
-            return Ok("Create service success");
+            return Ok("Service created successfully");
         }
 
         [HttpPut("Update")]
