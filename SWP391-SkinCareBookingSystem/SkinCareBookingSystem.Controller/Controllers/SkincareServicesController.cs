@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Interfaces;
@@ -48,7 +47,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("Create")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateService([FromBody] SkincareServiceCreateDTO request)
         {
             if (request is null)
@@ -64,7 +62,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPut("Update")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateService([FromQuery] int id, [FromBody] SkincareServiceUpdateDTO request)
         {
             if (request is null)
@@ -81,7 +78,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpDelete("Delete")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteService([FromQuery] int id)
         {
             if (!await _skincareServicesService.Delete(id))
