@@ -98,7 +98,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 id,
                 request.ServiceName,
                 request.Price,
-                request.WorkTime)
+                request.WorkTime);
                 return BadRequest("Update service failed");
 
             return Ok("Service updated successfully");

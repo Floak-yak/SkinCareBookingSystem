@@ -95,5 +95,36 @@ namespace SkinCareBookingSystem.Service.Service
                 return null;
             return booking;
         }
+
+        public async Task<bool> UpdateBookingDate(int bookingId, int userId, DateTime newDate)
+        {
+            Booking booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
+            if (booking is null || booking.UserId != userId)
+                return false;
+
+            TimeSpan tDiff = newDate - booking.Date;
+            if (Math.Abs(tDiff.TotalDays) > 7)
+                return false;
+
+            booking.Date = newDate;
+            _bookingRepository.UpdateBooking(booking);
+            return await _bookingRepository.SaveChange();
+        }
+
+        public async Task<bool> CancelBooking(int bookingId, int userId)
+        {
+            Booking booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
+            if (booking is null || booking.UserId != userId)
+                return false;
+
+            TimeSpan tDiff = DateTime.UtcNow - booking.CreatedTime;
+            if (tDiff.TotalDays > 1)
+                return false;
+
+            if (booking.Status == BookingStatus.Paid)
+                return false;
+
+            return await _bookingRepository.DeleteBooking(bookingId);
+        }
     }
 }
