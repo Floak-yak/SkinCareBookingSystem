@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.Service.Service
 {
-    public class ProductService : IProductService
+	public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
 
@@ -18,7 +18,21 @@ namespace SkinCareBookingSystem.Service.Service
         {
             _productRepository = productRepository;
         }
-        public async Task<List<Product>> Search(string productName) =>
+
+		public async Task<bool> AddProducts(List<Product> products)
+		{
+            if (products.Count == 0)
+                return false;
+			if (products.Count == 1)
+            {
+                _productRepository.CreateProduct(products[0]);
+                return await _productRepository.SaveChange();
+            }
+			_productRepository.CreateProducts(products);
+			return await _productRepository.SaveChange();
+		}
+
+		public async Task<List<Product>> Search(string productName) =>
             await _productRepository.Search(productName);
 
         public async Task<List<Product>> Search(decimal minPrice, decimal maxPrice) =>

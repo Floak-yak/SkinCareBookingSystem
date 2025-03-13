@@ -15,5 +15,8 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<List<Product>> Search(int categoryId);
         public Task<List<Product>> SearchDescPrice();
         public Task<List<Product>> SearchAscPrice();
-    }
+        public void CreateProduct(Product product);
+        public void CreateProducts(List<Product> products);
+		public Task<bool> SaveChange();
+	}
 }

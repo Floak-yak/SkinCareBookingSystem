@@ -14,6 +14,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<List<Product>> Search(Decimal underPrice);        
         public Task<List<Product>> Search(int categoryId);        
         public Task<List<Product>> SearchDescPrice();        
-        public Task<List<Product>> SearchAscPrice();        
+        public Task<List<Product>> SearchAscPrice();       
+        public Task<bool> AddProducts(List<Product> products);
     }
 }
