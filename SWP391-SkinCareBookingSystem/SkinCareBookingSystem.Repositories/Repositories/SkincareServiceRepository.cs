@@ -62,7 +62,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<List<SkincareService>> Search(string search)
         {
             return await _context.SkincareServices
-                .Where(s => s.ServiceName.Contains(search) != null)
+                .Where(s => s.ServiceName.Contains(search))
                 .ToListAsync();
         }
 
@@ -72,9 +72,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         }
         public async Task<bool> IsServiceExist(string name)
         {
-            if (await GetServiceByname(name) is null)
-                return true;
-            return false;
+            return await GetServiceByname(name) != null;
         }
     }
 }

@@ -2,11 +2,7 @@
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Service.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
-using System.Net.Mail;
-using System.Net;
-using SkinCareBookingSystem.Service.Interfaces;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -69,14 +65,18 @@ namespace SkinCareBookingSystem.Service.Service
             return await _categoryRepository.Delete(categoryId);
         }
 
-        public Task<Category> GetCategoryByName(string categoryName)
+        public async Task<Category> GetCategoryByName(string categoryName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(categoryName))
+                return null;
+            return await _categoryRepository.GetCategoryByName(categoryName);
         }
 
-        public Task<bool> IsCategoryExist(string categoryName)
+        public async Task<bool> IsCategoryExist(string categoryName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(categoryName))
+                return false;
+            return await _categoryRepository.IsCategoryExist(categoryName);
         }
     }
 }

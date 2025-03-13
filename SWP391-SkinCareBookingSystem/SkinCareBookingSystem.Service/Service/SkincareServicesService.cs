@@ -21,69 +21,126 @@ namespace SkinCareBookingSystem.Service.Service
         }
         public async Task<bool> Create(string serviceName, decimal price, DateTime workTime)
         {
-            if(string.IsNullOrEmpty(serviceName) || workTime == DateTime.MinValue || price <= 0)
-                return false;
-            if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
-                return false;
-            
-            SkincareService skincareServices = new()
+            try
             {
-                ServiceName = serviceName,
-                Price = price,
-                WorkTime = workTime
-            };
-            _skincareServicesRepository.Create(skincareServices);
-            return await _skincareServicesRepository.SaveChange();
+                if(string.IsNullOrEmpty(serviceName) || workTime == DateTime.MinValue || price <= 0)
+                    return false;
+                if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
+                    return false;
+                
+                SkincareService skincareServices = new()
+                {
+                    ServiceName = serviceName,
+                    Price = price,
+                    WorkTime = workTime
+                };
+                _skincareServicesRepository.Create(skincareServices);
+                return await _skincareServicesRepository.SaveChange();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public async Task<bool> Delete(int id)
         {
-            return await _skincareServicesRepository.Delete(id);
+            try
+            {
+                SkincareService service = await _skincareServicesRepository.GetServiceById(id);
+                if (service == null)
+                    return false;
+                
+                if (service.BookingServiceSchedules != null && service.BookingServiceSchedules.Any())
+                    return false;
+
+                return await _skincareServicesRepository.Delete(id);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public async Task<SkincareService> GetServiceByid(int serviceId)
         {
-            return await _skincareServicesRepository.GetServiceById(serviceId);
+            try
+            {
+                return await _skincareServicesRepository.GetServiceById(serviceId);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public async Task<SkincareService> GetServiceByname(string name)
         {
-            return await _skincareServicesRepository.GetServiceByname(name);
+            try
+            {
+                return await _skincareServicesRepository.GetServiceByname(name);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
-
-        public Task<List<SkincareService>> GetServices()
+        public async Task<List<SkincareService>> GetServices()
         {
-            return _skincareServicesRepository.GetServices();
+            try
+            {
+                return await _skincareServicesRepository.GetServices();
+            }
+            catch (Exception)
+            {
+                return new List<SkincareService>();
+            }
         }
 
         public async Task<List<SkincareService>> Search(string search)
         {
-            if (string.IsNullOrEmpty(search)) return null;
-            return await _skincareServicesRepository.Search(search);
+            try
+            {
+                if (string.IsNullOrEmpty(search)) 
+                    return await GetServices();
+                return await _skincareServicesRepository.Search(search);
+            }
+            catch (Exception)
+            {
+                return new List<SkincareService>();
+            }
         }
 
         public async Task<bool> Update(int id, string serviceName, decimal price, DateTime workTime)
         {
-            SkincareService skincareService = await _skincareServicesRepository.GetServiceById(id);
-            if (skincareService == null) 
-                return false;
-            if (!string.IsNullOrEmpty(serviceName))
+            try
             {
-                if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
+                SkincareService skincareService = await _skincareServicesRepository.GetServiceById(id);
+                if (skincareService == null) 
                     return false;
-                skincareService.ServiceName = serviceName;
+                if (!string.IsNullOrEmpty(serviceName))
+                {
+                    if(await _skincareServicesRepository.IsServiceExist(serviceName)) 
+                        return false;
+                    skincareService.ServiceName = serviceName;
+                }
+                if (price <= 0)
+                    return false;
+                skincareService.Price = price;
+
+                // maximum service duration is 3.5 hours
+                if (workTime == DateTime.MinValue || workTime.TimeOfDay.TotalHours > 3.5)
+                    return false;
+                skincareService.WorkTime = workTime;
+
+                _skincareServicesRepository.Update(skincareService);
+                return await _skincareServicesRepository.SaveChange();
             }
-            if (price <= 0)
+            catch (Exception)
+            {
                 return false;
-            skincareService.Price = price;
-
-            if (workTime == DateTime.MinValue || workTime > new DateTime().AddHours(3).AddMinutes(30))
-                return false;
-            skincareService.WorkTime = workTime;
-
-            _skincareServicesRepository.Update(skincareService);
-            return await _skincareServicesRepository.SaveChange();
+            }
         }
     }
 }

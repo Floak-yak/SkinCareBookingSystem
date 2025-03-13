@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Interfaces;
@@ -9,6 +10,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("AllowAll")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -18,9 +20,20 @@ namespace SkinCareBookingSystem.Controller.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpGet("GetCategories")]
-        public async Task<IActionResult> GetCategories() =>
-            Ok(await _categoryService.GetCategories());
+        [HttpGet]
+        [Route("GetCategories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            try
+            {
+                var categories = await _categoryService.GetCategories();
+                return Ok(categories);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
         [HttpGet("GetCategoryById")]
         public async Task<IActionResult> GetCategoryById(int categoryId)
