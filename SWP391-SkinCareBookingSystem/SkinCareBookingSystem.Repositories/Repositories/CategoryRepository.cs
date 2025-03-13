@@ -61,8 +61,8 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<bool> IsCategoryExist(string categoryName)
         {
             if (await GetCategoryByName(categoryName) is null)
-                return true;
-            return false;
+                return false;
+            return true;
         }
 
         public async Task<bool> Savechange()
