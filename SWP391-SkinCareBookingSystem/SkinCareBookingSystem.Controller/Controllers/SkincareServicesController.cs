@@ -11,22 +11,24 @@ namespace SkinCareBookingSystem.Controller.Controllers
     public class SkincareServicesController : ControllerBase
     {
         private readonly ISkincareServicesService _skincareServicesService;
+        private readonly IImageService _imageService;
 
-        public SkincareServicesController(ISkincareServicesService skincareServicesService)
+        public SkincareServicesController(ISkincareServicesService skincareServicesService, IImageService imageService)
         {
             _skincareServicesService = skincareServicesService;
+            _imageService = imageService;
         }
 
         [HttpGet("GetServices")]
-        public async Task<IActionResult> GetServices() =>
-            Ok(await _skincareServicesService.GetServices());
+        public async Task<IActionResult> GetServices([FromQuery] int page = 1, [FromQuery] int pageSize = 10) =>
+            Ok(await _skincareServicesService.GetServices(page, pageSize));
 
         [HttpGet("GetServiceById")]
         public async Task<IActionResult> GetServiceById([FromQuery] int id)
         {
             var service = await _skincareServicesService.GetServiceByid(id);
             if (service == null)
-                return BadRequest("Service not found");
+                return NotFound("Service not found");
             return Ok(service);
         }
 
@@ -35,16 +37,16 @@ namespace SkinCareBookingSystem.Controller.Controllers
         {
             var service = await _skincareServicesService.GetServiceByname(name);
             if (service == null)
-                return BadRequest("Service not found");
+                return NotFound("Service not found");
             return Ok(service);
         }
 
         [HttpGet("Search")]
-        public async Task<IActionResult> SearchServices([FromQuery] string search)
+        public async Task<IActionResult> SearchServices([FromQuery] string search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             if (string.IsNullOrEmpty(search))
                 return BadRequest("Search term cannot be empty");
-            return Ok(await _skincareServicesService.Search(search));
+            return Ok(await _skincareServicesService.Search(search, page, pageSize));
         }
 
         [HttpGet("GetRandomServicesByCategory")]
@@ -71,6 +73,11 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (request.ServiceName.Length > 100)
                 return BadRequest("Service name cannot exceed 100 characters");
 
+            if (string.IsNullOrEmpty(request.ServiceDescription))
+                return BadRequest("Service description cannot be empty");
+            if (request.ServiceDescription.Length > 500)
+                return BadRequest("Service description cannot exceed 500 characters");
+
             if (request.Price <= 0)
                 return BadRequest("Price must be greater than 0");
 
@@ -79,10 +86,28 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (request.WorkTime.TimeOfDay.TotalHours > 3.5)
                 return BadRequest("Work time cannot exceed 3.5 hours");
 
+            if (request.CategoryId <= 0)
+                return BadRequest("Invalid category ID");
+
+            // Handle image upload if provided
+            Image image = null;
+            if (!string.IsNullOrEmpty(request.ImageLink))
+            {
+                var success = await _imageService.StoreImage(request.ImageLink);
+                if (!success)
+                    return BadRequest("Failed to store image");
+                image = await _imageService.GetImageByDescription(System.IO.Path.GetFileName(request.ImageLink));
+                if (image == null)
+                    return BadRequest("Failed to retrieve stored image");
+            }
+
             if (!await _skincareServicesService.Create(
                 request.ServiceName,
+                request.ServiceDescription,
                 request.Price,
-                request.WorkTime))
+                request.WorkTime,
+                request.CategoryId,
+                image?.Id))
                 return BadRequest("Create service failed");
 
             return Ok("Service created successfully");
@@ -100,19 +125,49 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest("Service name cannot exceed 100 characters");
             }
 
-            if (request.Price <= 0)
+            if (!string.IsNullOrEmpty(request.ServiceDescription))
+            {
+                if (request.ServiceDescription.Length > 500)
+                    return BadRequest("Service description cannot exceed 500 characters");
+            }
+
+            if (request.Price.HasValue && request.Price.Value <= 0)
                 return BadRequest("Price must be greater than 0");
 
-            if (request.WorkTime == DateTime.MinValue)
-                return BadRequest("Work time cannot be empty");
-            if (request.WorkTime.TimeOfDay.TotalHours > 3.5)
-                return BadRequest("Work time cannot exceed 3.5 hours");
+            if (request.WorkTime.HasValue)
+            {
+                if (request.WorkTime.Value == DateTime.MinValue)
+                    return BadRequest("Work time cannot be empty");
+                if (request.WorkTime.Value.TimeOfDay.TotalHours > 3.5)
+                    return BadRequest("Work time cannot exceed 3.5 hours");
+            }
+
+            if (request.CategoryId.HasValue && request.CategoryId.Value <= 0)
+                return BadRequest("Invalid category ID");
+
+            // Handle image update if provided
+            int? imageId = null;
+            if (!string.IsNullOrEmpty(request.ImageLink))
+            {
+                var success = await _imageService.StoreImage(request.ImageLink);
+                if (!success)
+                    return BadRequest("Failed to store image");
+                var image = await _imageService.GetImageByDescription(System.IO.Path.GetFileName(request.ImageLink));
+                if (image == null)
+                    return BadRequest("Failed to retrieve stored image");
+                imageId = image.Id;
+            }
 
             var result = await _skincareServicesService.Update(
                 id,
                 request.ServiceName,
+                request.ServiceDescription,
                 request.Price,
-                request.WorkTime);
+                request.WorkTime,
+                request.CategoryId,
+                imageId);
+
+            if (!result)
                 return BadRequest("Update service failed");
 
             return Ok("Service updated successfully");
@@ -131,6 +186,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
     public class SkincareServiceCreateDTO
     {
         public string ServiceName { get; set; }
+        public string ServiceDescription { get; set; }
+        public string ImageLink { get; set; }
+        public int CategoryId { get; set; }
         public decimal Price { get; set; }
         public DateTime WorkTime { get; set; }
     }
@@ -138,7 +196,10 @@ namespace SkinCareBookingSystem.Controller.Controllers
     public class SkincareServiceUpdateDTO
     {
         public string ServiceName { get; set; }
-        public decimal Price { get; set; }
-        public DateTime WorkTime { get; set; }
+        public string ServiceDescription { get; set; }
+        public string ImageLink { get; set; }
+        public int? CategoryId { get; set; }
+        public decimal? Price { get; set; }
+        public DateTime? WorkTime { get; set; }
     }
 } 
