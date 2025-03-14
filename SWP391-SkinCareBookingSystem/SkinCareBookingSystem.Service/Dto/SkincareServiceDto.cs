@@ -20,7 +20,6 @@ namespace SkinCareBookingSystem.Service.Dto
         public int CategoryId { get; set; }
 
         [Required]
-        [Range(0.01, 1000000)]
         public decimal Price { get; set; }
 
         [Required]
@@ -40,7 +39,6 @@ namespace SkinCareBookingSystem.Service.Dto
         [Range(1, int.MaxValue)]
         public int? CategoryId { get; set; }
 
-        [Range(0.01, 1000000)]
         public decimal? Price { get; set; }
 
         public DateTime? WorkTime { get; set; }
