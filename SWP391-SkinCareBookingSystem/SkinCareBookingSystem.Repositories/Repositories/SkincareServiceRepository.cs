@@ -74,5 +74,20 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await GetServiceByname(name) != null;
         }
+
+        public async Task<Dictionary<int, List<SkincareService>>> GetRandomServicesByCategory(int count)
+        {
+            var services = await _context.SkincareServices
+                .Include(s => s.Category)
+                .Include(s => s.Image)
+                .GroupBy(s => s.CategoryId)
+                .OrderBy(g => g.First().Category.CategoryName)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.OrderBy(r => Guid.NewGuid()).Take(count).ToList()
+                );
+
+            return services;
+        }
     }
 }

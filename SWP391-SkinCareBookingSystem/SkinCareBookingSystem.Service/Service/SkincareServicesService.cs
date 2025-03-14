@@ -155,5 +155,20 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
             }
         }
+
+        public async Task<Dictionary<int, List<SkincareService>>> GetRandomServicesByCategory(int count)
+        {
+            try
+            {
+                if (count <= 0)
+                    return new Dictionary<int, List<SkincareService>>();
+
+                return await _skincareServicesRepository.GetRandomServicesByCategory(count);
+            }
+            catch (Exception)
+            {
+                return new Dictionary<int, List<SkincareService>>();
+            }
+        }
     }
 }

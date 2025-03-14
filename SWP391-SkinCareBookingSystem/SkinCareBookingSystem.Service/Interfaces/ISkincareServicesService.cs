@@ -18,6 +18,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<bool> Delete(int id);
         public Task<bool> Update(int id, string serviceName, decimal price, DateTime workTime);
         public Task<bool> Create(string serviceName, decimal price, DateTime workTime);
-
+        public Task<Dictionary<int, List<SkincareService>>> GetRandomServicesByCategory(int count);
     }
 }
