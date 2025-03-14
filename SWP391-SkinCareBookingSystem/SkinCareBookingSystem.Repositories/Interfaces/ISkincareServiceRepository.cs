@@ -18,5 +18,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public void Create(SkincareService service);
         public Task<bool> SaveChange();
         public Task<bool> IsServiceExist(string serviceName);
+        public Task<Dictionary<int, List<SkincareService>>> GetRandomServicesByCategory(int count);
     }
 }

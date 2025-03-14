@@ -3,6 +3,7 @@ using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -44,6 +45,19 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (string.IsNullOrEmpty(search))
                 return BadRequest("Search term cannot be empty");
             return Ok(await _skincareServicesService.Search(search));
+        }
+
+        [HttpGet("GetRandomServicesByCategory")]
+        public async Task<IActionResult> GetRandomServicesByCategory([FromQuery] int count = 3)
+        {
+            if (count <= 0)
+                return BadRequest("Count must be greater than 0");
+            
+            var services = await _skincareServicesService.GetRandomServicesByCategory(count);
+            if (services == null || !services.Any())
+                return NotFound("No services found");
+                
+            return Ok(services);
         }
 
         [HttpPost("Create")]

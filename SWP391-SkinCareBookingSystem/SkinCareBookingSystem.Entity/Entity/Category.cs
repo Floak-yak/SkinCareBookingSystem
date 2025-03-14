@@ -16,6 +16,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int UserId { get; set; }
         public User User { get; set; }
         public ICollection<Product> Products { get; set; }
+        public ICollection<SkincareService> skincareServices { get; set; }
         #endregion
     }
 }

@@ -10,8 +10,12 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     {
         public int Id { get; set; }
         public string ServiceName { get; set; }
+        public string ServiceDescription { get; set; }
+        public Image Image { get; set; }
 
         #region Relationship
+        public int CategoryId { get; set; }
+        public Category Category { get; set; }
         public Decimal Price { get; set; }
         public DateTime WorkTime { get; set; }
         public ICollection<BookingServiceSchedule> BookingServiceSchedules { get; set; }
