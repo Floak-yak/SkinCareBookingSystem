@@ -14,9 +14,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
     public class ImageController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly ImageService _imageService;
+        private readonly IImageService _imageService;
 
-        public ImageController(ImageService imageService, IMapper mapper)
+        public ImageController(IImageService imageService, IMapper mapper)
         {
             _mapper = mapper;
             _imageService = imageService;
