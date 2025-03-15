@@ -83,7 +83,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Update success");
         }
 
-        [HttpPut("Verify")]
+        [HttpGet("Verify")]
         public async Task<IActionResult> VerifyAccount([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))

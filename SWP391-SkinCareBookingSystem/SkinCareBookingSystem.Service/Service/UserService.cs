@@ -65,7 +65,8 @@ namespace SkinCareBookingSystem.Service.Service
                 FullName = fullName,
                 YearOfBirth = YearOfBirth,
                 PhoneNumber = PhoneNumber,
-                IsVerified = true,                
+                IsVerified = true,      
+                VerifyToken = ""
             };
 
             string password = new Random().Next(11234500, 2131232312).ToString();
@@ -131,8 +132,8 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<List<UserResponse>> GetCustomers() =>
             _mapper.Map<List<UserResponse>>(await _userRepository.GetCustomers());
 
-        public async Task<List<UserResponse>> GetSkinTherapists() =>
-            _mapper.Map<List<UserResponse>>(await _userRepository.GetSkinTherapists());
+        public async Task<List<SkinTherapistResponse>> GetSkinTherapists() =>
+            _mapper.Map<List<SkinTherapistResponse>>(await _userRepository.GetSkinTherapists());
 
         public async Task<List<UserResponse>> GetStaffs() =>
             _mapper.Map<List<UserResponse>>(await _userRepository.GetStaffs());

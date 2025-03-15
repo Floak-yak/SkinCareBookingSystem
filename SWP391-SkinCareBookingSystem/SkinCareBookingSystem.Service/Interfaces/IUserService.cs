@@ -25,6 +25,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<bool> UpdateRole(int userId ,Role role);
         public Task<List<UserResponse>> GetStaffs();
         public Task<List<UserResponse>> GetCustomers();
-        public Task<List<UserResponse>> GetSkinTherapists();
+        public Task<List<SkinTherapistResponse>> GetSkinTherapists();
     }
 }

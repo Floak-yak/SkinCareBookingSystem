@@ -16,6 +16,7 @@ namespace SkinCareBookingSystem.Service.Mapper
             CreateMap<User, UserResponse>().ReverseMap();
             CreateMap<User, CreateAccountResponse>().ReverseMap();
             CreateMap<Product, CreateProductRequest>().ReverseMap();
+            CreateMap<User, SkinTherapistResponse>().ReverseMap();
         }
     }
 }

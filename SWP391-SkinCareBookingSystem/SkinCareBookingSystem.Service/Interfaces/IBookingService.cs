@@ -1,4 +1,5 @@
 ﻿using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto.BookingDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +15,9 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<List<Booking>> GetBookingsAsync();
         public Task<bool> DeleteBooking(int bookingId);
         public Task<Booking> UpdateBooking(int bookingId, string serviceName);
-        public Task<Booking> CreateBooking(DateTime Date, string serviceName, int userId);
+        public Task<Booking> CreateBooking(CreateBookingRequest request);
         public Task<bool> UpdateBookingDate(int bookingId, int userId, DateTime newDate);
         public Task<bool> CancelBooking(int bookingId, int userId);
+        public Task<List<User>> RandomSkinTherapist(string ServiceName, DateTime date, List<User> listUser);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto.BookingDto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -22,14 +23,14 @@ namespace SkinCareBookingSystem.Service.Service
             _bookingRepository = bookingRepository;
             _skincareServiceRepository = skincareServiceRepository;
         }
-        public async Task<Booking> CreateBooking(DateTime Date, string serviceName, int userId)
+        public async Task<Booking> CreateBooking(CreateBookingRequest request)
         {
             SkincareService skincareService = await _skincareServiceRepository
-                .GetServiceByname(serviceName);
+                .GetServiceByname(request.ServiceName);
             if (skincareService is null)
                 return null;
 
-            User user = await _userRepository.GetUserById(userId);
+            User user = await _userRepository.GetUserById(request.UserId);
             if (user is null)
                 return null;
 
@@ -37,6 +38,11 @@ namespace SkinCareBookingSystem.Service.Service
             User therapist = await _bookingRepository.GetRandomSkinTherapistAsync();
             if (therapist is null)
                 return null;
+
+            TimeOnly time = TimeOnly.Parse(request.Time);
+            DateTime date = DateTime.Parse(request.Date);
+            date.AddHours(time.Hour);
+            date.AddHours(time.Minute);
 
             BookingServiceSchedule bookingService = new()
             {
@@ -48,10 +54,10 @@ namespace SkinCareBookingSystem.Service.Service
             {
                 Status = (BookingStatus)1,
                 CreatedTime = DateTime.UtcNow,
-                Date = Date,
+                Date = date,
                 TotalPrice = skincareService.Price,
                 User = user,
-                UserId = userId,
+                UserId = request.UserId,
             };
             booking.BookingServiceSchedules.Add(bookingService);
 
@@ -125,6 +131,11 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
 
             return await _bookingRepository.DeleteBooking(bookingId);
+        }
+
+        public Task<List<User>> RandomSkinTherapist(string ServiceName, DateTime date, List<User> listUser)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -23,7 +23,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return await _context.Users
                 .Include(u => u.TestInformationHistory)
                 .Include(u => u.Posts)
-                .Include(u => u.Categories)
+                .Include(u => u.Category)
                 .Include(u => u.Bookings)
                 .Include(u => u.Schedules)
                 .OrderBy(u => u.FullName)
@@ -35,7 +35,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return await _context.Users
                 .Include(u => u.TestInformationHistory)
                 .Include(u => u.Posts)
-                .Include(u => u.Categories)
+                .Include(u => u.Category)
                 .Include(u => u.Bookings)
                 .Include(u => u.Schedules)
                 .FirstOrDefaultAsync(u => u.Id == userId);
@@ -46,7 +46,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return await _context.Users
                 .Include(u => u.TestInformationHistory)
                 .Include(u => u.Posts)
-                .Include(u => u.Categories)
+                .Include(u => u.Category)
                 .Include(u => u.Bookings)
                 .Include(u => u.Schedules)
                 .FirstOrDefaultAsync(u => u.FullName.Equals(userName));
@@ -99,5 +99,27 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<List<User>> GetSkinTherapists() =>
             await _context.Users.Where(u => u.IsVerified && u.Role == Role.SkinTherapist).ToListAsync();
+
+        //Not done yet
+        public async Task<List<User>> GetSkinTherapistsFreeInTimeSpan(DateTime dateTime, int Duration, int categoryId)
+        {
+            DateTime endDate = dateTime.AddMinutes(Duration);
+            List<User> users = await _context.Users.Include(u => u.Schedules).Where(u => u.CategoryId == categoryId).ToListAsync();
+            List<User> removeUser = new List<User>();
+            if (users.Count == 0)
+                return null;
+            foreach (var user in users)
+            {
+                if (user.Schedules
+                    .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs.Where(sl => sl.TimeStartShift == dateTime) != null)
+                    .FirstOrDefault() != null)
+                    removeUser.Add(user);
+            }
+            foreach (var user in removeUser)
+            {
+                users.Remove(user);
+            }
+            return users;
+        }
     }
 }
