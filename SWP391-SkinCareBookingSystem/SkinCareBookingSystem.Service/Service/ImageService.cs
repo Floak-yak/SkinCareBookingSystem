@@ -1,6 +1,9 @@
-﻿using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto.Image;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -13,28 +16,37 @@ namespace SkinCareBookingSystem.Service.Service
     public class ImageService : IImageService
     {
         private readonly IImageRepository _imageRepository;
+        private readonly IMapper _mapper;
 
-        public ImageService(IImageRepository imageRepository)
+        public ImageService(IImageRepository imageRepository, IMapper mapper)
         {
             _imageRepository = imageRepository;
+            _mapper = mapper;
         }
 
-        public async Task<bool> StoreImage(string imageLink)
+        public async Task<StoreImageResponse> StoreImage(IFormFile imageRequest, string? description)
         {
-            if (string.IsNullOrEmpty(imageLink) || 
-                string.IsNullOrEmpty(ConvertImageToBase64(imageLink))) 
-                return false;
-
+            using var memoryStream = new MemoryStream();
+            await imageRequest.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+            if (string.IsNullOrEmpty(description))
+            {
+                description = imageRequest.FileName;
+            }
             Image image = new()
             {
-                Bytes = File.ReadAllBytes(imageLink),
-                Size = new FileInfo(imageLink).Length,
-                Description = Path.GetFileName(imageLink),
-                FileExtension = new FileInfo(imageLink).Extension
+                Bytes = fileBytes,
+                Size = Math.Round(imageRequest.Length / 1024m, 2),
+                Description = description,
+                FileExtension = Path.GetExtension(imageRequest.FileName)
             };
 
             _imageRepository.CreateImage(image);
-            return await _imageRepository.SaveChange();
+            if (await _imageRepository.SaveChange())
+            {
+                return _mapper.Map<StoreImageResponse>(image);
+            }
+            return null;
         }
 
         public string ConvertImageToBase64(string imageLink)
@@ -59,5 +71,23 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<Image> GetImageId(int imageId) =>
             await _imageRepository.GetImageById(imageId);
+
+        public async Task<bool> StoreImage(string imageLink)
+        {
+            if (string.IsNullOrEmpty(imageLink) ||
+                string.IsNullOrEmpty(ConvertImageToBase64(imageLink)))
+                return false;
+
+            Image image = new()
+            {
+                Bytes = File.ReadAllBytes(imageLink),
+                Size = new FileInfo(imageLink).Length,
+                Description = Path.GetFileName(imageLink),
+                FileExtension = new FileInfo(imageLink).Extension
+            };
+
+            _imageRepository.CreateImage(image);
+            return await _imageRepository.SaveChange();
+        }
     }
 }
