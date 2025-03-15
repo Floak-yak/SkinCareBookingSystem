@@ -18,5 +18,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public void UpdateImage(Image image);
         public void CreateImage(Image image);
         public Task<bool> SaveChange();
+        public Task<List<Image>> GetAllImages();
     }
 }

@@ -15,5 +15,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<StoreImageResponse> StoreImage(IFormFile imageRequest, string? description);
         public Task<Image> GetImageByDescription(string description);
         public Task<Image> GetImageId(int imageId);
+        public Task<List<Image>> GetImages();
     }
 }

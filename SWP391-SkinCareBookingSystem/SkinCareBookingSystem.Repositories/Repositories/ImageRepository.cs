@@ -29,6 +29,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return await SaveChange();
         }
 
+        public async Task<List<Image>> GetAllImages() =>
+            await _context.Images.OrderByDescending(i => i.Id).ToListAsync();
+
         public async Task<Image> GetImageByDescription(string description) =>
             await _context.Images
                 .FirstOrDefaultAsync(i => i.Description.Equals(description));

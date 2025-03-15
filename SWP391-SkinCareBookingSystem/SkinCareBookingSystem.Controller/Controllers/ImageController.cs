@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.BookingDto;
 using SkinCareBookingSystem.Service.Dto.Image;
 using SkinCareBookingSystem.Service.Interfaces;
@@ -20,7 +21,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
             _mapper = mapper;
             _imageService = imageService;
         }
-
+        [HttpGet("Gets")]
+        public async Task<IActionResult> Gets() =>
+            Ok(await _imageService.GetImages());
         [HttpPost("UploadImage")]
         public async Task<IActionResult> UploadImage(IFormFile image, string? description)
         {

@@ -89,5 +89,8 @@ namespace SkinCareBookingSystem.Service.Service
             _imageRepository.CreateImage(image);
             return await _imageRepository.SaveChange();
         }
+
+        public async Task<List<Image>> GetImages() =>
+            await _imageRepository.GetAllImages();
     }
 }
