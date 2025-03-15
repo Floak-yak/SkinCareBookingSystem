@@ -15,16 +15,19 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string PhoneNumber { get; set; }
-        public string VerifyToken { get; set; }
+        public string? VerifyToken { get; set; }
         public bool IsVerified { get; set; }
+        public string? Description { get; set; }
 
         #region Relationship
+        public int? CategoryId { get; set; }
+        public Category? Category { get; set; }
         public ICollection<TestInformation>? TestInformationHistory { get; set; }
         public ICollection<Post>? Posts { get; set; }
-        public ICollection<Category>? Categories { get; set; }
         public ICollection<Booking>? Bookings { get; set; }
         public ICollection<Schedule>? Schedules { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }
+        public Image? Image { get; set; }
         #endregion
     }
 

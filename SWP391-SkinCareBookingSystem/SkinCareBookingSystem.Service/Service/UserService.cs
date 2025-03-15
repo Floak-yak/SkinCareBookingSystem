@@ -24,13 +24,15 @@ namespace SkinCareBookingSystem.Service.Service
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IImageRepository _imageRepository;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper)
+        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper, IImageRepository imageRepository)
         {
             _config = config;
             _passwordHasher = passwordHasher;
             _userRepository = userRepository;
             _mapper = mapper;
+            _imageRepository = imageRepository;
         }
 
         public async Task<bool> ChangePassword(int userId, string oldPassword, string newPassword)
@@ -65,7 +67,8 @@ namespace SkinCareBookingSystem.Service.Service
                 FullName = fullName,
                 YearOfBirth = YearOfBirth,
                 PhoneNumber = PhoneNumber,
-                IsVerified = true,                
+                IsVerified = true,      
+                VerifyToken = ""
             };
 
             string password = new Random().Next(11234500, 2131232312).ToString();
@@ -131,8 +134,8 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<List<UserResponse>> GetCustomers() =>
             _mapper.Map<List<UserResponse>>(await _userRepository.GetCustomers());
 
-        public async Task<List<UserResponse>> GetSkinTherapists() =>
-            _mapper.Map<List<UserResponse>>(await _userRepository.GetSkinTherapists());
+        public async Task<List<SkinTherapistResponse>> GetSkinTherapists() =>
+            _mapper.Map<List<SkinTherapistResponse>>(await _userRepository.GetSkinTherapists());
 
         public async Task<List<UserResponse>> GetStaffs() =>
             _mapper.Map<List<UserResponse>>(await _userRepository.GetStaffs());
@@ -428,6 +431,26 @@ namespace SkinCareBookingSystem.Service.Service
             if (user is null)
                 return false;
             user.Role = role;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
+        }
+
+        public async Task<bool> UpdateUserDescription(UpdateUserDescriptionRequest request)
+        {
+            User user = await _userRepository.GetUserById(request.UserId);
+            if (user is null || user.Role != (Role)3) return false;
+            user.Description = request.Description;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
+        }
+
+        public async Task<bool> UploadAvatarForUser(UploadAvatarForUserRequest request)
+        {
+            User user = await _userRepository.GetUserById(request.UserId);
+            if (user is null) return false;
+            Image image = await _imageRepository.GetImageById(request.ImageId);
+            if (image is null) return false;    
+            user.Image = image;
             _userRepository.Update(user);
             return await _userRepository.SaveChange();
         }

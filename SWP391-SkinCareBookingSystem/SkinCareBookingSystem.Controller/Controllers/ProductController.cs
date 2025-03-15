@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.Product;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 
@@ -76,7 +77,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
 		[HttpPost("AddProduct")]
-		public async Task<IActionResult> AddProducts([FromBody] List<Product> products)
+		public async Task<IActionResult> AddProducts([FromBody] List<CreateProductRequest> products)
 		{
 			if (products is null)
 				return NotFound();

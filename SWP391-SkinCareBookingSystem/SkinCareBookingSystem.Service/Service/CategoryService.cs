@@ -39,7 +39,6 @@ namespace SkinCareBookingSystem.Service.Service
             Category category = new()
             {
                 CategoryName = categoryName,
-                UserId = userId
             };
 
             _categoryRepository.Create(category);

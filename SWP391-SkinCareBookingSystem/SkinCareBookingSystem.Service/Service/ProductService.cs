@@ -1,6 +1,8 @@
-﻿using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using AutoMapper;
+using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto.Product;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -13,22 +15,35 @@ namespace SkinCareBookingSystem.Service.Service
 	public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
+		private readonly IMapper _mapper;
+		private readonly IImageRepository _imageRepository;
 
-        public ProductService(IProductRepository productRepository)
+		public ProductService(IProductRepository productRepository, IMapper mapper, IImageRepository imageRepository)
         {
             _productRepository = productRepository;
-        }
+			_mapper = mapper;
+			_imageRepository = imageRepository;
+		}
 
-		public async Task<bool> AddProducts(List<Product> products)
+		public async Task<bool> AddProducts(List<CreateProductRequest> products)
 		{
             if (products.Count == 0)
                 return false;
+
 			if (products.Count == 1)
             {
-                _productRepository.CreateProduct(products[0]);
+                Product product = _mapper.Map<Product>(products[0]);
+                product.Image = await _imageRepository.GetImageById(products[0].ImageId);
+				_productRepository.CreateProduct(product);
                 return await _productRepository.SaveChange();
             }
-			_productRepository.CreateProducts(products);
+
+            List<Product> listProduct = _mapper.Map<List<Product>>(products);
+            for (int i = 0; i < listProduct.Count; i++)
+            {
+                listProduct[i].Image = await _imageRepository.GetImageById(products[i].ImageId);
+			}
+			_productRepository.CreateProducts(listProduct);
 			return await _productRepository.SaveChange();
 		}
 

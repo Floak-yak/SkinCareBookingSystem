@@ -9,7 +9,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     public class ScheduleLog
     {
         public int Id { get; set; }
-        public DateTime WorkingTime { get; set; }
+        public int WorkingTime { get; set; }
         public DateTime TimeStartShift { get; set; }
 
         #region Relationship
