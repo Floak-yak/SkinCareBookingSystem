@@ -24,13 +24,15 @@ namespace SkinCareBookingSystem.Service.Service
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ImageRepository _imageRepository;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper)
+        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper, ImageRepository imageRepository)
         {
             _config = config;
             _passwordHasher = passwordHasher;
             _userRepository = userRepository;
             _mapper = mapper;
+            _imageRepository = imageRepository;
         }
 
         public async Task<bool> ChangePassword(int userId, string oldPassword, string newPassword)
@@ -429,6 +431,26 @@ namespace SkinCareBookingSystem.Service.Service
             if (user is null)
                 return false;
             user.Role = role;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
+        }
+
+        public async Task<bool> UpdateUserDescription(UpdateUserDescriptionRequest request)
+        {
+            User user = await _userRepository.GetUserById(request.UserId);
+            if (user is null || user.Role != (Role)3) return false;
+            user.Description = request.Description;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
+        }
+
+        public async Task<bool> UploadAvatarForUser(UploadAvatarForUserRequest request)
+        {
+            User user = await _userRepository.GetUserById(request.UserId);
+            if (user is null) return false;
+            Image image = await _imageRepository.GetImageById(request.ImageId);
+            if (image is null) return false;    
+            user.Image = image;
             _userRepository.Update(user);
             return await _userRepository.SaveChange();
         }
