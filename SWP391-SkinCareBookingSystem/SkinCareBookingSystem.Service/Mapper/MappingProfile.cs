@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
-using SkinCareBookingSystem.Service.Dto.Image;
+using SkinCareBookingSystem.Service.Dto.ImageDto;
 using SkinCareBookingSystem.Service.Dto.Product;
 using SkinCareBookingSystem.Service.Dto.User;
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SkinCareBookingSystem.Service.Dto.Image
+namespace SkinCareBookingSystem.Service.Dto.ImageDto
 {
     public class StoreImageResponse
     {

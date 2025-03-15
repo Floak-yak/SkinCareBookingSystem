@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
-using SkinCareBookingSystem.Service.Dto.Image;
+using SkinCareBookingSystem.Service.Dto.ImageDto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;

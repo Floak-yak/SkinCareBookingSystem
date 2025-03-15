@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Service.Dto.Image;
+using SkinCareBookingSystem.Service.Dto.ImageDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
