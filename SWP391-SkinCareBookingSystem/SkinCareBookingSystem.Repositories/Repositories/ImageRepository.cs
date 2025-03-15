@@ -29,6 +29,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return await SaveChange();
         }
 
+        public async Task<List<Image>> GetAllImages() =>
+            await _context.Images.OrderByDescending(i => i.Id).ToListAsync();
+
         public async Task<Image> GetImageByDescription(string description) =>
             await _context.Images
                 .FirstOrDefaultAsync(i => i.Description.Equals(description));
@@ -36,15 +39,15 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<Image> GetImageById(int imageId) => await _context.Images.FirstOrDefaultAsync(i => i.Id == imageId);
         
 
-        public async Task<Image> GetImageByPostContentId(int postContentId) =>
-            await _context.Images.FirstOrDefaultAsync(i => i.Content.Id == postContentId);
+        //public async Task<Image> GetImageByPostContentId(int postContentId) =>
+        //    await _context.Images.FirstOrDefaultAsync(i => i.Id == postContentId);
 
-        public async Task<Image> GetImageByPostId(int postId) =>
-            await _context.Images.FirstOrDefaultAsync(i => i.Post.Id == postId);
+        //public async Task<Image> GetImageByPostId(int postId) =>
+        //    await _context.Images.FirstOrDefaultAsync(i => i.Id == postId);
 
 
-        public async Task<Image> GetImageByProductId(int productId) =>
-            await _context.Images.FirstOrDefaultAsync(i => i.Product.Id == productId);
+        //public async Task<Image> GetImageByProductId(int productId) =>
+        //    await _context.Images.FirstOrDefaultAsync(i => i.Id == productId);
 
         public async Task<bool> SaveChange()
         {

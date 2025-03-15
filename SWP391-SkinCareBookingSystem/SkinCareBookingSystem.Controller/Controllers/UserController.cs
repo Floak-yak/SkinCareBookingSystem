@@ -83,7 +83,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Update success");
         }
 
-        [HttpPut("Verify")]
+        [HttpGet("Verify")]
         public async Task<IActionResult> VerifyAccount([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))
@@ -115,6 +115,26 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return BadRequest("Change password fail");
             }
             return Ok("Change password success");
+        }
+
+        [HttpPut("UpdateAvatarForUser")]
+        public async Task<IActionResult> UpdateAvatarForUser(UploadAvatarForUserRequest request)
+        {
+            if (!await _userService.UploadAvatarForUser(request))
+            {
+                return BadRequest("Update fail");
+            }
+            return Ok("Update success");
+        }
+
+        [HttpPut("UpdateDescription")]
+        public async Task<IActionResult> UpdateDescription(UpdateUserDescriptionRequest request)
+        {
+            if (!await _userService.UpdateUserDescription(request))
+            {
+                return BadRequest("Update fail");
+            }
+            return Ok("Update success");
         }
     }
 }

@@ -13,8 +13,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         
         #region Relationship
         public ICollection<Post> Posts { get; set; }
-        public int UserId { get; set; }
-        public User User { get; set; }
+        public ICollection<User> Users { get; set; }
         public ICollection<Product> Products { get; set; }
         public ICollection<SkincareService> skincareServices { get; set; }
         #endregion

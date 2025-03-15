@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.BookingDto;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 
@@ -29,9 +30,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateBooking(DateTime Date, string serviceName, int userId)
+        public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
-            Booking booking = await _bookingService.CreateBooking(Date, serviceName, userId);
+            Booking booking = await _bookingService.CreateBooking(request);
             if (booking is null)
                 return BadRequest("Create fail");
             return Ok(_transactionService.CreateTransaction(booking));

@@ -43,9 +43,9 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Category>()
-                .HasOne(c => c.User)
-                .WithMany(u => u.Categories)
-                .HasForeignKey(c => c.UserId)
+                .HasMany(c => c.Users)
+                .WithOne(u => u.Category)
+                .HasForeignKey(u => u.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Product>()
@@ -115,21 +115,6 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .WithMany(sl => sl.BookingServiceSchedules)
                 .HasForeignKey(bss => bss.ScheduleLogId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Image>()
-                .HasOne(i => i.Content)
-                .WithOne(c => c.Image)
-                .HasForeignKey<Content>(c => c.Id);
-
-            modelBuilder.Entity<Image>()
-                .HasOne(i => i.Product)
-                .WithOne(p => p.Image)
-                .HasForeignKey<Product>(p => p.Id);
-
-            modelBuilder.Entity<Image>()
-                .HasOne(i => i.Post)
-                .WithOne(p => p.Image)
-                .HasForeignKey<Post>(p => p.Id);
         }
     }
 }

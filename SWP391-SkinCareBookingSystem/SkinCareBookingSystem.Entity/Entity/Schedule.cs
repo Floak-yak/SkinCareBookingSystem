@@ -14,7 +14,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         #region Relationship
         public int UserId { get; set; }
         public User User { get; set; }
-        public ICollection<ScheduleLog> ScheduleLogs { get; set; }
+        public ICollection<ScheduleLog>? ScheduleLogs { get; set; }
         #endregion
     }
 }
