@@ -1,13 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Interfaces;
+using SkinCareBookingSystem.Service.Dto;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.AspNetCore.Cors;
+using System.IO;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
     [Route("api/[controller]")]
+    [ApiController]
+    [EnableCors("AllowAll")]
     public class SkincareServicesController : ControllerBase
     {
         private readonly ISkincareServicesService _skincareServicesService;
@@ -63,123 +68,112 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("Create")]
+        [Consumes("application/json")]
         public async Task<IActionResult> CreateService([FromBody] SkincareServiceCreateDTO request)
         {
-            if (request is null)
-                return BadRequest("Request body cannot be null");
-
-            if (string.IsNullOrEmpty(request.ServiceName))
-                return BadRequest("Service name cannot be empty");
-            if (request.ServiceName.Length > 100)
-                return BadRequest("Service name cannot exceed 100 characters");
-
-            if (string.IsNullOrEmpty(request.ServiceDescription))
-                return BadRequest("Service description cannot be empty");
-            if (request.ServiceDescription.Length > 500)
-                return BadRequest("Service description cannot exceed 500 characters");
-
-            if (request.Price <= 0)
-                return BadRequest("Price must be greater than 0");
-
-            if (request.WorkTime == DateTime.MinValue)
-                return BadRequest("Work time cannot be empty");
-            if (request.WorkTime.TimeOfDay.TotalHours > 3.5)
-                return BadRequest("Work time cannot exceed 3.5 hours");
-
-            if (request.CategoryId <= 0)
-                return BadRequest("Invalid category ID");
-
-            // Handle image upload if provided
-            Image image = null;
-            if (!string.IsNullOrEmpty(request.ImageLink))
+            try
             {
-                var success = await _imageService.StoreImage(request.ImageLink);
-                if (!success)
-                    return BadRequest("Failed to store image");
-                image = await _imageService.GetImageByDescription(System.IO.Path.GetFileName(request.ImageLink));
-                if (image == null)
-                    return BadRequest("Failed to retrieve stored image");
+                // Log the raw request body
+                var rawRequest = await new StreamReader(Request.Body).ReadToEndAsync();
+                Console.WriteLine($"Raw request body: {rawRequest}");
+
+                if (request is null)
+                    return BadRequest("Request body cannot be null");
+
+                // Log the deserialized request
+                Console.WriteLine($"Deserialized request: ServiceName={request.ServiceName}, Description={request.ServiceDescription}, CategoryId={request.CategoryId}, Price={request.Price}, WorkTime={request.WorkTime}");
+
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                // Handle image upload if provided
+                Image image = null;
+                if (!string.IsNullOrEmpty(request.ImageLink))
+                {
+                    var success = await _imageService.StoreImage(request.ImageLink);
+                    if (!success)
+                        return BadRequest("Failed to store image");
+                    image = await _imageService.GetImageByDescription(System.IO.Path.GetFileName(request.ImageLink));
+                    if (image == null)
+                        return BadRequest("Failed to retrieve stored image");
+                }
+
+                if (!await _skincareServicesService.Create(
+                    request.ServiceName,
+                    request.ServiceDescription,
+                    request.Price,
+                    request.WorkTime,
+                    request.CategoryId,
+                    image?.Id))
+                    return BadRequest("Create service failed");
+
+                return Ok("Service created successfully");
             }
-
-            if (!await _skincareServicesService.Create(
-                request.ServiceName,
-                request.ServiceDescription,
-                request.Price,
-                request.WorkTime,
-                request.CategoryId,
-                image?.Id))
-                return BadRequest("Create service failed");
-
-            return Ok("Service created successfully");
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpPut("Update")]
+        [Consumes("application/json")]
         public async Task<IActionResult> UpdateService([FromQuery] int id, [FromBody] SkincareServiceUpdateDTO request)
         {
-            if (request is null)
-                return BadRequest("Request body cannot be null");
-
-            if (!string.IsNullOrEmpty(request.ServiceName))
+            try
             {
-                if (request.ServiceName.Length > 100)
-                    return BadRequest("Service name cannot exceed 100 characters");
-            }
+                if (request is null)
+                    return BadRequest("Request body cannot be null");
 
-            if (!string.IsNullOrEmpty(request.ServiceDescription))
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                // Handle image update if provided
+                int? imageId = null;
+                if (!string.IsNullOrEmpty(request.ImageLink))
+                {
+                    var success = await _imageService.StoreImage(request.ImageLink);
+                    if (!success)
+                        return BadRequest("Failed to store image");
+                    var image = await _imageService.GetImageByDescription(System.IO.Path.GetFileName(request.ImageLink));
+                    if (image == null)
+                        return BadRequest("Failed to retrieve stored image");
+                    imageId = image.Id;
+                }
+
+                var result = await _skincareServicesService.Update(
+                    id,
+                    request.ServiceName,
+                    request.ServiceDescription,
+                    request.Price,
+                    request.WorkTime,
+                    request.CategoryId,
+                    imageId);
+
+                if (!result)
+                    return BadRequest("Update service failed");
+
+                return Ok("Service updated successfully");
+            }
+            catch (Exception ex)
             {
-                if (request.ServiceDescription.Length > 500)
-                    return BadRequest("Service description cannot exceed 500 characters");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-
-            if (request.Price.HasValue && request.Price.Value <= 0)
-                return BadRequest("Price must be greater than 0");
-
-            if (request.WorkTime.HasValue)
-            {
-                if (request.WorkTime.Value == DateTime.MinValue)
-                    return BadRequest("Work time cannot be empty");
-                if (request.WorkTime.Value.TimeOfDay.TotalHours > 3.5)
-                    return BadRequest("Work time cannot exceed 3.5 hours");
-            }
-
-            if (request.CategoryId.HasValue && request.CategoryId.Value <= 0)
-                return BadRequest("Invalid category ID");
-
-            // Handle image update if provided
-            int? imageId = null;
-            if (!string.IsNullOrEmpty(request.ImageLink))
-            {
-                var success = await _imageService.StoreImage(request.ImageLink);
-                if (!success)
-                    return BadRequest("Failed to store image");
-                var image = await _imageService.GetImageByDescription(System.IO.Path.GetFileName(request.ImageLink));
-                if (image == null)
-                    return BadRequest("Failed to retrieve stored image");
-                imageId = image.Id;
-            }
-
-            var result = await _skincareServicesService.Update(
-                id,
-                request.ServiceName,
-                request.ServiceDescription,
-                request.Price,
-                request.WorkTime,
-                request.CategoryId,
-                imageId);
-
-            if (!result)
-                return BadRequest("Update service failed");
-
-            return Ok("Service updated successfully");
         }
 
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteService([FromQuery] int id)
         {
-            if (!await _skincareServicesService.Delete(id))
-                return BadRequest("Delete service failed");
+            try
+            {
+                if (!await _skincareServicesService.Delete(id))
+                    return BadRequest("Delete service failed");
 
-            return Ok("Delete service success");
+                return Ok("Delete service success");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
     }
 
