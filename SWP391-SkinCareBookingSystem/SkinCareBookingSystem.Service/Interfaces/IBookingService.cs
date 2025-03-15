@@ -18,6 +18,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<Booking> CreateBooking(CreateBookingRequest request);
         public Task<bool> UpdateBookingDate(int bookingId, int userId, DateTime newDate);
         public Task<bool> CancelBooking(int bookingId, int userId);
-        public Task<List<User>> RandomSkinTherapist(string ServiceName, DateTime date, List<User> listUser);
+        public Task<User> RandomSkinTherapist(List<User> listUser);
     }
 }

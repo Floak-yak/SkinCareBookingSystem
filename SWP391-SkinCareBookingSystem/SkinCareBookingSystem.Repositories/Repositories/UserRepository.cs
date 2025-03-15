@@ -100,7 +100,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<List<User>> GetSkinTherapists() =>
             await _context.Users.Where(u => u.IsVerified && u.Role == Role.SkinTherapist).ToListAsync();
 
-        //Not done yet
         public async Task<List<User>> GetSkinTherapistsFreeInTimeSpan(DateTime dateTime, int Duration, int categoryId)
         {
             DateTime endDate = dateTime.AddMinutes(Duration);
@@ -112,6 +111,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             {
                 if (user.Schedules
                     .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs.Where(sl => sl.TimeStartShift == dateTime) != null)
+                    .FirstOrDefault() != null)
+                    removeUser.Add(user);
+                if (user.Schedules
+                    .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs
+                    .Where(sl =>  new DateTime().AddMonths(sl.TimeStartShift.Month)
+                        .AddYears(sl.TimeStartShift.Year)
+                        .AddDays(sl.TimeStartShift.Day)
+                        .AddMinutes(Duration) >= dateTime && sl.TimeStartShift < dateTime) != null)
                     .FirstOrDefault() != null)
                     removeUser.Add(user);
             }
