@@ -184,7 +184,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public string ImageLink { get; set; }
         public int CategoryId { get; set; }
         public decimal Price { get; set; }
-        public DateTime WorkTime { get; set; }
+        public int WorkTime { get; set; }
     }
 
     public class SkincareServiceUpdateDTO
@@ -194,6 +194,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public string ImageLink { get; set; }
         public int? CategoryId { get; set; }
         public decimal? Price { get; set; }
-        public DateTime? WorkTime { get; set; }
+        public int? WorkTime { get; set; }
     }
 } 

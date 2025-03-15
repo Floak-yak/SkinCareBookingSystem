@@ -16,8 +16,8 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<SkincareService> GetServiceByname(string serviceName);
         public Task<List<SkincareService>> Search(string search, int page = 1, int pageSize = 10);
         public Task<bool> Delete(int id);
-        public Task<bool> Update(int id, string serviceName, string serviceDescription, decimal? price, DateTime? workTime, int? categoryId, int? imageId);
-        public Task<bool> Create(string serviceName, string serviceDescription, decimal price, DateTime workTime, int categoryId, int? imageId);
+        public Task<bool> Update(int id, string serviceName, string serviceDescription, decimal? price, int? workTime, int? categoryId, int? imageId);
+        public Task<bool> Create(string serviceName, string serviceDescription, decimal price, int workTime, int categoryId, int? imageId);
         public Task<Dictionary<int, List<SkincareService>>> GetRandomServicesByCategory(int count);
     }
 }
