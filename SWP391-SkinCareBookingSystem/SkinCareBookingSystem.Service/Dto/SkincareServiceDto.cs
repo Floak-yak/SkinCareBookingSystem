@@ -23,7 +23,8 @@ namespace SkinCareBookingSystem.Service.Dto
         public decimal Price { get; set; }
 
         [Required]
-        public DateTime WorkTime { get; set; }
+        [Range(1, 90, ErrorMessage = "Work time must be between 1 and 90 minutes")]
+        public int WorkTime { get; set; }
     }
 
     public class SkincareServiceUpdateDTO
@@ -41,6 +42,7 @@ namespace SkinCareBookingSystem.Service.Dto
 
         public decimal? Price { get; set; }
 
-        public DateTime? WorkTime { get; set; }
+        [Range(1, 90, ErrorMessage = "Work time must be between 1 and 90 minutes")]
+        public int? WorkTime { get; set; }
     }
 } 

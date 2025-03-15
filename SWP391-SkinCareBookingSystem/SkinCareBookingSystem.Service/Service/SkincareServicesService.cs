@@ -19,7 +19,7 @@ namespace SkinCareBookingSystem.Service.Service
         {
             _skincareServicesRepository = skincareServiceRepository;
         }
-        public async Task<bool> Create(string serviceName, string serviceDescription, decimal price, DateTime workTime, int categoryId, int? imageId)
+        public async Task<bool> Create(string serviceName, string serviceDescription, decimal price, int workTime, int categoryId, int? imageId)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace SkinCareBookingSystem.Service.Service
                     return false;
                 if (price <= 0)
                     return false;
-                if (workTime == DateTime.MinValue || workTime.TimeOfDay.TotalHours > 3.5)
+                if (workTime < 1 || workTime > 90)
                     return false;
                 if (categoryId <= 0)
                     return false;
@@ -42,7 +42,7 @@ namespace SkinCareBookingSystem.Service.Service
                     ServiceName = serviceName.Trim(),
                     ServiceDescription = serviceDescription.Trim(),
                     Price = price,
-                    WorkTime = (int)workTime.TimeOfDay.TotalMinutes,
+                    WorkTime = workTime,
                     CategoryId = categoryId,
                 };
 
@@ -133,7 +133,7 @@ namespace SkinCareBookingSystem.Service.Service
             }
         }
 
-        public async Task<bool> Update(int id, string serviceName, string serviceDescription, decimal? price, DateTime? workTime, int? categoryId, int? imageId)
+        public async Task<bool> Update(int id, string serviceName, string serviceDescription, decimal? price, int? workTime, int? categoryId, int? imageId)
         {
             try
             {
@@ -172,9 +172,9 @@ namespace SkinCareBookingSystem.Service.Service
 
                 if (workTime.HasValue)
                 {
-                    if (workTime.Value == DateTime.MinValue || workTime.Value.TimeOfDay.TotalHours > 3.5)
+                    if (workTime.Value < 1 || workTime.Value > 90)
                         return false;
-                    skincareService.WorkTime = (int)workTime.Value.TimeOfDay.TotalMinutes;
+                    skincareService.WorkTime = workTime.Value;
                 }
 
                 if (categoryId.HasValue)
