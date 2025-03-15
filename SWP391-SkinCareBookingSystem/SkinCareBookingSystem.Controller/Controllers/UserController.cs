@@ -94,7 +94,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPut("ResetPassword")]
-        public async Task<IActionResult> ResetPassword(string email)
+        public async Task<IActionResult> ResetPassword([FromQuery] string email)
         {
             if (string.IsNullOrEmpty(email))
                 return BadRequest("Can't find email");

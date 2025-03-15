@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.BookingDto;
-using SkinCareBookingSystem.Service.Dto.Image;
+using SkinCareBookingSystem.Service.Dto.ImageDto;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
 

@@ -24,9 +24,9 @@ namespace SkinCareBookingSystem.Service.Service
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
-        private readonly ImageRepository _imageRepository;
+        private readonly IImageRepository _imageRepository;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper, ImageRepository imageRepository)
+        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper, IImageRepository imageRepository)
         {
             _config = config;
             _passwordHasher = passwordHasher;

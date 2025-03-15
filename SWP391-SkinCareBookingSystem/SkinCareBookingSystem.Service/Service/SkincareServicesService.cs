@@ -42,9 +42,8 @@ namespace SkinCareBookingSystem.Service.Service
                     ServiceName = serviceName.Trim(),
                     ServiceDescription = serviceDescription.Trim(),
                     Price = price,
-                    WorkTime = workTime,
+                    WorkTime = (int)workTime.TimeOfDay.TotalMinutes,
                     CategoryId = categoryId,
-                    ImageId = imageId ?? 0
                 };
 
                 _skincareServicesRepository.Create(skincareServices);
@@ -175,7 +174,7 @@ namespace SkinCareBookingSystem.Service.Service
                 {
                     if (workTime.Value == DateTime.MinValue || workTime.Value.TimeOfDay.TotalHours > 3.5)
                         return false;
-                    skincareService.WorkTime = workTime.Value;
+                    skincareService.WorkTime = (int)workTime.Value.TimeOfDay.TotalMinutes;
                 }
 
                 if (categoryId.HasValue)
@@ -183,11 +182,6 @@ namespace SkinCareBookingSystem.Service.Service
                     if (categoryId.Value <= 0)
                         return false;
                     skincareService.CategoryId = categoryId.Value;
-                }
-
-                if (imageId.HasValue)
-                {
-                    skincareService.ImageId = imageId.Value;
                 }
 
                 _skincareServicesRepository.Update(skincareService);
