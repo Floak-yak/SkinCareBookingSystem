@@ -84,12 +84,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Categories");
                 });
@@ -97,13 +92,19 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Content", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContentOfPost")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ContentType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ImageId")
                         .HasColumnType("int");
 
                     b.Property<int>("Position")
@@ -113,6 +114,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ImageId");
 
                     b.HasIndex("PostId");
 
@@ -150,13 +153,19 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("DatePost")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("int");
 
                     b.Property<int>("PostStatus")
                         .HasColumnType("int");
@@ -172,6 +181,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("ImageId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("Posts");
@@ -180,13 +191,19 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Product", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -198,6 +215,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("ImageId");
 
                     b.ToTable("Products");
                 });
@@ -237,8 +256,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<DateTime>("TimeStartShift")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("WorkingTime")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("WorkingTime")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -255,17 +274,31 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ImageId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ServiceDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ServiceName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("WorkTime")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("WorkTime")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("ImageId");
 
                     b.ToTable("SkincareServices");
                 });
@@ -298,6 +331,33 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("TestInformations");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Transaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TotalMoney")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("TranctionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Transactions");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.User", b =>
                 {
                     b.Property<int>("Id")
@@ -306,6 +366,12 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -313,6 +379,9 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
@@ -329,13 +398,16 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("VerifyToken")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("YearOfBirth")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("ImageId");
 
                     b.ToTable("Users");
                 });
@@ -378,22 +450,11 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Service");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Category", b =>
-                {
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
-                        .WithMany("Categories")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Content", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
-                        .WithOne("Content")
-                        .HasForeignKey("SkinCareBookingSystem.BusinessObject.Entity.Content", "Id")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -417,10 +478,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired();
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
-                        .WithOne("Post")
-                        .HasForeignKey("SkinCareBookingSystem.BusinessObject.Entity.Post", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany()
+                        .HasForeignKey("ImageId");
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
                         .WithMany("Posts")
@@ -444,10 +503,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired();
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
-                        .WithOne("Product")
-                        .HasForeignKey("SkinCareBookingSystem.BusinessObject.Entity.Product", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany()
+                        .HasForeignKey("ImageId");
 
                     b.Navigation("Category");
 
@@ -476,6 +533,25 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Schedule");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Category", "Category")
+                        .WithMany("skincareServices")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Image");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
@@ -485,6 +561,33 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Transaction", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
+                        .WithMany("Transactions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.User", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Category", "Category")
+                        .WithMany("Users")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Image");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Booking", b =>
@@ -497,18 +600,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Posts");
 
                     b.Navigation("Products");
-                });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Image", b =>
-                {
-                    b.Navigation("Content")
-                        .IsRequired();
+                    b.Navigation("Users");
 
-                    b.Navigation("Post")
-                        .IsRequired();
-
-                    b.Navigation("Product")
-                        .IsRequired();
+                    b.Navigation("skincareServices");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
@@ -535,13 +630,13 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                 {
                     b.Navigation("Bookings");
 
-                    b.Navigation("Categories");
-
                     b.Navigation("Posts");
 
                     b.Navigation("Schedules");
 
                     b.Navigation("TestInformationHistory");
+
+                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }
