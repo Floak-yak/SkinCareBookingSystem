@@ -28,15 +28,15 @@ namespace SkinCareBookingSystem.Service.Service
             SkincareService skincareService = await _skincareServiceRepository
                 .GetServiceByname(request.ServiceName);
             if (skincareService is null)
-                return null;
+                throw new InvalidOperationException(nameof(request.ServiceName));
 
             User user = await _userRepository.GetUserById(request.UserId);
             if (user is null)
-                return null;
+                throw new InvalidOperationException(nameof(request.UserId));
 
             User skintherapist = await _userRepository.GetUserById(request.UserId);
             if (!skintherapist.IsVerified || skintherapist.Role != (Role)3)
-                return null;
+                throw new InvalidOperationException(nameof(skincareService));
 
             TimeOnly time = TimeOnly.Parse(request.Time.ToString());
             DateTime date = DateTime.Parse(request.Date);
@@ -47,7 +47,7 @@ namespace SkinCareBookingSystem.Service.Service
                 skintherapist = await RandomSkinTherapist(await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId));
 
             if (skintherapist is null)
-                return null;
+                throw new ArgumentNullException(nameof(skintherapist), "No free skintherapist in this time");
 
             if (skintherapist.Schedules is null)
             {

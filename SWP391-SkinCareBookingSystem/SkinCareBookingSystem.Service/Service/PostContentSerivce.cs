@@ -1,6 +1,7 @@
 ﻿using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -20,25 +21,24 @@ namespace SkinCareBookingSystem.Service.Service
             _postContentRepository = postContentRepository;
             _postRepository = postRepository;
         }
-        public async Task<bool> CreateContent(string contentOfPost, ContentType contentType, int position, string imageLink, int postId)
+        public async Task<bool> CreateContent(CreatePostContentRequest request)
         {
-            if (string.IsNullOrEmpty(contentOfPost) || string.IsNullOrEmpty(imageLink))
+            if (string.IsNullOrEmpty(request.ContentOfPost) || string.IsNullOrEmpty(request.imageLink))
                 return false;
 
             //Check imageLink work or not
             Image image = new();
 
-            Post post = await _postRepository.GetPostByIdAsync(postId);
+            Post post = await _postRepository.GetPostByIdAsync(request.PostId);
             if (post is null)
                 return false;
 
             Content content = new()
             {
-                ContentOfPost = contentOfPost,
-                ContentType = contentType,
-                Position = position,
+                ContentOfPost = request.ContentOfPost,
+                Position = request.Position,
                 Image = image,
-                PostId = postId,
+                PostId = request.PostId,
                 Post = post,
             };
 
@@ -56,7 +56,7 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<List<Content>> GetContentsAsync() =>
             await _postContentRepository.GetContentsAsync();
 
-        public async Task<bool> UpdateContent(int contentId, string contentOfPost, ContentType contentType, int position, string imageLink)
+        public async Task<bool> UpdateContent(int contentId, string contentOfPost, int position, string imageLink)
         {
             Content content = await _postContentRepository.GetContentByIdAsync(contentId);
 
@@ -64,7 +64,6 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
 
             if (string.IsNullOrEmpty(contentOfPost))
-                content.ContentType = contentType;
 
             if (string.IsNullOrEmpty(imageLink))
             {

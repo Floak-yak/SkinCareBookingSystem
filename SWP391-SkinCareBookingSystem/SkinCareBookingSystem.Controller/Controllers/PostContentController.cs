@@ -31,7 +31,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreatePostContentRequest request)
         {
-            if (!await _postContentSerivce.CreateContent(request.ContentOfPost, request.ContentType, request.Position, request.imageLink, request.PostId))
+            if (!await _postContentSerivce.CreateContent(request))
                 return BadRequest("Create fail");
             return Ok("Create Success");
         }

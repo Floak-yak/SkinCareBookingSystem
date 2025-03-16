@@ -32,7 +32,15 @@ namespace SkinCareBookingSystem.Controller.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
-            Booking booking = await _bookingService.CreateBooking(request);
+            Booking booking;
+            try
+            {
+                booking = await _bookingService.CreateBooking(request);
+            }catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
             if (booking is null)
                 return BadRequest("Create fail");
             return Ok(_transactionService.CreateTransaction(booking));

@@ -1,4 +1,5 @@
-﻿using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using HtmlAgilityPack;
+using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
 using SkinCareBookingSystem.Service.Dto;
@@ -36,40 +37,42 @@ namespace SkinCareBookingSystem.Service.Service
             return await _postRepository.SaveChange();
         }
 
-        public async Task<bool> CreatePost(int userId, string title, List<CreatePostContentRequest> contents, int categoryId, string imageLink)
+        public async Task<bool> CreatePost(CreatePostWithContentsRequest request)
         {
-            if (string.IsNullOrEmpty(title) || contents is null ||
-                string.IsNullOrEmpty(imageLink)) 
+            if (string.IsNullOrEmpty(request.Title))
+                throw new ArgumentNullException(nameof(request.Title));
+
+            if (string.IsNullOrEmpty(request.imageLink))
+                throw new ArgumentNullException(nameof(request.imageLink));
+
+            if (string.IsNullOrEmpty(request.content))
+                throw new ArgumentNullException(nameof(request.content));
+
+            if (await _postRepository.IsTitleExist(request.Title)) 
                 return false;
 
-            if (await _postRepository.IsTitleExist(title)) 
-                return false;
-
-            User user = await _userRepository.GetUserById(userId);
+            User user = await _userRepository.GetUserById(request.UserId);
             if (user is null)
-                return false;
+                throw new ArgumentNullException(typeof(User).ToString());
 
-            Category category = await _categoryRepository.GetCategoryById(userId);
+            Category category = await _categoryRepository.GetCategoryById(request.UserId);
             if (category is null)
+                throw new ArgumentNullException(typeof(Category).ToString());
+
+            if (!await _imageService.StoreImage(request.imageLink))
                 return false;
 
-            if (!await _imageService.StoreImage(imageLink))
-                return false;
+            HtmlDocument htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(request.content);
 
-            Image image = await _imageService.GetImageByDescription(Path.GetFileName(imageLink));
-
-            List<Content> listContent = new();
-            foreach (var content in contents)
-            {
-                listContent.Add(new Content() { });
-            }
+            Image image = await _imageService.AddImage(request.imageLink);
 
             Post post = new()
             {
-                UserId = userId,
-                Title = title,
-                Contents = listContent,
-                CategoryId = categoryId,
+                UserId = request.UserId,
+                Title = request.Title,
+                Contents = await GetContentsWithImages(htmlDocument),
+                CategoryId = request.CategoryId,
                 DatePost = DateTime.UtcNow,
                 Image = image,
                 PostStatus = 0,
@@ -79,6 +82,43 @@ namespace SkinCareBookingSystem.Service.Service
 
             _postRepository.CreatePost(post);
             return await _postRepository.SaveChange();
+        }
+
+        public async Task<List<Content>> GetContentsWithImages(HtmlDocument doc)
+        {
+            var contents = new List<Content>();
+
+            var contentNodes = doc.DocumentNode.SelectSingleNode("//div[@class='content-section']");
+            if (contentNodes == null)
+                return contents;
+
+            var nodes = contentNodes.ChildNodes;
+
+            int position = 1;
+            Image? lastImage = null;
+
+            foreach (var node in nodes)
+            {
+                if (node.Name == "p")
+                {
+                    var contentText = node.InnerText.Trim();
+                    contents.Add(new Content
+                    {
+                        Id = position,
+                        ContentOfPost = contentText,
+                        Position = position++,
+                        PostId = 1,
+                        Image = lastImage
+                    });
+
+                    lastImage = null;
+                }
+                else if (node.Name == "img")
+                {
+                    lastImage = await _imageService.AddImage(node.GetAttributeValue("src", null));
+                }
+            }
+            return contents;
         }
 
         public async Task<bool> CreatePostWithoutContent(int userId, string title, int categoryId, string imageLink)
