@@ -92,5 +92,25 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<List<Image>> GetImages() =>
             await _imageRepository.GetAllImages();
+
+        public async Task<Image> AddImage(string imageLink)
+        {
+            if (string.IsNullOrEmpty(imageLink) ||
+                string.IsNullOrEmpty(ConvertImageToBase64(imageLink)))
+                throw new ArgumentNullException(nameof(imageLink));
+
+            byte[] imageBytes = File.ReadAllBytes(imageLink);
+            string extension = Path.GetExtension(imageLink);
+            decimal size = imageBytes.Length / 1024m; // Convert bytes to KB
+
+            return new Image
+            {
+                Id = 0, // DB will assign this
+                Bytes = imageBytes,
+                Description = $"Local Image from {imageLink}",
+                FileExtension = extension,
+                Size = size
+            };
+        }
     }
 }

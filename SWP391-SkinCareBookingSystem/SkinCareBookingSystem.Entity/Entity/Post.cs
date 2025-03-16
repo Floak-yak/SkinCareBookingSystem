@@ -10,6 +10,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     {
         public int Id { get; set; }
         public string Title { get; set; }
+        public string Summary { get; set; }
         public DateTime DatePost { get; set; }
         public PostStatus PostStatus { get; set; }
 

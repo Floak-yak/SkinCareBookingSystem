@@ -10,19 +10,12 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     {
         public int Id { get; set; }
         public string ContentOfPost { get; set; }
-        public ContentType ContentType { get; set; }
         public int Position { get; set; }
         
         #region Relationship
-        public Image Image { get; set; }
+        public Image? Image { get; set; }
         public int PostId { get; set; }
         public Post Post { get; set; }
         #endregion
-    }
-
-    public enum ContentType
-    {
-        ContentOfImage = 1,
-        Summary = 2,
     }
 }

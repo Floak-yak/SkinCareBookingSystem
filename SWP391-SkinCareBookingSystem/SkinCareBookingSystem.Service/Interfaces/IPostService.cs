@@ -23,7 +23,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         /// <returns></returns>
         public Task<bool> UpdatePost(int postId, string title, int categoryId, string imageLink);
         public Task<bool> ChangePostStatus(int postId, PostStatus postStatus);
-        public Task<bool> CreatePost(int userId, string title, List<CreatePostContentRequest> contents, int categoryId, string imageLink);
+        public Task<bool> CreatePost(CreatePostWithContentsRequest request); 
         public Task<bool> CreatePostWithoutContent(int userId, string title, int categoryId, string imageLink);
         public Task<List<Post>> Search(string seachText);
         public Task<List<Post>> Search(int categoryId);

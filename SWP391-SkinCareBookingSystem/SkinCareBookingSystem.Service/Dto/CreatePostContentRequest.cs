@@ -10,7 +10,6 @@ namespace SkinCareBookingSystem.Service.Dto
     public class CreatePostContentRequest
     {
         public string ContentOfPost { get; set; }
-        public ContentType ContentType { get; set; }
         public int Position { get; set; }
         public string imageLink { get; set; }
         public int PostId { get; set; }

@@ -11,7 +11,8 @@ namespace SkinCareBookingSystem.Service.Dto
     {
         public string Title { get; set; }
         public string imageLink { get; set; }
-        public List<CreatePostContentRequest> contents { get; set; }
+        public string summary { get; set; }
+        public string content { get; set; } //Html
         public int CategoryId { get; set; }
         public int UserId { get; set; }
     }
