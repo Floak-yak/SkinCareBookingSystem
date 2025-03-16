@@ -20,9 +20,21 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<bool> DeleteBooking(int bookingId)
         {
-            Booking booking = await GetBookingByIdAsync(bookingId);
+            // Get booking with related BookingServiceSchedules
+            var booking = await _context.Bookings
+                .Include(b => b.BookingServiceSchedules)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+
             if (booking is null)
                 return false;
+
+            // First remove all related BookingServiceSchedule records
+            if (booking.BookingServiceSchedules != null && booking.BookingServiceSchedules.Any())
+            {
+                _context.BookingServiceSchedules.RemoveRange(booking.BookingServiceSchedules);
+            }
+
+            // Then remove the booking
             _context.Bookings.Remove(booking);
             return await SaveChange();
         }
