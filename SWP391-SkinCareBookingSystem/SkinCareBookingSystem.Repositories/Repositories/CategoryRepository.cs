@@ -16,7 +16,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public CategoryRepository(AppDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
         public void Create(Category category)
         {
@@ -34,11 +34,26 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<List<Category>> GetCategory()
         {
-            return await _context.Categories
-                .Include(s => s.Posts)
-                .Include(s => s.Products)
-                .OrderBy(s => s.CategoryName)
-                .ToListAsync();
+            try
+            {
+                if (_context.Categories == null)
+                {
+                    throw new InvalidOperationException("Categories DbSet is null");
+                }
+
+                return await _context.Categories
+                    .AsNoTracking()
+                    .Include(s => s.Posts)
+                    .Include(s => s.Products)
+                    .OrderBy(s => s.CategoryName)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CategoryRepository.GetCategory: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task<Category> GetCategoryById(int categoryId)

@@ -2,6 +2,9 @@
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Service.Interfaces;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
 namespace SkinCareBookingSystem.Service.Service
@@ -13,12 +16,23 @@ namespace SkinCareBookingSystem.Service.Service
 
         public CategoryService(ICategoryRepository categoryRepository, IConfiguration config)
         {
-            _categoryRepository = categoryRepository;
-            _config = config;
+            _categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task<List<Category>> GetCategories() =>
-            await _categoryRepository.GetCategory();
+        public async Task<List<Category>> GetCategories()
+        {
+            try
+            {
+                return await _categoryRepository.GetCategory();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CategoryService.GetCategories: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
 
         public async Task<Category> GetCategoryById(int categoryId)
         {
