@@ -19,6 +19,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public void CreateProduct(Product product);
         public void CreateProducts(List<Product> products);
         public Task<bool> RemoveProduct(Product product);
+        public void UpdateProduct(Product product); 
 		public Task<bool> SaveChange();
 	}
 }
