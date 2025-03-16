@@ -62,8 +62,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (!Regex.IsMatch(request.PhoneNumber, phoneNumberPattern))
                 return null;
 
-            string yearOfBirthPattern = @"^(18[8-9]\d|19\d{2}|20[0-2]\d)$";
-            if (!Regex.IsMatch(request.YearOfBirth.Date.ToString("d"), yearOfBirthPattern))
+            if (DateTime.Now.Year - request.YearOfBirth.Year > 120 || request.YearOfBirth.Year - DateTime.Now.Year < 4)
                 return null;
 
             if (await _userRepository.GetUserByEmail(request.Email) != null)
@@ -178,8 +177,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (!Regex.IsMatch(PhoneNumber, phoneNumberPattern))
                 return false;
 
-            string yearOfBirthPattern = @"^(18[8-9]\d|19\d{2}|20[0-2]\d)$";
-            if (!Regex.IsMatch(YearOfBirth.Date.ToString("d"), yearOfBirthPattern))
+            if (DateTime.Now.Year - YearOfBirth.Year  > 120 || YearOfBirth.Year - DateTime.Now.Year < 4)
                 return false;
 
             if (await _userRepository.GetUserByEmail(email) != null) 
