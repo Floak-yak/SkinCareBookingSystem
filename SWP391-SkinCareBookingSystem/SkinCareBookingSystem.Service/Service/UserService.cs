@@ -177,7 +177,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (!Regex.IsMatch(PhoneNumber, phoneNumberPattern))
                 return false;
 
-            if (DateTime.Now.Year - YearOfBirth.Year  > 120 || YearOfBirth.Year - DateTime.Now.Year < 4)
+            if (DateTime.Now.Year - YearOfBirth.Year  > 120 || DateTime.Now.Year - YearOfBirth.Year < 4)
                 return false;
 
             if (await _userRepository.GetUserByEmail(email) != null) 
