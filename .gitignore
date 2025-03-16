@@ -420,3 +420,5 @@ CoverageReport/
 
 .cursorignore
 SWP391-SkinCareBookingSystem/SkinCareBookingSystem.Repositories/Migrations/AppDbContextModelSnapshot.cs
+
+/migrations/*
