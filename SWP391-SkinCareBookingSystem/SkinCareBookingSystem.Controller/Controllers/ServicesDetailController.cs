@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SkinCareBookingSystem.Controller
+namespace SkinCareBookingSystem.Controller.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -103,8 +103,8 @@ namespace SkinCareBookingSystem.Controller
                 var entity = createDto.ToEntity();
                 var createdService = await _servicesDetailService.CreateServicesDetailAsync(entity);
                 return CreatedAtAction(
-                    nameof(GetServicesDetailById), 
-                    new { id = createdService.Id }, 
+                    nameof(GetServicesDetailById),
+                    new { id = createdService.Id },
                     new { success = true, data = createdService.ToDTO(), message = "Service detail created successfully" }
                 );
             }

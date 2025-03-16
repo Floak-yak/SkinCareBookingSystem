@@ -80,10 +80,42 @@ namespace SkinCareBookingSystem.Controller.Controllers
         [HttpDelete("Cancel")]
         public async Task<IActionResult> CancelBooking(int bookingId, int userId)
         {
-            bool result = await _bookingService.CancelBooking(bookingId, userId);
-            if (!result)
-                return BadRequest("Cancel booking failed.");
-            return Ok("Booking cancelled successfully");
+            try
+            {
+                var booking = await _bookingService.GetBookingByIdAsync(bookingId);
+                if (booking == null)
+                {
+                    return NotFound(new { success = false, message = $"Booking with ID {bookingId} not found" });
+                }
+
+                if (booking.UserId != userId)
+                {
+                    return BadRequest(new { success = false, message = "You are not authorized to cancel this booking" });
+                }
+
+                if (booking.Status == BookingStatus.Paid)
+                {
+                    return BadRequest(new { success = false, message = "Cannot cancel a paid booking" });
+                }
+
+                TimeSpan timeSinceCreation = DateTime.UtcNow - booking.CreatedTime;
+                if (timeSinceCreation.TotalDays > 1)
+                {
+                    return BadRequest(new { success = false, message = "Booking can only be cancelled within 24 hours of creation" });
+                }
+
+                bool result = await _bookingService.CancelBooking(bookingId, userId);
+                if (!result)
+                {
+                    return StatusCode(500, new { success = false, message = "Failed to cancel booking due to a server error" });
+                }
+
+                return Ok(new { success = true, message = "Booking cancelled successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "An error occurred while cancelling the booking", error = ex.Message });
+            }
         }
     }
 }
