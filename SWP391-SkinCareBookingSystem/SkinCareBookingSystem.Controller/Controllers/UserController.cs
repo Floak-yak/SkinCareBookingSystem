@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
@@ -135,6 +136,16 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return BadRequest("Update fail");
             }
             return Ok("Update success");
+        }
+
+        [HttpDelete("Remove")]
+        public async Task<IActionResult> RemoveUser([FromQuery] RemoveUserRequest request)
+        {
+            if (!await _userService.RemoveUser(request))
+            {
+                return BadRequest("Remove fail");
+            }
+            return Ok("Remove success");
         }
     }
 }

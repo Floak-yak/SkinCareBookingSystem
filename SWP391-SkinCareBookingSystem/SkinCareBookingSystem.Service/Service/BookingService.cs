@@ -71,7 +71,16 @@ namespace SkinCareBookingSystem.Service.Service
                 return null;
             }
 
-            if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift == date) == null)
+            if (schedule.ScheduleLogs is null)
+            {
+                ScheduleLog scheduleLog = new ScheduleLog()
+                {
+                    TimeStartShift = date,
+                    WorkingTime = skincareService.WorkTime
+                };
+                schedule.ScheduleLogs.Add(scheduleLog);
+            }
+            else if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift == date) == null)
             {
                 ScheduleLog scheduleLog = new ScheduleLog()
                 {
@@ -101,6 +110,10 @@ namespace SkinCareBookingSystem.Service.Service
                 User = user,
                 UserId = request.UserId,
             };
+            if (booking.BookingServiceSchedules is null)
+            {
+                booking.BookingServiceSchedules = new List<BookingServiceSchedule>();
+            }
             booking.BookingServiceSchedules.Add(bookingService);
 
             _bookingRepository.CreateBooking(booking);

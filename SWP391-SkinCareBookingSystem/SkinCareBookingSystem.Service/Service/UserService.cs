@@ -190,6 +190,15 @@ namespace SkinCareBookingSystem.Service.Service
             return false;
         }
 
+        public async Task<bool> RemoveUser(RemoveUserRequest request)
+        {
+            User user = await _userRepository.GetUserById(request.UserId);
+            if (user == null) return false;
+            user.IsDeleted = true;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
+        }
+
         public async Task<bool> ResetPassword(string email)
         {
             User user = await _userRepository.GetUserByEmail(email);
