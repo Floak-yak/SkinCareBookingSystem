@@ -22,7 +22,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<string> GenerateToken(User user, int extraDayExpired);
         public void SendEmail(string email, string userName, string token);
         public void SendEmail(string email, string userName, int newPassword);
-        public Task<bool> UpdateRole(int userId ,Role role);
+        public Task<bool> UpdateRole(int userId ,Role role, int categoryId);
         public Task<List<UserResponse>> GetStaffs();
         public Task<List<UserResponse>> GetCustomers();
         public Task<List<SkinTherapistResponse>> GetSkinTherapists();
