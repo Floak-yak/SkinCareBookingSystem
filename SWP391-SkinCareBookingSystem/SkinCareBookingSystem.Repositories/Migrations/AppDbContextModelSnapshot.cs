@@ -267,6 +267,40 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("ScheduleLogs");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.ServicesDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ImageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImageId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("ServicesDetails");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.Property<int>("Id")
@@ -535,6 +569,25 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Schedule");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.ServicesDetail", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "SkincareService")
+                        .WithMany("ServicesDetails")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Image");
+
+                    b.Navigation("SkincareService");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Category", "Category")
@@ -626,6 +679,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", b =>
                 {
                     b.Navigation("BookingServiceSchedules");
+
+                    b.Navigation("ServicesDetails");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.User", b =>

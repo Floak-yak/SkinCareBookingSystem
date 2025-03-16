@@ -22,6 +22,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
 
         [Range(1, 90, ErrorMessage = "Work time must be between 1 and 90 minutes")]
         public int WorkTime { get; set; } //Minute
+        public ICollection<ServicesDetail> ServicesDetails { get; set; }
         public ICollection<BookingServiceSchedule> BookingServiceSchedules { get; set; }
         #endregion
     }

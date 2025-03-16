@@ -26,6 +26,7 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<BookingServiceSchedule> BookingServiceSchedules { get; set; }
         public DbSet<Image> Images { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<ServicesDetail> ServicesDetails { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -88,6 +89,12 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .HasOne(sl => sl.Schedule)
                 .WithMany(s => s.ScheduleLogs)
                 .HasForeignKey(sl => sl.ScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ServicesDetail>()
+                .HasOne(sd => sd.SkincareService)
+                .WithMany(s => s.ServicesDetails)
+                .HasForeignKey(sd => sd.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<BookingServiceSchedule>()

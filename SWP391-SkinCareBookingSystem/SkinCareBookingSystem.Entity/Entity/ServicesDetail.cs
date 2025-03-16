@@ -14,5 +14,6 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int Duration { get; set; }
         public Image Image { get; set; }
         public int ServiceId { get; set; }
+        public SkincareService SkincareService { get; set; }
     }
 }
