@@ -54,6 +54,28 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return BadRequest("Update booking date failed");
             return Ok("Booking date updated successfully");
         }
+        
+        [HttpPut("Update")]
+        public async Task<IActionResult> UpdateBooking([FromBody] UpdateBookingRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Date) || string.IsNullOrEmpty(request.Time))
+                return BadRequest("Date and time are required");
+
+            try
+            {
+                if (!await _bookingService.UpdateBookingDateTime(request))
+                    return BadRequest("Update booking failed");
+                return Ok("Booking updated successfully");
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Invalid date or time format");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [HttpDelete("Cancel")]
         public async Task<IActionResult> CancelBooking(int bookingId, int userId)

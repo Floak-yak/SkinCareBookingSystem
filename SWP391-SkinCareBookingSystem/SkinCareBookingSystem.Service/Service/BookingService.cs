@@ -188,6 +188,33 @@ namespace SkinCareBookingSystem.Service.Service
             return await _bookingRepository.DeleteBooking(bookingId);
         }
 
+        public async Task<bool> UpdateBookingDateTime(UpdateBookingRequest request)
+        {
+            Booking booking = await _bookingRepository.GetBookingByIdAsync(request.BookingId);
+            if (booking is null)
+                return false;
+
+            User therapist = await _userRepository.GetUserById(request.SkinTherapistId);
+            if (therapist == null || !therapist.IsVerified || therapist.Role != (Role)3)
+                return false;
+
+            TimeOnly time = TimeOnly.Parse(request.Time);
+            DateTime date = DateTime.Parse(request.Date);
+            date = date.AddHours(time.Hour).AddMinutes(time.Minute);
+
+            booking.Date = date;
+            
+            var bookingServiceSchedule = booking.BookingServiceSchedules.FirstOrDefault();
+            if (bookingServiceSchedule != null && bookingServiceSchedule.ScheduleLog != null)
+            {
+                bookingServiceSchedule.ScheduleLog.TimeStartShift = date;
+                bookingServiceSchedule.ScheduleLog.Schedule.UserId = request.SkinTherapistId;
+            }
+
+            _bookingRepository.UpdateBooking(booking);
+            return await _bookingRepository.SaveChange();
+        }
+
         public async Task<User> RandomSkinTherapist(List<User> listUser)
         {
             if (listUser.Count == 0)
