@@ -26,14 +26,16 @@ namespace SkinCareBookingSystem.Service.Service
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly IImageRepository _imageRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper, IImageRepository imageRepository)
+        public UserService(IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IConfiguration config, IMapper mapper, IImageRepository imageRepository, ICategoryRepository categoryRepository)
         {
             _config = config;
             _passwordHasher = passwordHasher;
             _userRepository = userRepository;
             _mapper = mapper;
             _imageRepository = imageRepository;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<bool> ChangePassword(int userId, string oldPassword, string newPassword)
@@ -450,12 +452,21 @@ namespace SkinCareBookingSystem.Service.Service
             Console.WriteLine("Email sent successfully!");
         }
 
-        public async Task<bool> UpdateRole(int userId, Role role)
+        public async Task<bool> UpdateRole(int userId, Role role, int categoryId)
         {
             User user = await _userRepository.GetUserById(userId);
             if (user is null)
                 return false;
             user.Role = role;
+            if (role == Role.SkinTherapist)
+                if (categoryId <= 0 || _categoryRepository.GetCategoryById(categoryId).Result is null)
+                {
+                    return false;
+                }else
+                {
+                    user.CategoryId = categoryId;
+                    user.Category = await _categoryRepository.GetCategoryById(categoryId);
+                }
             _userRepository.Update(user);
             return await _userRepository.SaveChange();
         }
