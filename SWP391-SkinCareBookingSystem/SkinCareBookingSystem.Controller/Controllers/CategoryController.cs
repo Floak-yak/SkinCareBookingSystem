@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Interfaces;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.Controller.Controllers
@@ -17,7 +19,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
         public CategoryController(ICategoryService categoryService)
         {
-            _categoryService = categoryService;
+            _categoryService = categoryService ?? throw new ArgumentNullException(nameof(categoryService));
         }
 
         [HttpGet]
@@ -27,28 +29,61 @@ namespace SkinCareBookingSystem.Controller.Controllers
             try
             {
                 var categories = await _categoryService.GetCategories();
-                return Ok(categories);
+                if (categories == null || !categories.Any())
+                {
+                    return NotFound(new { success = false, message = "No categories found" });
+                }
+                return Ok(new { success = true, data = categories });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                Console.WriteLine($"Error in GetCategories: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
             }
         }
 
         [HttpGet("GetCategoryById")]
         public async Task<IActionResult> GetCategoryById(int categoryId)
         {
-            var category = await _categoryService.GetCategoryById(categoryId);
-            if (category == null) return NotFound();
-            return Ok(category);
+            try
+            {
+                var category = await _categoryService.GetCategoryById(categoryId);
+                if (category == null)
+                {
+                    return NotFound(new { success = false, message = "Category not found" });
+                }
+                return Ok(new { success = true, data = category });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetCategoryById: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
         }
 
         [HttpPost("Create")]
         public async Task<IActionResult> CreateCategory(string categoryName, int userId)
         {
-            if (!await _categoryService.CreateCategory(categoryName, userId))
-                return BadRequest("Create failed");
-            return Ok("Create Success");
+            try
+            {
+                if (string.IsNullOrEmpty(categoryName))
+                {
+                    return BadRequest(new { success = false, message = "Category name cannot be empty" });
+                }
+
+                if (!await _categoryService.CreateCategory(categoryName, userId))
+                {
+                    return BadRequest(new { success = false, message = "Failed to create category" });
+                }
+
+                return Ok(new { success = true, message = "Category created successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CreateCategory: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
         }
 
         [HttpPut("UpdateCategory")]
