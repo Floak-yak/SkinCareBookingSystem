@@ -35,8 +35,9 @@ namespace SkinCareBookingSystem.Service.Service
                 throw new InvalidOperationException(nameof(request.UserId));
 
             User skintherapist = await _userRepository.GetUserById(request.SkinTherapistId);
-            if (!skintherapist.IsVerified || skintherapist.Role != (Role)3)
-                throw new InvalidOperationException("Invalid: " + nameof(skincareService));
+            if (request.SkinTherapistId != 0)
+                if (!skintherapist.IsVerified || skintherapist.Role != (Role)3)
+                    throw new InvalidOperationException("Invalid: " + nameof(skincareService));
 
             TimeOnly time = TimeOnly.Parse(request.Time.ToString());
             DateTime date = DateTime.Parse(request.Date);
@@ -73,6 +74,7 @@ namespace SkinCareBookingSystem.Service.Service
 
             if (schedule.ScheduleLogs is null)
             {
+                schedule.ScheduleLogs = new List<ScheduleLog>();
                 ScheduleLog scheduleLog = new ScheduleLog()
                 {
                     TimeStartShift = date,
@@ -190,6 +192,8 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<User> RandomSkinTherapist(List<User> listUser)
         {
+            if (listUser is null)
+                return null;
             if (listUser.Count == 0)
                 return null;
             return listUser[new Random().Next(0, listUser.Count)];

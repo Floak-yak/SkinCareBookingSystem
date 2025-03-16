@@ -103,17 +103,21 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<List<User>> GetSkinTherapistsFreeInTimeSpan(DateTime dateTime, int Duration, int categoryId)
         {
             DateTime endDate = dateTime.AddMinutes(Duration);
-            List<User> users = await _context.Users.Include(u => u.Schedules).Where(u => u.CategoryId == categoryId).ToListAsync();
+            List<User> users = await _context.Users.Where(u => u.CategoryId == categoryId).ToListAsync();
             List<User> removeUser = new List<User>();
             if (users.Count == 0)
                 return null;
             foreach (var user in users)
             {
-                if (user.Schedules
+                List<Schedule> schedules = await _context.Schedules
+                    .Include(s => s.ScheduleLogs)
+                    .Where(s => s.UserId == user.Id).ToListAsync();
+                if (schedules is null) continue;
+                if (schedules
                     .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs.Where(sl => sl.TimeStartShift == dateTime) != null)
                     .FirstOrDefault() != null)
                     removeUser.Add(user);
-                if (user.Schedules
+                else if (schedules
                     .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs
                     .Where(sl =>  new DateTime().AddMonths(sl.TimeStartShift.Month)
                         .AddYears(sl.TimeStartShift.Year)
