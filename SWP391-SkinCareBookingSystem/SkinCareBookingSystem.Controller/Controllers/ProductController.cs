@@ -90,5 +90,15 @@ namespace SkinCareBookingSystem.Controller.Controllers
 		{
 			return Ok(await _productService.RemoveProduct(productId));
 		}
-	}
+
+        [HttpPut("UpdateProduct")]
+        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductRequest request)
+        {
+            if (!await _productService.UpdateProduct(request))
+            {
+                return BadRequest("Update fail");
+            }
+            return Ok("Update success");
+        }
+    }
 }

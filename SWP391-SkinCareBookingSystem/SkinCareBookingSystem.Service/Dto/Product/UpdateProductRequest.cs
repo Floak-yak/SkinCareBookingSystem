@@ -5,15 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SkinCareBookingSystem.Service.Dto
+namespace SkinCareBookingSystem.Service.Dto.Product
 {
-    public class GetProductResponse
+    public class UpdateProductRequest
     {
-        public int Id { get; set; }
+        public int productId { get; set; }
         public string ProductName { get; set; }
-        public int CategoryId { get; set; }
-        public DateTime CreatedDate { get; set; }
         public Decimal Price { get; set; }
-        public Image? Image { get; set; }
+        public int CategoryId { get; set; }
+        public int ImageId { get; set; }
     }
 }
