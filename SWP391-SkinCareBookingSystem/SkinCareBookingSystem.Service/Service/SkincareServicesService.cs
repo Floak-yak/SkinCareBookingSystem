@@ -77,6 +77,8 @@ namespace SkinCareBookingSystem.Service.Service
                     Console.WriteLine($"Category with ID {categoryId} not found");
                     return false;
                 }
+                if (price < 100000 || price > 5000000)
+                    return false;
 
                 if (await _skincareServicesRepository.IsServiceExist(serviceName))
                 {
