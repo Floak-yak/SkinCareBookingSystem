@@ -39,9 +39,29 @@ namespace SkinCareBookingSystem.Service.Service
             return await _categoryRepository.GetCategoryById(categoryId);
         }
 
-        public async Task<bool> CreateCategory(string categoryName, int userId)
+        public async Task<bool> CreateCategoryUserId(string categoryName, int userId)
         {
             if (string.IsNullOrEmpty(categoryName) || userId <= 0)
+                return false;
+
+            if (!Regex.IsMatch(categoryName, @"^[a-zA-Z0-9\s]+$"))
+                return false;
+
+            if (await _categoryRepository.IsCategoryExist(categoryName))
+                return false;
+
+            Category category = new()
+            {
+                CategoryName = categoryName,
+            };
+
+            _categoryRepository.Create(category);
+            return await _categoryRepository.Savechange();
+        }
+
+        public async Task<bool> CreateCategory(string categoryName)
+        {
+            if (string.IsNullOrEmpty(categoryName))
                 return false;
 
             if (!Regex.IsMatch(categoryName, @"^[a-zA-Z0-9\s]+$"))

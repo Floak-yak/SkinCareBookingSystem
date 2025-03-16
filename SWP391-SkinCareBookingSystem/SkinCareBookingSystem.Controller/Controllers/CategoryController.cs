@@ -62,8 +62,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpPost("Create")]
-        public async Task<IActionResult> CreateCategory(string categoryName, int userId)
+        [HttpPost("CreateUserId")]
+        public async Task<IActionResult> CreateCategoryUserId(string categoryName, int userId)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest(new { success = false, message = "Category name cannot be empty" });
                 }
 
-                if (!await _categoryService.CreateCategory(categoryName, userId))
+                if (!await _categoryService.CreateCategoryUserId(categoryName, userId))
                 {
                     return BadRequest(new { success = false, message = "Failed to create category" });
                 }
@@ -82,6 +82,30 @@ namespace SkinCareBookingSystem.Controller.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in CreateCategory: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
+        }
+
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateCategory(string categoryName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(categoryName))
+                {
+                    return BadRequest(new { success = false, message = "Category name cannot be empty" });
+                }
+
+                if (!await _categoryService.CreateCategory(categoryName))
+                {
+                    return BadRequest(new { success = false, message = "Failed to create category" });
+                }
+
+                return Ok(new { success = true, message = "Category created successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CreateSimpleCategory: {ex.Message}");
                 return StatusCode(500, new { success = false, message = "Internal server error" });
             }
         }

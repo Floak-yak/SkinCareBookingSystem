@@ -9,7 +9,8 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<List<Category>> GetCategories();
         Task<Category> GetCategoryById(int categoryId);
         Task<Category> GetCategoryByName(string categoryName);
-        Task<bool> CreateCategory(string categoryName, int userId);
+        Task<bool> CreateCategoryUserId(string categoryName, int userId);
+        Task<bool> CreateCategory(string categoryName);
         Task<bool> UpdateCategory(int categoryId, string newCategoryName);
         Task<bool> DeleteCategory(int categoryId);
         Task<bool> IsCategoryExist(string categoryName);
