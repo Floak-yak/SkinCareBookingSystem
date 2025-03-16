@@ -19,5 +19,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<bool> UpdateBookingDate(int bookingId, int userId, DateTime newDate);
         public Task<bool> CancelBooking(int bookingId, int userId);
         public Task<User> RandomSkinTherapist(List<User> listUser);
+        public Task<bool> UpdateBookingDateTime(UpdateBookingRequest request);
     }
 }

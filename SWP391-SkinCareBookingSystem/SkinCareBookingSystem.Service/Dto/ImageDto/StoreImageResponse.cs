@@ -8,6 +8,6 @@ namespace SkinCareBookingSystem.Service.Dto.ImageDto
 {
     public class StoreImageResponse
     {
-        public int Id { get; set; }
+        public int ImageId { get; set; }
     }
 }

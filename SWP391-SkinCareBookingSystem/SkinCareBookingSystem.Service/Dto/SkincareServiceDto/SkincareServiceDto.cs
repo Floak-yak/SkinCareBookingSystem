@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace SkinCareBookingSystem.Service.Dto
+namespace SkinCareBookingSystem.Service.Dto.SkincareServiceDto
 {
     public class SkincareServiceCreateDTO
     {
@@ -13,8 +13,6 @@ namespace SkinCareBookingSystem.Service.Dto
         [StringLength(500)]
         public string ServiceDescription { get; set; }
 
-        public string ImageLink { get; set; }
-
         [Required]
         [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
@@ -25,6 +23,8 @@ namespace SkinCareBookingSystem.Service.Dto
         [Required]
         [Range(1, 90, ErrorMessage = "Work time must be between 1 and 90 minutes")]
         public int WorkTime { get; set; }
+
+        public int? ImageId { get; set; }
     }
 
     public class SkincareServiceUpdateDTO
@@ -35,8 +35,6 @@ namespace SkinCareBookingSystem.Service.Dto
         [StringLength(500)]
         public string ServiceDescription { get; set; }
 
-        public string ImageLink { get; set; }
-
         [Range(1, int.MaxValue)]
         public int? CategoryId { get; set; }
 
@@ -44,5 +42,7 @@ namespace SkinCareBookingSystem.Service.Dto
 
         [Range(1, 90, ErrorMessage = "Work time must be between 1 and 90 minutes")]
         public int? WorkTime { get; set; }
+
+        public int? ImageId { get; set; }
     }
-} 
+}
