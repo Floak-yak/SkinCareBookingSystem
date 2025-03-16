@@ -14,28 +14,86 @@ namespace SkinCareBookingSystem.Service.Service
     public class SkincareServicesService : ISkincareServicesService
     {
         private readonly ISkincareServiceRepository _skincareServicesRepository;
+        private readonly IImageRepository _imageRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public SkincareServicesService(ISkincareServiceRepository skincareServiceRepository)
+        public SkincareServicesService(
+            ISkincareServiceRepository skincareServiceRepository, 
+            IImageRepository imageRepository,
+            ICategoryRepository categoryRepository)
         {
             _skincareServicesRepository = skincareServiceRepository;
+            _imageRepository = imageRepository;
+            _categoryRepository = categoryRepository;
         }
+
         public async Task<bool> Create(string serviceName, string serviceDescription, decimal price, int workTime, int categoryId, int? imageId)
         {
             try
             {
-                if (string.IsNullOrEmpty(serviceName) || serviceName.Length > 100)
+                // Log input values
+                Console.WriteLine($"Creating service with: Name={serviceName}, Desc={serviceDescription}, Price={price}, WorkTime={workTime}, CategoryId={categoryId}, ImageId={imageId}");
+
+                if (string.IsNullOrEmpty(serviceName))
+                {
+                    Console.WriteLine("Service name is null or empty");
                     return false;
-                if (string.IsNullOrEmpty(serviceDescription) || serviceDescription.Length > 500)
+                }
+                if (serviceName.Length > 100)
+                {
+                    Console.WriteLine("Service name is too long");
                     return false;
+                }
+                if (string.IsNullOrEmpty(serviceDescription))
+                {
+                    Console.WriteLine("Service description is null or empty");
+                    return false;
+                }
+                if (serviceDescription.Length > 500)
+                {
+                    Console.WriteLine("Service description is too long");
+                    return false;
+                }
                 if (price <= 0)
+                {
+                    Console.WriteLine("Price must be greater than 0");
                     return false;
+                }
                 if (workTime < 1 || workTime > 90)
+                {
+                    Console.WriteLine("Work time must be between 1 and 90 minutes");
                     return false;
+                }
                 if (categoryId <= 0)
+                {
+                    Console.WriteLine("Category ID must be greater than 0");
                     return false;
+                }
+
+                // Validate category exists
+                var category = await _categoryRepository.GetCategoryById(categoryId);
+                if (category == null)
+                {
+                    Console.WriteLine($"Category with ID {categoryId} not found");
+                    return false;
+                }
 
                 if (await _skincareServicesRepository.IsServiceExist(serviceName))
+                {
+                    Console.WriteLine("Service with this name already exists");
                     return false;
+                }
+                
+                // Validate that the image exists if an ID is provided
+                if (imageId.HasValue)
+                {
+                    var image = await _imageRepository.GetImageById(imageId.Value);
+                    if (image == null)
+                    {
+                        Console.WriteLine($"Image with ID {imageId.Value} not found");
+                        return false;
+                    }
+                }
                 
                 SkincareService skincareServices = new()
                 {
@@ -44,13 +102,21 @@ namespace SkinCareBookingSystem.Service.Service
                     Price = price,
                     WorkTime = workTime,
                     CategoryId = categoryId,
+                    ImageId = imageId ?? 1
                 };
 
                 _skincareServicesRepository.Create(skincareServices);
-                return await _skincareServicesRepository.SaveChange();
+                var saveResult = await _skincareServicesRepository.SaveChange();
+                if (!saveResult)
+                {
+                    Console.WriteLine("Failed to save changes to database");
+                }
+                return saveResult;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error creating service: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -182,6 +248,11 @@ namespace SkinCareBookingSystem.Service.Service
                     if (categoryId.Value <= 0)
                         return false;
                     skincareService.CategoryId = categoryId.Value;
+                }
+
+                if (imageId.HasValue)
+                {
+                    skincareService.ImageId = imageId.Value;
                 }
 
                 _skincareServicesRepository.Update(skincareService);
