@@ -25,34 +25,46 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 		public async Task<List<Product>> Search(string productName) => 
             await _context.Products
                 .Where(p => p.ProductName.Contains(productName))
+                .Include(p => p.Category)
+                .Include(p => p.Image)
                 .OrderBy(p => p.CreatedDate)
                 .ToListAsync();
 
         public async Task<List<Product>> Search(decimal minPrice, decimal maxPrice) =>
             await _context.Products
                 .Where(p => p.Price <= maxPrice && p.Price >= minPrice)
+                .Include(p => p.Category)
+                .Include(p => p.Image)
                 .OrderBy(p => p.CreatedDate)
                 .ToListAsync();
 
         public async Task<List<Product>> Search(decimal underPrice) =>
             await _context.Products
                 .Where(p => p.Price <= underPrice)
+                .Include(p => p.Category)
+                .Include(p => p.Image)
                 .OrderBy(p => p.CreatedDate)
                 .ToListAsync();
 
         public async Task<List<Product>> Search(int categoryId) =>
             await _context.Products
                 .Where(p => p.CategoryId == categoryId)
+                .Include(p => p.Category)
+                .Include(p => p.Image)
                 .OrderBy(p => p.CreatedDate)
                 .ToListAsync();
 
         public async Task<List<Product>> SearchAscPrice() =>
             await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Image)
                 .OrderBy(p => p.Price)
                 .ToListAsync();
 
         public async Task<List<Product>> SearchDescPrice() =>
             await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Image)
                 .OrderByDescending(p => p.Price)
                 .ToListAsync();
 		public async Task<bool> SaveChange() =>
