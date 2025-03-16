@@ -13,5 +13,6 @@ namespace SkinCareBookingSystem.Service.Dto.User
         public string Email { get; set; }
         public int Role {  get; set; }
         public string PhoneNumber { get; set; }
+        public int CategoryId { get; set; }
     }
 }

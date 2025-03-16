@@ -101,10 +101,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ContentType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ImageId")
+                    b.Property<int?>("ImageId")
                         .HasColumnType("int");
 
                     b.Property<int>("Position")
@@ -169,6 +166,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.Property<int>("PostStatus")
                         .HasColumnType("int");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -383,6 +384,9 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<int?>("ImageId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
 
@@ -454,9 +458,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
                         .WithMany()
-                        .HasForeignKey("ImageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ImageId");
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Post", "Post")
                         .WithMany("Contents")

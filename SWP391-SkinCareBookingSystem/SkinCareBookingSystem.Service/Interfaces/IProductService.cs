@@ -18,5 +18,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<List<Product>> SearchAscPrice();       
         public Task<bool> AddProducts(List<CreateProductRequest> products);
         public Task<bool> RemoveProduct(int productId);
+        public Task<bool> UpdateProduct(UpdateProductRequest request);
     }
 }

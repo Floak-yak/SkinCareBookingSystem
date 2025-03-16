@@ -15,6 +15,7 @@ using SkinCareBookingSystem.Repositories.Repositories;
 using AutoMapper;
 using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.User;
+using Azure.Core;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -45,30 +46,39 @@ namespace SkinCareBookingSystem.Service.Service
             return await _userRepository.SaveChange();
         }
 
-        public async Task<CreateAccountResponse> CreateAccount(Role role, string email, string fullName, DateTime YearOfBirth, string PhoneNumber)
+        public async Task<CreateAccountResponse> CreateAccount(CreateAccountRequest request)
         {
-            if (string.IsNullOrEmpty(fullName)  || string.IsNullOrEmpty(email) 
-                || string.IsNullOrEmpty(PhoneNumber)
-                || YearOfBirth.Year > DateTime.UtcNow.Year
-                || DateTime.UtcNow.Year - YearOfBirth.Year > 120)
+            if (string.IsNullOrEmpty(request.FullName)  || string.IsNullOrEmpty(request.Email) 
+                || string.IsNullOrEmpty(request.PhoneNumber)
+                || request.YearOfBirth.Year > DateTime.UtcNow.Year
+                || DateTime.UtcNow.Year - request.YearOfBirth.Year > 120)
                 return null;
 
             string emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
-            if (!Regex.IsMatch(email, emailPattern))
+            if (!Regex.IsMatch(request.Email, emailPattern))
                 return null;
 
-            if (await _userRepository.GetUserByEmail(email) != null)
+            string phoneNumberPattern = @"^0\d{9}$";
+            if (!Regex.IsMatch(request.PhoneNumber, phoneNumberPattern))
+                return null;
+
+            string yearOfBirthPattern = @"^(18[8-9]\d|19\d{2}|20[0-2]\d)$";
+            if (!Regex.IsMatch(request.YearOfBirth.Date.ToString("d"), yearOfBirthPattern))
+                return null;
+
+            if (await _userRepository.GetUserByEmail(request.Email) != null)
                 return null;
 
             User user = new()
             {
-                Role = role,
-                Email = email,
-                FullName = fullName,
-                YearOfBirth = YearOfBirth,
-                PhoneNumber = PhoneNumber,
+                Role = (Role)request.Role,
+                Email = request.Email,
+                FullName = request.FullName,
+                YearOfBirth = request.YearOfBirth,
+                PhoneNumber = request.PhoneNumber,
                 IsVerified = true,      
-                VerifyToken = ""
+                VerifyToken = "",
+                CategoryId = request.CategoryId,
             };
 
             string password = new Random().Next(11234500, 2131232312).ToString();
@@ -162,6 +172,14 @@ namespace SkinCareBookingSystem.Service.Service
 
             string emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
             if (!Regex.IsMatch(email, emailPattern))
+                return false;
+
+            string phoneNumberPattern = @"^0\d{9}$";
+            if (!Regex.IsMatch(PhoneNumber, phoneNumberPattern))
+                return false;
+
+            string yearOfBirthPattern = @"^(18[8-9]\d|19\d{2}|20[0-2]\d)$";
+            if (!Regex.IsMatch(YearOfBirth.Date.ToString("d"), yearOfBirthPattern))
                 return false;
 
             if (await _userRepository.GetUserByEmail(email) != null) 

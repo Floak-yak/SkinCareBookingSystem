@@ -71,7 +71,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             if (request is null)
                 return BadRequest(new ArgumentNullException().Message);           
 
-            return Ok(await _userService.CreateAccount((Role)request.Role, request.Email, request.FullName, request.YearOfBirth, request.PhoneNumber));
+            return Ok(await _userService.CreateAccount(request));
         }
 
         [HttpPut]
