@@ -18,6 +18,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string? VerifyToken { get; set; }
         public bool IsVerified { get; set; }
         public string? Description { get; set; }
+        public bool IsDeleted { get; set; }
 
         #region Relationship
         public int? CategoryId { get; set; }

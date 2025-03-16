@@ -43,7 +43,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             
             if (booking is null)
                 return BadRequest("Create fail");
-            return Ok(_transactionService.CreateTransaction(booking));
+            return Ok(await _transactionService.CreateTransaction(booking));
         }
 
         [HttpPut("UpdateDate")]

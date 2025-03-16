@@ -13,6 +13,6 @@ namespace SkinCareBookingSystem.Service.Dto.Product
 		public DateTime CreatedDate { get; set; }
 		public Decimal Price { get; set; }
 		public int CategoryId { get; set; }
-		public int ImageId { get; set; }
+		public Image? Image { get; set; }
 	}
 }

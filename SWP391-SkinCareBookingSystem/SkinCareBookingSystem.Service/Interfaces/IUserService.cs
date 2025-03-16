@@ -28,5 +28,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<List<SkinTherapistResponse>> GetSkinTherapists();
         public Task<bool> UploadAvatarForUser(UploadAvatarForUserRequest request);
         public Task<bool> UpdateUserDescription(UpdateUserDescriptionRequest request);
+        public Task<bool> RemoveUser(RemoveUserRequest request);
     }
 }
