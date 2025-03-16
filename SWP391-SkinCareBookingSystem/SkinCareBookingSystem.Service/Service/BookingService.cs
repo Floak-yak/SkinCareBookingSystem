@@ -34,9 +34,9 @@ namespace SkinCareBookingSystem.Service.Service
             if (user is null)
                 throw new InvalidOperationException(nameof(request.UserId));
 
-            User skintherapist = await _userRepository.GetUserById(request.UserId);
+            User skintherapist = await _userRepository.GetUserById(request.SkinTherapistId);
             if (!skintherapist.IsVerified || skintherapist.Role != (Role)3)
-                throw new InvalidOperationException(nameof(skincareService));
+                throw new InvalidOperationException("Invalid: " + nameof(skincareService));
 
             TimeOnly time = TimeOnly.Parse(request.Time.ToString());
             DateTime date = DateTime.Parse(request.Date);
