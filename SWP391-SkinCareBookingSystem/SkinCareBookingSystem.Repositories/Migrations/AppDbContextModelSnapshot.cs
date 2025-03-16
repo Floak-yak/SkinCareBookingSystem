@@ -282,7 +282,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<int>("Duration")
                         .HasColumnType("int");
 
-                    b.Property<int>("ImageId")
+                    b.Property<int?>("ImageId")
                         .HasColumnType("int");
 
                     b.Property<int>("ServiceId")
@@ -574,8 +574,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
                         .WithMany()
                         .HasForeignKey("ImageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "SkincareService")
                         .WithMany("ServicesDetails")
