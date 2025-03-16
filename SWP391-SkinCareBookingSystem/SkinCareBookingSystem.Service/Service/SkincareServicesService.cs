@@ -33,6 +33,8 @@ namespace SkinCareBookingSystem.Service.Service
                     return false;
                 if (categoryId <= 0)
                     return false;
+                if (price < 100000 || price > 500000)
+                    return false;
 
                 if (await _skincareServicesRepository.IsServiceExist(serviceName))
                     return false;
