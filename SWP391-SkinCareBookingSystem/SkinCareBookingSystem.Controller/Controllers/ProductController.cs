@@ -15,11 +15,13 @@ namespace SkinCareBookingSystem.Controller.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IProductService _productService;
+        private readonly ITransactionService _transactionService;
 
-        public ProductController(IProductService productService, IMapper mapper)
+        public ProductController(IProductService productService, IMapper mapper, ITransactionService transactionService)
         {
             _mapper = mapper;
             _productService = productService;
+            _transactionService = transactionService;
         }
 
         [HttpGet("IncludeName")]
@@ -99,6 +101,19 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return BadRequest("Update fail");
             }
             return Ok("Update success");
+        }
+
+        [HttpPost("")]
+        public async Task<IActionResult> CheckoutCart([FromBody] CheckoutCartRequest request)
+        {
+            if (request is null) return BadRequest("Request is null");
+            if (request.checkoutProductInformation is null) return BadRequest("Request is null");
+            foreach (var item in request.checkoutProductInformation)
+            {
+                if (item.Amount <= 0 || item.Id <= 0)
+                    return BadRequest("Invalid product");
+            }
+            return Ok(await _transactionService.CreateTransaction(request));
         }
     }
 }
