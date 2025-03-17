@@ -11,13 +11,14 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int Id { get; set; }
         public Decimal TotalMoney { get; set; }
         public DateTime CreatedDate { get; set; }
-        public TranctionType TranctionType { get; set; }
+        public TranctionStatus TranctionStatus { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
     }
-    public enum TranctionType
+    public enum TranctionStatus
     {
-        AccountAssignment = 1,
-        UnDefined = 0,
+        Paid = 1,
+        Pending = 0,
+        Cancel = - 1,
     }
 }
