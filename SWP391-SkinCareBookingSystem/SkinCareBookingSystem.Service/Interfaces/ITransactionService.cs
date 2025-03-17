@@ -13,5 +13,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
     {
         public Task<CreatePaymentResult> CreateTransaction(Booking booking);
         public Task<CreatePaymentResult> CreateTransaction(CheckoutCartRequest request);
+        public Task<bool> UpdateTransaction(int transactionId, int status);
     }
 }
