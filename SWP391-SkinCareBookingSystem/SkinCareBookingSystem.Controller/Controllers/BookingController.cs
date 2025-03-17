@@ -23,12 +23,16 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("Gets")]
-        public async Task<List<GetBookingsResponse>> Gets()
+        public async Task<IActionResult> Gets()
         {
-            var result = _mapper.Map<List<GetBookingsResponse>>(await _bookingService.GetBookingsAsync());
-            return result;
-        }
-
+            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
+            if (responses is null)
+            {
+                return NotFound();
+            }
+            return Ok(responses);
+        } 
+            
         [HttpPost("Create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {

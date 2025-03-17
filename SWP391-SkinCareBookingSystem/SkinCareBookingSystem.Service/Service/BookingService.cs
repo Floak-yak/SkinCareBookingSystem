@@ -1,6 +1,8 @@
-﻿using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using AutoMapper;
+using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
+using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.BookingDto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
@@ -13,12 +15,16 @@ namespace SkinCareBookingSystem.Service.Service
 {
     public class BookingService : IBookingService
     {
+        private readonly IScheduleLogRepository _scheduleLogRepository;
+        private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly ISkincareServiceRepository _skincareServiceRepository;
 
-        public BookingService(IBookingRepository bookingRepository, ISkincareServiceRepository skincareServiceRepository, IUserRepository userRepository)
+        public BookingService(IBookingRepository bookingRepository, ISkincareServiceRepository skincareServiceRepository, IUserRepository userRepository, IMapper mapper, IScheduleLogRepository scheduleLogRepository)
         {
+            _scheduleLogRepository = scheduleLogRepository;
+            _mapper = mapper;
             _userRepository = userRepository;
             _bookingRepository = bookingRepository;
             _skincareServiceRepository = skincareServiceRepository;
@@ -133,8 +139,40 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<Booking> GetBookingByIdAsync(int bookingId) =>
             await _bookingRepository.GetBookingByIdAsync(bookingId);
 
-        public async Task<List<Booking>> GetBookingsAsync() =>
-            await _bookingRepository.GetBookingsAsync();
+        public async Task<List<GetBookingsResponse>> GetBookingsAsync()
+        {
+            List<Booking> bookings = await _bookingRepository.GetBookingsAsync();
+            if (bookings is null)
+                return null;
+            List<GetBookingsResponse> result = new();
+            foreach (Booking booking in bookings)
+            {
+                SkincareService service = await _skincareServiceRepository
+                    .GetServiceById(booking.BookingServiceSchedules
+                    .FirstOrDefault(b => b.BookingId == booking.Id).ServiceId);
+                if (service is null)
+                    continue;
+                ScheduleLog log = await _scheduleLogRepository.GetScheduleLogById(booking.BookingServiceSchedules
+                    .FirstOrDefault(b => b.BookingId == booking.Id).ScheduleLogId);
+                if (log is null)
+                    continue;
+                User skintherapist = await _userRepository
+                    .GetUserById(log.Schedule.UserId);
+                GetBookingsResponse response = new()
+                {
+                    Id = booking.Id,
+                    CreatedTime = booking.CreatedTime,
+                    Date = booking.Date,
+                    Status = booking.Status,
+                    TotalPrice = booking.TotalPrice,
+                    User = _mapper.Map<ViewUser>(booking.User),
+                    ServiceName = service.ServiceName,
+                    SkintherapistName = skintherapist.FullName
+                };
+                result.Add(response);
+            }
+            return result;
+        }
 
         public async Task<List<Booking>> GetBookingsByUserIdAsync(int userId) =>
             await _bookingRepository.GetBookingsByUserIdAsync(userId);

@@ -14,6 +14,8 @@ namespace SkinCareBookingSystem.Service.Dto
         public DateTime Date { get; set; }
         public decimal TotalPrice { get; set; }
         public BookingStatus Status { get; set; }
+        public string ServiceName { get; set; }
+        public string SkintherapistName { get; set; }
         public ViewUser User { get; set; }
     }
 }
