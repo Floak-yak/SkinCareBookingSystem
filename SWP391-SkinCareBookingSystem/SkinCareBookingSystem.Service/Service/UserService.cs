@@ -16,6 +16,7 @@ using AutoMapper;
 using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.User;
 using Azure.Core;
+using System.Data;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -64,7 +65,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (!Regex.IsMatch(request.PhoneNumber, phoneNumberPattern))
                 return null;
 
-            if (DateTime.Now.Year - request.YearOfBirth.Year > 120 || request.YearOfBirth.Year - DateTime.Now.Year < 4)
+            if (DateTime.Now.Year - request.YearOfBirth.Year > 120 || DateTime.Now.Year - request.YearOfBirth.Year < 4)
                 return null;
 
             if (await _userRepository.GetUserByEmail(request.Email) != null)
@@ -79,8 +80,18 @@ namespace SkinCareBookingSystem.Service.Service
                 PhoneNumber = request.PhoneNumber,
                 IsVerified = true,      
                 VerifyToken = "",
-                CategoryId = request.CategoryId,
             };
+
+            if (user.Role == Role.SkinTherapist)
+                if (request.CategoryId <= 0 || _categoryRepository.GetCategoryById(request.CategoryId).Result is null)
+                {
+                    return null;
+                }
+                else
+                {
+                    user.CategoryId = request.CategoryId;
+                    user.Category = await _categoryRepository.GetCategoryById(request.CategoryId);
+                }
 
             string password = new Random().Next(11234500, 2131232312).ToString();
 
