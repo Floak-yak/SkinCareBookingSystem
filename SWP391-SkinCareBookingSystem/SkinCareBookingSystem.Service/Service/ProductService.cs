@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.Service.Service
 {
-	public class ProductService : IProductService
+    public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
 		private readonly IMapper _mapper;
@@ -62,7 +62,10 @@ namespace SkinCareBookingSystem.Service.Service
 			return await _productRepository.SaveChange();
 		}
 
-		public async Task<bool> RemoveProduct(int productId)
+        public async Task<Product> GetProductById(int productId) =>
+            await _productRepository.GetProductById(productId);
+
+        public async Task<bool> RemoveProduct(int productId)
 		{
 			Product product = await _productRepository.GetProductById(productId);
             if (product == null) return false;
