@@ -103,7 +103,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Update success");
         }
 
-        [HttpPost("")]
+        [HttpPost("CheckoutCart")]
         public async Task<IActionResult> CheckoutCart([FromBody] CheckoutCartRequest request)
         {
             if (request is null) return BadRequest("Request is null");
@@ -114,6 +114,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest("Invalid product");
             }
             return Ok(await _transactionService.CreateTransaction(request));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromQuery] int productId)
+        {
+            return Ok(_mapper.Map<GetProductResponse>(await _productService.GetProductById(productId)));
         }
     }
 }
