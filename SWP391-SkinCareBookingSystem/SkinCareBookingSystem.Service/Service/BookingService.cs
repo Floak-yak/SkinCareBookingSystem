@@ -52,6 +52,12 @@ namespace SkinCareBookingSystem.Service.Service
 
             if (skintherapist is null)
                 skintherapist = await RandomSkinTherapist(await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId));
+            else
+            {
+                List<User> listSkintherrpist = await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId);
+                if (listSkintherrpist.Contains(skintherapist))
+                    throw new ArgumentNullException(nameof(skintherapist), "This skintherapist is busy");
+            }
 
             if (skintherapist is null)
                 throw new ArgumentNullException(nameof(skintherapist), "No free skintherapist in this time");
@@ -245,6 +251,9 @@ namespace SkinCareBookingSystem.Service.Service
             booking.Date = date;
             
             var bookingServiceSchedule = booking.BookingServiceSchedules.FirstOrDefault();
+            if (bookingServiceSchedule == null)
+                throw new ArgumentNullException("BookingServiceSchedule is null");
+
             if (bookingServiceSchedule != null && bookingServiceSchedule.ScheduleLog != null)
             {
                 bookingServiceSchedule.ScheduleLog.TimeStartShift = date;
