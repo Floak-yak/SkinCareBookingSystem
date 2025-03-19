@@ -15,14 +15,16 @@ namespace SkinCareBookingSystem.Service.Service
 {
     public class BookingService : IBookingService
     {
+        private readonly ITransactionRepository _transactionRepository;
         private readonly IScheduleLogRepository _scheduleLogRepository;
         private readonly IMapper _mapper;
         private readonly IUserRepository _userRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly ISkincareServiceRepository _skincareServiceRepository;
 
-        public BookingService(IBookingRepository bookingRepository, ISkincareServiceRepository skincareServiceRepository, IUserRepository userRepository, IMapper mapper, IScheduleLogRepository scheduleLogRepository)
+        public BookingService(IBookingRepository bookingRepository, ISkincareServiceRepository skincareServiceRepository, IUserRepository userRepository, IMapper mapper, IScheduleLogRepository scheduleLogRepository, ITransactionRepository transactionRepository)
         {
+            _transactionRepository = transactionRepository;
             _scheduleLogRepository = scheduleLogRepository;
             _mapper = mapper;
             _userRepository = userRepository;
@@ -42,7 +44,7 @@ namespace SkinCareBookingSystem.Service.Service
 
             User skintherapist = await _userRepository.GetUserById(request.SkinTherapistId);
             if (request.SkinTherapistId != 0)
-                if (!skintherapist.IsVerified || skintherapist.Role != (Role)3)
+                if (!skintherapist.IsVerified || skintherapist.Role != (Role)3 || skintherapist.CategoryId is null)
                     throw new InvalidOperationException("Invalid: " + nameof(skincareService));
 
             TimeOnly time = TimeOnly.Parse(request.Time.ToString());
@@ -55,8 +57,11 @@ namespace SkinCareBookingSystem.Service.Service
             else
             {
                 List<User> listSkintherrpist = await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId);
-                if (listSkintherrpist.Contains(skintherapist))
-                    throw new ArgumentNullException(nameof(skintherapist), "This skintherapist is busy");
+                if (listSkintherrpist is not null)
+                {
+                    if (listSkintherrpist.Contains(skintherapist))
+                        throw new ArgumentNullException(nameof(skintherapist), "This skintherapist is busy");
+                }             
             }
 
             if (skintherapist is null)
@@ -224,9 +229,16 @@ namespace SkinCareBookingSystem.Service.Service
             if (booking is null || booking.UserId != userId)
                 return false;
 
-            TimeSpan tDiff = DateTime.UtcNow - booking.CreatedTime;
-            if (tDiff.TotalDays > 1)
+            //TimeSpan tDiff = DateTime.UtcNow - booking.CreatedTime;
+            //if (tDiff.TotalDays > 1)
+            //    return false;
+
+            Transaction transaction = await _transactionRepository.GetTransactionByABookingIdAndUserId(userId, bookingId);
+            if (transaction is null) return false;
+            if (transaction.TranctionStatus is TranctionStatus.Paid)
+            {
                 return false;
+            }
 
             if (booking.Status == BookingStatus.Paid)
                 return false;

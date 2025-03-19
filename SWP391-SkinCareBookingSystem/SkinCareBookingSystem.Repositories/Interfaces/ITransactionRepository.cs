@@ -13,5 +13,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<bool> SaveChange();
         public Task<Transaction> GetById(int id);
         public void Update(Transaction transaction);    
+        public Task<Transaction> GetTransactionByABookingIdAndUserId(int userId, int bookingId);    
     }
 }
