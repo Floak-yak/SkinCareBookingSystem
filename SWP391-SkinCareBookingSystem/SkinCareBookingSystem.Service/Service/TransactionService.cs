@@ -1,9 +1,11 @@
-﻿using Net.payOS;
+﻿using AutoMapper;
+using Net.payOS;
 using Net.payOS.Types;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
 using SkinCareBookingSystem.Service.Dto.Product;
+using SkinCareBookingSystem.Service.Dto.Transaction;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -16,13 +18,17 @@ namespace SkinCareBookingSystem.Service.Service
 {
     public class TransactionService : ITransactionService
     {
+        private readonly IBookingRepository _bookingRepository;
+        private readonly IMapper _mapper;
         private readonly ITransactionRepository _transactionRepository;
         private readonly PayOS _payOS;
         private readonly IProductRepository _productRepository;
         private readonly IUserRepository _userRepository;
 
-        public TransactionService(PayOS payOS, ITransactionRepository transactionRepository, IProductRepository productRepository, IUserRepository userRepository)
+        public TransactionService(PayOS payOS, ITransactionRepository transactionRepository, IProductRepository productRepository, IUserRepository userRepository, IMapper mapper, IBookingRepository bookingRepository)
         {
+            _bookingRepository = bookingRepository;
+            _mapper = mapper;
             _transactionRepository = transactionRepository;
             _payOS = payOS;
             _productRepository = productRepository;
@@ -37,6 +43,7 @@ namespace SkinCareBookingSystem.Service.Service
                 TranctionStatus = (TranctionStatus)0,
                 UserId = booking.UserId,
                 User = booking.User,
+                BookingId = booking.Id,
             };
 
             _transactionRepository.Create(transaction);
@@ -53,7 +60,7 @@ namespace SkinCareBookingSystem.Service.Service
             PaymentData paymentData = new PaymentData(orderCode, decimal.ToInt32(booking.TotalPrice), "Thanh toan doan hang", items, cancelUrl, returnUrl);
 
             CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
-                        
+
             return createPayment;
         }
 
@@ -68,14 +75,19 @@ namespace SkinCareBookingSystem.Service.Service
             int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
             List<ItemData> items = new List<ItemData>();
             int totalPrice = 0;
+            List<Product> products = new List<Product>();
             foreach (var productInfo in request.checkoutProductInformation)
             {
                 Product product = await _productRepository.GetProductById(productInfo.Id);
                 if (product == null) continue;
                 totalPrice += (int)product.Price * productInfo.Amount;
                 items.Add(new ItemData(product.ProductName, productInfo.Amount, (int)product.Price));
+                products.Add(product);
             }
-
+            if (products.Count == 0)
+            {
+                throw new Exception("Invalid Product");
+            }
             Transaction transaction = new()
             {
                 CreatedDate = DateTime.UtcNow,
@@ -83,6 +95,7 @@ namespace SkinCareBookingSystem.Service.Service
                 TranctionStatus = (TranctionStatus)0,
                 UserId = request.UserId,
                 User = user,
+                Products = products
             };
 
             _transactionRepository.Create(transaction);
@@ -96,8 +109,46 @@ namespace SkinCareBookingSystem.Service.Service
             PaymentData paymentData = new PaymentData(orderCode, totalPrice, "Thanh toan doan hang", items, cancelUrl, returnUrl);
 
             CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
-                        
+
             return createPayment;
+        }
+
+        public async Task<List<GetTransactionResponse>> GetAllTransactions()
+        {
+            List<Transaction> transactions = await _transactionRepository.GetAllTransactions();
+            List<GetTransactionResponse> responses = new List<GetTransactionResponse>();
+            foreach (Transaction transaction in transactions)
+            {
+                GetTransactionResponse transactionResponse = _mapper.Map<GetTransactionResponse>(transaction);
+                if (transaction.BookingId != null)
+                {
+                    transactionResponse.Booking = await _bookingRepository.GetBookingByIdAsync((int)transaction.BookingId);
+                    transactionResponse.BookingType = "Booking's transaction";
+                }else
+                    transactionResponse.BookingType = "Order's transaction";
+
+                responses.Add(transactionResponse);
+            }
+            return responses;
+        }
+
+        public async Task<List<GetTransactionResponse>> GetTransactionByUserId(int userId)
+        {
+            List<Transaction> transactions = await _transactionRepository.GetByUserId(userId);
+            List<GetTransactionResponse> responses = new List<GetTransactionResponse>();
+            foreach (Transaction transaction in transactions)
+            {
+                GetTransactionResponse transactionResponse = _mapper.Map<GetTransactionResponse>(transaction);
+                if (transaction.BookingId != null)
+                {
+                    transactionResponse.Booking = await _bookingRepository.GetBookingByIdAsync((int)transaction.BookingId);
+                    transactionResponse.BookingType = "Booking's transaction";
+                }
+                else
+                    transactionResponse.BookingType = "Order's transaction";
+                responses.Add(transactionResponse);
+            }
+            return responses;
         }
 
         public async Task<bool> UpdateTransaction(int transactionId, int status)
