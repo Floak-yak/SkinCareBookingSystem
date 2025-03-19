@@ -26,6 +26,10 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> GetUsers() =>
             Ok(await _userService.GetUsers());
 
+        [HttpGet("GetUserById")]
+        public async Task<IActionResult> GetUserById([FromQuery] int userId) =>
+            Ok(await _userService.GetUserById(userId));
+
         [HttpGet("GetStaffs")]
         public async Task<IActionResult> GetStaffs() =>
             Ok(await _userService.GetStaffs());

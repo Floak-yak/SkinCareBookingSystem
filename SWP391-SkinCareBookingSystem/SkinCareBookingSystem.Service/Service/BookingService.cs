@@ -86,6 +86,10 @@ namespace SkinCareBookingSystem.Service.Service
                 skintherapist.Schedules.Add(scheduleCreate);
             }
 
+            //Check category of skintherapist with skinservice. Avoid trouble from value
+            if (skincareService.CategoryId != skintherapist.CategoryId)
+                throw new InvalidOperationException("Category is not match with category of service" + nameof(request.CategoryId));
+
             Schedule schedule = skintherapist.Schedules.FirstOrDefault(s => s.DateWork == date);
             if (schedule is null)
             {

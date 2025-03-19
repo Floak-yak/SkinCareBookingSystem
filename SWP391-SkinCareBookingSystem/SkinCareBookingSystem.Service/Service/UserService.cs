@@ -162,6 +162,9 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<List<UserResponse>> GetStaffs() =>
             _mapper.Map<List<UserResponse>>(await _userRepository.GetStaffs());
 
+        public async Task<ViewUser> GetUserById(int userId) =>
+            _mapper.Map<ViewUser>(await _userRepository.GetUserById(userId));
+
         public async Task<List<ViewUser>> GetUsers() =>
             _mapper.Map<List<ViewUser>>(await _userRepository.GetUsers());
 
