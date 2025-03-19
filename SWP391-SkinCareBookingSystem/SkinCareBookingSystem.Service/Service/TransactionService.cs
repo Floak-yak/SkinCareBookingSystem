@@ -46,8 +46,8 @@ namespace SkinCareBookingSystem.Service.Service
 
             int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
             ItemData item = new ItemData(booking.BookingServiceSchedules.FirstOrDefault().Service.ServiceName, 1, decimal.ToInt32(booking.TotalPrice));
-            var cancelUrl = "https://localhost:7101/api/Transaction/Cancel?" + transaction.Id.ToString();
-            var returnUrl = "https://localhost:7101/api/Transaction/Checkout?" + transaction.Id.ToString();
+            var cancelUrl = $"https://localhost:7101/api/Transaction/Cancel?transactionId={transaction.Id}";
+            var returnUrl = $"https://localhost:7101/api/Transaction/Checkout?transactionId={transaction.Id}";
             List<ItemData> items = new List<ItemData>();
             items.Add(item);
             PaymentData paymentData = new PaymentData(orderCode, decimal.ToInt32(booking.TotalPrice), "Thanh toan doan hang", items, cancelUrl, returnUrl);
@@ -90,8 +90,8 @@ namespace SkinCareBookingSystem.Service.Service
             if (!await _transactionRepository.SaveChange())
                 throw new Exception("Create transaction fail");
 
-            var cancelUrl = "https://localhost:7101/api/Transaction/Cancel?" + transaction.Id.ToString();
-            var returnUrl = "https://localhost:7101/api/Transaction/Checkout?" + transaction.Id.ToString();
+            var cancelUrl = $"https://localhost:7101/api/Transaction/Cancel?transactionId={transaction.Id}";
+            var returnUrl = $"https://localhost:7101/api/Transaction/Checkout?transactionId={transaction.Id}";
 
             PaymentData paymentData = new PaymentData(orderCode, totalPrice, "Thanh toan doan hang", items, cancelUrl, returnUrl);
 
