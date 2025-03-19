@@ -12,10 +12,10 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string CategoryName { get; set; }
         
         #region Relationship
-        public ICollection<Post> Posts { get; set; }
-        public ICollection<User> Users { get; set; }
-        public ICollection<Product> Products { get; set; }
-        public ICollection<SkincareService> skincareServices { get; set; }
+        public ICollection<Post> Posts { get; set; } = new List<Post>();
+        public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<SkincareService> skincareServices { get; set; } = new List<SkincareService>();
         #endregion
     }
 }
