@@ -1,4 +1,5 @@
-﻿using SkinCareBookingSystem.BusinessObject.Entity;
+﻿using Microsoft.EntityFrameworkCore;
+using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Data;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using System;
@@ -17,7 +18,19 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public void Create(Transaction transaction) =>
             _context.Add(transaction);
 
+        public async Task<Transaction> GetById(int id) =>
+            await _context.Transactions.FirstOrDefaultAsync(t => t.Id == id);
+
+        public async Task<Transaction> GetTransactionByABookingIdAndUserId(int userId, int bookingId) =>
+            await _context.Transactions
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.User.Bookings
+                    .FirstOrDefault(b => b.Id == bookingId) != null && t.UserId == userId);
+
         public async Task<bool> SaveChange() =>
             await _context.SaveChangesAsync() > 0;
+
+        public void Update(Transaction transaction) =>
+            _context.Transactions.Update(transaction);
     }
 }

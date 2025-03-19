@@ -69,7 +69,7 @@ namespace SkinCareBookingSystem.Service.Service
             return await _imageRepository.GetImageByDescription(description);
         }
 
-        public async Task<Image> GetImageId(int imageId) =>
+        public async Task<Image> GetImageById(int imageId) =>
             await _imageRepository.GetImageById(imageId);
 
         public async Task<bool> StoreImage(string imageLink)

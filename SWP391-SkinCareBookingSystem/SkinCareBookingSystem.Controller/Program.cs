@@ -41,6 +41,7 @@ builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IServicesDetailRepository, ServicesDetailRepository>();
 builder.Services.AddScoped<IServicesDetailService, ServicesDetailService>();
+builder.Services.AddScoped<IScheduleLogRepository, ScheduleLogRepository>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 IConfiguration configurationPayOs = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();

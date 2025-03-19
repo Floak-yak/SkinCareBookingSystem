@@ -380,7 +380,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<decimal>("TotalMoney")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("TranctionType")
+                    b.Property<int>("TranctionStatus")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -573,8 +573,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
                         .WithMany()
-                        .HasForeignKey("ImageId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ImageId");
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "SkincareService")
                         .WithMany("ServicesDetails")

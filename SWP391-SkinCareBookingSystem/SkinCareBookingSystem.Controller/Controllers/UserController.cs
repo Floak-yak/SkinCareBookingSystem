@@ -75,11 +75,11 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateRole([FromQuery] int userId, int role)
+        public async Task<IActionResult> UpdateRole([FromQuery] int userId, int role, int categoryId)
         {
             if (role < 1 || role > 4)
                 return BadRequest("Invalid role");
-            if (!await _userService.UpdateRole(userId, (Role)role))
+            if (!await _userService.UpdateRole(userId, (Role)role, categoryId))
                 return BadRequest("Update fail");
             return Ok("Update success");
         }

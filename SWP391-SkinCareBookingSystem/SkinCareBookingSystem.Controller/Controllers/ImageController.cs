@@ -38,5 +38,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
             return BadRequest("Upload Fail");
         }
+        [HttpGet("GetImageById")]
+        public async Task<IActionResult> GetImageById([FromQuery] int imageId) =>
+            Ok(await _imageService.GetImageById(imageId));
     }
 }

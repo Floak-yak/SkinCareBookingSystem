@@ -113,17 +113,16 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                     .Include(s => s.ScheduleLogs)
                     .Where(s => s.UserId == user.Id).ToListAsync();
                 if (schedules is null) continue;
-                if (schedules
-                    .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs.Where(sl => sl.TimeStartShift == dateTime) != null)
-                    .FirstOrDefault() != null)
-                    removeUser.Add(user);
-                else if (schedules
-                    .Where(s => s.DateWork.Date == dateTime.Date && s.ScheduleLogs
-                    .Where(sl =>  new DateTime().AddMonths(sl.TimeStartShift.Month)
-                        .AddYears(sl.TimeStartShift.Year)
-                        .AddDays(sl.TimeStartShift.Day)
-                        .AddMinutes(Duration) >= dateTime && sl.TimeStartShift < dateTime) != null)
-                    .FirstOrDefault() != null)
+                //So sanh cung ngay, cung gio 
+                Schedule schedule = schedules.FirstOrDefault(s => s.DateWork.Date.ToShortDateString()
+                        .Equals(dateTime.Date.ToShortDateString()));
+                if (schedule is null) continue;
+                if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift == dateTime) != null)
+                    removeUser.Add(user);      
+                else if (schedule.ScheduleLogs
+                        .FirstOrDefault(sl => sl.TimeStartShift.Hour + Duration >= dateTime.Hour
+                        && sl.TimeStartShift.Hour <= dateTime.Hour
+                        && sl.TimeStartShift.Minute <= dateTime.Minute) != null)
                     removeUser.Add(user);
             }
             foreach (var user in removeUser)

@@ -85,6 +85,12 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .HasForeignKey(ti => ti.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Category)
+                .WithMany(c => c.Users)
+                .HasForeignKey(u => u.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<ScheduleLog>()
                 .HasOne(sl => sl.Schedule)
                 .WithMany(s => s.ScheduleLogs)

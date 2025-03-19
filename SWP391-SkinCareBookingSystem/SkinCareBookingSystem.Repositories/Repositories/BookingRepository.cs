@@ -40,7 +40,10 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         }
 
         public async Task<Booking> GetBookingByIdAsync(int bookingId) =>
-            await _context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
+            await _context.Bookings
+            .Include(b => b.BookingServiceSchedules)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == bookingId);
 
         public async Task<User> GetRandomSkinTherapistAsync()
         {
