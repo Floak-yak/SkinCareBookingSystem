@@ -49,7 +49,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<List<SkincareService>> GetServices()
         {
             return await _context.SkincareServices
-                .Include(s => s.BookingServiceSchedules)
+//                .Include(s => s.BookingServiceSchedules)
                 .OrderBy(s => s.ServiceName)
                 .ToListAsync();
         }
