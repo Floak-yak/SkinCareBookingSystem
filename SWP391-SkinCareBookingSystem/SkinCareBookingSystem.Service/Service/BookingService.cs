@@ -38,6 +38,9 @@ namespace SkinCareBookingSystem.Service.Service
             if (skincareService is null)
                 throw new InvalidOperationException(nameof(request.ServiceName));
 
+            if (skincareService.CategoryId != request.CategoryId)
+                throw new InvalidOperationException("Category is not match with category of service" + nameof(request.CategoryId));
+
             User user = await _userRepository.GetUserById(request.UserId);
             if (user is null)
                 throw new InvalidOperationException(nameof(request.UserId));
@@ -48,12 +51,12 @@ namespace SkinCareBookingSystem.Service.Service
                     throw new InvalidOperationException("Invalid: " + nameof(skincareService));
 
             TimeOnly time = TimeOnly.Parse(request.Time.ToString());
-            DateTime date = DateTime.Parse(request.Date);
-            date.AddHours(time.Hour);
-            date.AddHours(time.Minute);
+            DateTime dateRequest = DateTime.Parse(request.Date);
+            DateTime date = new DateTime(dateRequest.Date.Year, dateRequest.Date.Month, dateRequest.Date.Day, time.Hour, time.Minute, 0);
+            
 
-            if (skintherapist is null)
-                skintherapist = await RandomSkinTherapist(await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId));
+             if (skintherapist is null)
+                  skintherapist = await RandomSkinTherapist(await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId));
             else
             {
                 List<User> listSkintherrpist = await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId);
