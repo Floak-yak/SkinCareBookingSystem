@@ -245,6 +245,9 @@ namespace SkinCareBookingSystem.Service.Service
             booking.Date = date;
             
             var bookingServiceSchedule = booking.BookingServiceSchedules.FirstOrDefault();
+            if (bookingServiceSchedule == null)
+                throw new ArgumentNullException("BookingServiceSchedule is null");
+
             if (bookingServiceSchedule != null && bookingServiceSchedule.ScheduleLog != null)
             {
                 bookingServiceSchedule.ScheduleLog.TimeStartShift = date;
