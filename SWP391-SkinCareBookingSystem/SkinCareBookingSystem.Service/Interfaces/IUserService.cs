@@ -13,6 +13,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
     {
         Task<User> Login(string email, string password);
         Task<List<ViewUser>> GetUsers();
+        Task<ViewUser> GetUserById(int userId);
         Task<CreateAccountResponse> CreateAccount(CreateAccountRequest request);
         Task<bool> Register(Role role, string email, string password, string fullName, DateTime YearOfBirth, string PhoneNumber);
         Task<bool> VerifyAccount(string token);
