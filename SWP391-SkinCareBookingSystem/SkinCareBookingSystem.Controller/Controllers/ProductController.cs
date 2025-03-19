@@ -116,7 +116,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok(await _transactionService.CreateTransaction(request));
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetById")]
         public async Task<IActionResult> GetById([FromQuery] int productId)
         {
             return Ok(_mapper.Map<GetProductResponse>(await _productService.GetProductById(productId)));
