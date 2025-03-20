@@ -77,7 +77,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 		}
 
         public async Task<Product> GetProductById(int productId) =>
-            await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            await _context.Products.Include(p => p.Image).Include(p => p.Category).OrderBy(p => p.CreatedDate).FirstOrDefaultAsync(p => p.Id == productId);
 
         public void UpdateProduct(Product product) =>
             _context.Products.Update(product);
