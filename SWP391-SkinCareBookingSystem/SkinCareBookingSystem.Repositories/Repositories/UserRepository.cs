@@ -131,5 +131,15 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             }
             return users;
         }
+
+        public async Task<List<User>> GetSkinTherapistsByCategoryId(int categoryId) =>
+            await _context.Users
+                .Include(u => u.TestInformationHistory)
+                .Include(u => u.Posts)
+                .Include(u => u.Category)
+                .Include(u => u.Bookings)
+                .Include(u => u.Schedules)
+                .OrderBy(u => u.FullName)
+            .Where(u => u.CategoryId == categoryId).ToListAsync();
     }
 }
