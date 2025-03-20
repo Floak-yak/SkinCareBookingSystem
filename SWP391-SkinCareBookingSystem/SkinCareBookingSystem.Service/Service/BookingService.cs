@@ -185,7 +185,8 @@ namespace SkinCareBookingSystem.Service.Service
                     TotalPrice = booking.TotalPrice,
                     User = _mapper.Map<ViewUser>(booking.User),
                     ServiceName = service.ServiceName,
-                    SkintherapistName = skintherapist.FullName
+                    SkintherapistName = skintherapist.FullName,
+                    CategoryId = service.CategoryId,
                 };
                 result.Add(response);
             }

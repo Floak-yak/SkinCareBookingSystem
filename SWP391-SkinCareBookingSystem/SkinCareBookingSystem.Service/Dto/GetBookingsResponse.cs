@@ -17,5 +17,6 @@ namespace SkinCareBookingSystem.Service.Dto
         public string ServiceName { get; set; }
         public string SkintherapistName { get; set; }
         public ViewUser User { get; set; }
+        public int? CategoryId { get; set; }
     }
 }
