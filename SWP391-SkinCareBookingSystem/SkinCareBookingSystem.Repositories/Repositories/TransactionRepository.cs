@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Data;
 using SkinCareBookingSystem.Repositories.Interfaces;
@@ -18,8 +19,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public void Create(Transaction transaction) =>
             _context.Add(transaction);
 
+        public async Task<List<Transaction>> GetAllTransactions() =>
+            await _context.Transactions.Include(t => t.User).Include(t => t.Products).OrderByDescending(t => t.CreatedDate).ToListAsync();
+
         public async Task<Transaction> GetById(int id) =>
-            await _context.Transactions.FirstOrDefaultAsync(t => t.Id == id);
+            await _context.Transactions.Include(t => t.User).Include(t => t.Products).FirstOrDefaultAsync(t => t.Id == id);
+
+        public async Task<List<Transaction>> GetByUserId(int id) =>
+            await _context.Transactions.Include(t => t.User).Include(t => t.Products).Where(t => t.UserId == id).ToListAsync();
 
         public async Task<Transaction> GetTransactionByABookingIdAndUserId(int userId, int bookingId) =>
             await _context.Transactions

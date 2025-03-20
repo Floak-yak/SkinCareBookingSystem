@@ -62,7 +62,7 @@ namespace SkinCareBookingSystem.Service.Service
                 List<User> listSkintherrpist = await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId);
                 if (listSkintherrpist is not null)
                 {
-                    if (listSkintherrpist.Contains(skintherapist))
+                    if (!listSkintherrpist.Contains(skintherapist))
                         throw new ArgumentNullException(nameof(skintherapist), "This skintherapist is busy");
                 }             
             }
@@ -85,6 +85,10 @@ namespace SkinCareBookingSystem.Service.Service
                 };
                 skintherapist.Schedules.Add(scheduleCreate);
             }
+
+            //Check category of skintherapist with skinservice. Avoid trouble from value
+            if (skincareService.CategoryId != skintherapist.CategoryId)
+                throw new InvalidOperationException("Category is not match with category of service" + nameof(request.CategoryId));
 
             Schedule schedule = skintherapist.Schedules.FirstOrDefault(s => s.DateWork == date);
             if (schedule is null)

@@ -3,6 +3,7 @@ using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.ImageDto;
 using SkinCareBookingSystem.Service.Dto.Product;
+using SkinCareBookingSystem.Service.Dto.Transaction;
 using SkinCareBookingSystem.Service.Dto.User;
 
 namespace SkinCareBookingSystem.Service.Mapper
@@ -19,6 +20,7 @@ namespace SkinCareBookingSystem.Service.Mapper
             CreateMap<Product, CreateProductRequest>().ReverseMap();
             CreateMap<User, SkinTherapistResponse>().ReverseMap();
             CreateMap<Image, StoreImageResponse>().ReverseMap();
+            CreateMap<Transaction, GetTransactionResponse>().ReverseMap();
         }
     }
 }

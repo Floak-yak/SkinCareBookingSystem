@@ -22,6 +22,21 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ProductTransaction", b =>
+                {
+                    b.Property<int>("ProductsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransactionsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductsId", "TransactionsId");
+
+                    b.HasIndex("TransactionsId");
+
+                    b.ToTable("ProductTransaction");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Booking", b =>
                 {
                     b.Property<int>("Id")
@@ -374,6 +389,9 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BookingId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -448,6 +466,21 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasIndex("ImageId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ProductTransaction", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Transaction", null)
+                        .WithMany()
+                        .HasForeignKey("TransactionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Booking", b =>

@@ -13,6 +13,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
     {
         Task<User> Login(string email, string password);
         Task<List<ViewUser>> GetUsers();
+        Task<ViewUser> GetUserById(int userId);
         Task<CreateAccountResponse> CreateAccount(CreateAccountRequest request);
         Task<bool> Register(Role role, string email, string password, string fullName, DateTime YearOfBirth, string PhoneNumber);
         Task<bool> VerifyAccount(string token);
@@ -26,6 +27,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<List<UserResponse>> GetStaffs();
         public Task<List<UserResponse>> GetCustomers();
         public Task<List<SkinTherapistResponse>> GetSkinTherapists();
+        public Task<List<SkinTherapistResponse>> GetSkinTherapistsByCategoryId(int categoryId);
         public Task<bool> UploadAvatarForUser(UploadAvatarForUserRequest request);
         public Task<bool> UpdateUserDescription(UpdateUserDescriptionRequest request);
         public Task<bool> RemoveUser(RemoveUserRequest request);

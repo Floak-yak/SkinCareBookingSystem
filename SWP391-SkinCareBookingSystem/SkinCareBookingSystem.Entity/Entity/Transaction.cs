@@ -14,6 +14,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public TranctionStatus TranctionStatus { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+        public int? BookingId { get; set; }
+        public List<Product>? Products { get; set; }
     }
     public enum TranctionStatus
     {

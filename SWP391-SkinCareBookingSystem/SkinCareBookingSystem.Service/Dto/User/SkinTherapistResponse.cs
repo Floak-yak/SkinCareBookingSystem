@@ -17,5 +17,6 @@ namespace SkinCareBookingSystem.Service.Dto.User
         public string? Description { get; set; }
         public int? CategoryId { get; set; }
         public Image? Image { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }
