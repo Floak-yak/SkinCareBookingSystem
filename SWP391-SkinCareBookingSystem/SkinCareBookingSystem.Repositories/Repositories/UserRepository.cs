@@ -117,13 +117,34 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 Schedule schedule = schedules.FirstOrDefault(s => s.DateWork.Date.ToShortDateString()
                         .Equals(dateTime.Date.ToShortDateString()));
                 if (schedule is null) continue;
-                if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift == dateTime) != null)
-                    removeUser.Add(user);      
-                else if (schedule.ScheduleLogs
-                        .FirstOrDefault(sl => sl.TimeStartShift.Hour + Duration >= dateTime.Hour
-                        && sl.TimeStartShift.Hour <= dateTime.Hour
-                        && sl.TimeStartShift.Minute <= dateTime.Minute) != null)
+                if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift.Hour == dateTime.Hour && sl.TimeStartShift.Minute == dateTime.Minute) != null)
+                {
                     removeUser.Add(user);
+                    continue;
+                }                        
+                else if (schedule.ScheduleLogs
+                        .FirstOrDefault(sl => 
+                        sl.TimeStartShift.Hour*60 
+                        + sl.TimeStartShift.Minute 
+                        + Duration 
+                        - dateTime.Hour*60 
+                        - sl.TimeStartShift.Minute > 0
+                        && sl.TimeStartShift.Hour < dateTime.Hour) != null)
+                {
+                    removeUser.Add(user);
+                    continue;
+                }else if (schedule.ScheduleLogs
+                        .FirstOrDefault(sl => 
+                        - sl.TimeStartShift.Hour * 60
+                        - sl.TimeStartShift.Minute
+                        + Duration
+                        + dateTime.Hour * 60
+                        + sl.TimeStartShift.Minute > 0
+                        && sl.TimeStartShift.Hour > dateTime.Hour) != null)
+                {
+                    removeUser.Add(user);
+                    continue;
+                }
             }
             foreach (var user in removeUser)
             {
