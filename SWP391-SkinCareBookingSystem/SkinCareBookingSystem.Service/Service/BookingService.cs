@@ -62,7 +62,7 @@ namespace SkinCareBookingSystem.Service.Service
                 List<User> listSkintherrpist = await _userRepository.GetSkinTherapistsFreeInTimeSpan(date, skincareService.WorkTime, request.CategoryId);
                 if (listSkintherrpist is not null)
                 {
-                    if (listSkintherrpist.Contains(skintherapist))
+                    if (!listSkintherrpist.Contains(skintherapist))
                         throw new ArgumentNullException(nameof(skintherapist), "This skintherapist is busy");
                 }             
             }
