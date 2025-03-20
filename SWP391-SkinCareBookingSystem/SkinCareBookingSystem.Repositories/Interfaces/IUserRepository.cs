@@ -16,6 +16,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<List<User>> GetStaffs();
         public Task<List<User>> GetCustomers();
         public Task<List<User>> GetSkinTherapists();
+        public Task<List<User>> GetSkinTherapistsByCategoryId(int categoryId);
         public Task<List<User>> GetSkinTherapistsFreeInTimeSpan(DateTime dateTime, int Duration, int categoryId);
         public void Create(User user);
         public void Update(User user);
