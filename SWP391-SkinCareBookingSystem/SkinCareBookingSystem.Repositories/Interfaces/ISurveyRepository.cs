@@ -9,7 +9,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
 {
     public interface ISurveyRepository
     {
-        public Dictionary<string, Node> LoadSurvey();
-        public void SaveSurvey(Dictionary<string, Node> surveyTree);
+        public Dictionary<string, SurveyQuestion> LoadSurvey();
+        public void SaveSurvey(Dictionary<string, SurveyQuestion> surveyTree);
     }
 }
