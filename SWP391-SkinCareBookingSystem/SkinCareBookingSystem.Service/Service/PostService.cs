@@ -55,7 +55,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (user is null)
                 throw new ArgumentNullException(typeof(User).ToString());
 
-            Category category = await _categoryRepository.GetCategoryById(request.UserId);
+            Category category = await _categoryRepository.GetCategoryById(request.CategoryId);
             if (category is null)
                 throw new ArgumentNullException(typeof(Category).ToString());
 
@@ -70,6 +70,7 @@ namespace SkinCareBookingSystem.Service.Service
             Post post = new()
             {
                 UserId = request.UserId,
+                Summary = request.summary,
                 Title = request.Title,
                 Contents = await GetContentsWithImages(htmlDocument),
                 CategoryId = request.CategoryId,
