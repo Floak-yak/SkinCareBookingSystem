@@ -1,6 +1,9 @@
+using AutoMapper;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
+using SkinCareBookingSystem.Repositories.Repositories;
 using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.Schedule;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,11 +14,15 @@ namespace SkinCareBookingSystem.Service.Service
 {
     public class ScheduleService : IScheduleService
     {
+        private readonly IMapper _mapper;
         private readonly IScheduleRepository _scheduleRepository;
+        private readonly ISkincareServiceRepository _skincareServiceRepository;
 
-        public ScheduleService(IScheduleRepository scheduleRepository)
+        public ScheduleService(IScheduleRepository scheduleRepository, IMapper mapper, ISkincareServiceRepository skincareServiceRepository)
         {
+            _mapper = mapper;
             _scheduleRepository = scheduleRepository;
+            _skincareServiceRepository = skincareServiceRepository;
         }
 
         public async Task<IEnumerable<ScheduleDto>> GetAllSchedulesAsync()
@@ -84,6 +91,20 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task DeleteScheduleAsync(int id)
         {
             await _scheduleRepository.DeleteAsync(id);
+        }
+
+        public async Task<List<ScheduleResponse>> GetSchedulesBySkinTherapistId(int skintherapistId)
+        {
+            var result = _mapper.Map<List<ScheduleResponse>>(await _scheduleRepository.GetSchedulesBySkinTherapistId(skintherapistId));
+            List<SkincareService> skincareServiceList = await _skincareServiceRepository.GetSkincareServicesBySkinTherapistId(skintherapistId);
+            foreach (var schedule in result)
+            {
+                foreach (var scheduleLog in schedule.ScheduleLogs)
+                {
+                    scheduleLog.ServiceName = skincareServiceList.FirstOrDefault(sk => sk.Id == scheduleLog.BookingServiceSchedules.First().ServiceId).ServiceName;
+                }
+            }
+            return result;
         }
     }
 } 

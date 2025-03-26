@@ -27,6 +27,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok(schedules);
         }
 
+        [HttpGet("GetScheduleBySkinTherapistId")]
+        public Task<IActionResult> GetScheduleBySkinTherapistId([FromQuery] int skinTherapistId)
+        {
+            throw new NotImplementedException();
+        }
+
         [HttpGet("Weekly")]
         public async Task<IActionResult> GetWeeklySchedules()
         {

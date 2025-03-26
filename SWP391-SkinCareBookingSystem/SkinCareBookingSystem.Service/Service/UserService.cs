@@ -51,25 +51,25 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<CreateAccountResponse> CreateAccount(CreateAccountRequest request)
         {
-            if (string.IsNullOrEmpty(request.FullName)  || string.IsNullOrEmpty(request.Email) 
+            if (string.IsNullOrEmpty(request.FullName) || string.IsNullOrEmpty(request.Email)
                 || string.IsNullOrEmpty(request.PhoneNumber)
                 || request.YearOfBirth.Year > DateTime.UtcNow.Year
                 || DateTime.UtcNow.Year - request.YearOfBirth.Year > 120)
-                return null;
+                throw new Exception("Field cannot be empty");
 
             string emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
             if (!Regex.IsMatch(request.Email, emailPattern))
-                return null;
+                throw new Exception($"Invalid email pattern: {emailPattern}");
 
             string phoneNumberPattern = @"^0\d{9}$";
             if (!Regex.IsMatch(request.PhoneNumber, phoneNumberPattern))
-                return null;
+                throw new Exception($"Invalid phone number pattern: {phoneNumberPattern}");
 
             if (DateTime.Now.Year - request.YearOfBirth.Year > 120 || DateTime.Now.Year - request.YearOfBirth.Year < 4)
-                return null;
+                throw new Exception("Age cannot bigger than 120 and lower than 4");
 
             if (await _userRepository.GetUserByEmail(request.Email) != null)
-                return null;
+                throw new Exception("Email exist");
 
             User user = new()
             {
@@ -85,7 +85,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (user.Role == Role.SkinTherapist)
                 if (request.CategoryId <= 0 || _categoryRepository.GetCategoryById(request.CategoryId).Result is null)
                 {
-                    return null;
+                    throw new Exception("Invalid categoryId");
                 }
                 else
                 {
