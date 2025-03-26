@@ -31,8 +31,30 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return NotFound();
             }
             return Ok(responses);
-        } 
-            
+        }
+
+        [HttpGet("SkinTherapistCheckout")]
+        public async Task<IActionResult> SkinTherapistCheckout([FromQuery] int skinTherapistId, int scheduleLogId)
+        {
+            if (skinTherapistId <= 0)
+                return BadRequest("Invalid skinTherapistId");
+            if (scheduleLogId <= 0)
+                return BadRequest("Invalid scheduleLogId");
+            bool result;
+            try
+            {
+                result = await _bookingService.SkinTherapistCheckout(skinTherapistId, scheduleLogId);
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            if (!result)
+            {
+                return BadRequest("Checkout fail");
+            }
+            return Ok("Checkout success");
+        }
+
         [HttpPost("Create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
@@ -97,7 +119,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest(new { success = false, message = "You are not authorized to cancel this booking" });
                 }
 
-                if (booking.Status == BookingStatus.Paid)
+                if (booking.Status == BookingStatus.Completed)
+                {
+                    return BadRequest(new { success = false, message = "Cannot cancel a completed booking" });
+                }
+
+                if (booking.Status == BookingStatus.Waitting)
                 {
                     return BadRequest(new { success = false, message = "Cannot cancel a paid booking" });
                 }

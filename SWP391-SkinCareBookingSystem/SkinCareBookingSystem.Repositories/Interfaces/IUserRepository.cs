@@ -24,5 +24,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<bool> SaveChange();
         public Task<bool> IsUserExist(string userName);
         public Task<User> GetUserByNameByEmailByRole(string email, Role role, string userName);
+        public Task<User> GetSkinTherapistById(int SkinTherapistId);
     }
 }
