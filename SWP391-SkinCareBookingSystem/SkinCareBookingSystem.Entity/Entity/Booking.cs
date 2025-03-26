@@ -23,7 +23,9 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
 
     public enum BookingStatus
     {
-        Pending = 1,
-        Paid = 2,
+        Cancel = -1,
+        Pending = 0,
+        Completed = 1,
+        Waitting = 2,
     }
 }

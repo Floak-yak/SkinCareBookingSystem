@@ -64,5 +64,8 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<Schedule>> GetSchedulesBySkinTherapistId(int skinTherapistId) =>
+            await _context.Schedules.Include(s => s.ScheduleLogs).Where(s => s.UserId == skinTherapistId).ToListAsync();
     }
 } 

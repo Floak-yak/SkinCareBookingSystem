@@ -13,5 +13,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         Task<Schedule> CreateAsync(Schedule schedule);
         Task<Schedule> UpdateAsync(Schedule schedule);
         Task DeleteAsync(int id);
+        Task<List<Schedule>> GetSchedulesBySkinTherapistId(int skinTherapistId);
     }
 } 

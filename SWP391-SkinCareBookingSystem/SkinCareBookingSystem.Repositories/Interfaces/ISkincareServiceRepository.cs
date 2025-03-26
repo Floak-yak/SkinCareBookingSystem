@@ -13,6 +13,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<SkincareService> GetServiceById(int serviceId);
         public Task<SkincareService> GetServiceByname(string name);
         public Task<List<SkincareService>> Search(string search);
+        public Task<List<SkincareService>> GetSkincareServicesBySkinTherapistId(int skinTherapistId);
         public Task<bool> Delete(int id);
         public void Update(SkincareService service);
         public void Create(SkincareService service);

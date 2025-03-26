@@ -89,5 +89,13 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
             return services;
         }
+
+        public async Task<List<SkincareService>> GetSkincareServicesBySkinTherapistId(int skinTherapistId)
+        {
+            User skintherapist = await _context.Users.FirstOrDefaultAsync(s => s.Id == skinTherapistId);
+            if (skintherapist == null)
+                return null;
+            return await _context.SkincareServices.Where(s => s.CategoryId == skintherapist.CategoryId).ToListAsync();
+        }           
     }
 }

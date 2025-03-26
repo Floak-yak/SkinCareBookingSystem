@@ -248,7 +248,7 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
             }
 
-            if (booking.Status == BookingStatus.Paid)
+            if (booking.Status == BookingStatus.Waitting || booking.Status == BookingStatus.Completed)
                 return false;
 
             return await _bookingRepository.DeleteBooking(bookingId);
@@ -291,6 +291,24 @@ namespace SkinCareBookingSystem.Service.Service
             if (listUser.Count == 0)
                 return null;
             return listUser[new Random().Next(0, listUser.Count)];
+        }
+
+        public async Task<bool> SkinTherapistCheckout(int skinTherapistId, int scheduleLogId)
+        {
+            User skinTherapist = await _userRepository.GetSkinTherapistById(skinTherapistId);
+            if (skinTherapist is null)
+                throw new InvalidOperationException("Invalid skintherapistId");
+            ScheduleLog scheduleLog = await _scheduleLogRepository.GetScheduleLogById(scheduleLogId);
+            if (scheduleLog is null)
+                throw new InvalidOperationException("Invalid scheduleLogId");
+            if (scheduleLog.TimeStartShift.Hour < DateTime.UtcNow.Hour)
+                throw new InvalidOperationException("Can not checkout before the shift start time!!!");
+            Booking booking = await _bookingRepository.GetBookingByScheduleLogId(scheduleLogId);
+            if (scheduleLog is null)
+                throw new Exception("Booking not found");
+            booking.Status = BookingStatus.Completed;
+            _bookingRepository.UpdateBooking(booking);
+            return await _bookingRepository.SaveChange();
         }
     }
 }

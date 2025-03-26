@@ -78,5 +78,10 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public void UpdateBooking(Booking booking) =>
             _context.Bookings.Update(booking);
+
+        public Task<Booking> GetBookingByScheduleLogId(int scheduleLogId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
