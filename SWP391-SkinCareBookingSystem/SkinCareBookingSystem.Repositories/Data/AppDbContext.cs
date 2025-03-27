@@ -27,6 +27,9 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<Image> Images { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<ServicesDetail> ServicesDetails { get; set; }
+        public DbSet<Survey> Surveys { get; set; }
+        public DbSet<Option> Options { get; set; }
+        public DbSet<Node> Nodes { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -128,6 +131,36 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .WithMany(sl => sl.BookingServiceSchedules)
                 .HasForeignKey(bss => bss.ScheduleLogId)
                 .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<Survey>()
+                .HasKey(s => s.QuestionId);
+                
+            modelBuilder.Entity<Survey>()
+                .HasMany(s => s.Options)
+                .WithOne(o => o.Question)
+                .HasForeignKey(o => o.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            modelBuilder.Entity<Survey>()
+                .HasMany(s => s.Nodes)
+                .WithOne(n => n.Survey)
+                .HasForeignKey(n => n.SurveyId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            modelBuilder.Entity<Option>()
+                .Property(o => o.Id)
+                .ValueGeneratedOnAdd();
+                
+            modelBuilder.Entity<Node>()
+                .Property(n => n.Id)
+                .ValueGeneratedOnAdd();
+                
+            // Configure the Attributes dictionary in Node entity
+            modelBuilder.Entity<Node>()
+                .Property(n => n.Attributes)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(v, (System.Text.Json.JsonSerializerOptions)null));
         }
     }
 }
