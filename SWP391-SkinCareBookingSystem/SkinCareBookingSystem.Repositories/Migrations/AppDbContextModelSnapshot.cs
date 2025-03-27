@@ -524,7 +524,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("SurveyResultId")
+                    b.Property<int?>("SurveyResultId")
                         .HasColumnType("int");
 
                     b.Property<int?>("SurveyResultId1")
@@ -903,8 +903,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", "SurveyResult")
                         .WithMany()
                         .HasForeignKey("SurveyResultId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", null)
                         .WithMany("Sessions")

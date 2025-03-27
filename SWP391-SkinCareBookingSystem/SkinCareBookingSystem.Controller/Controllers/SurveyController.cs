@@ -400,7 +400,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest("Survey session not completed");
                 }
 
-                var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId);
+                if (!session.SurveyResultId.HasValue)
+                {
+                    return NotFound("Survey result not assigned");
+                }
+
+                var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId.Value);
                 if (result == null)
                 {
                     return NotFound("Survey result not found");
@@ -451,19 +456,22 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
                 foreach (var session in sessions)
                 {
-                    var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId);
-                    if (result != null)
+                    if (session.SurveyResultId.HasValue)
                     {
-                        history.Add(new
+                        var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId.Value);
+                        if (result != null)
                         {
-                            sessionId = session.Id,
-                            completedDate = session.CompletedDate,
-                            result = new
+                            history.Add(new
                             {
-                                skinType = result.SkinType,
-                                resultText = result.ResultText
-                            }
-                        });
+                                sessionId = session.Id,
+                                completedDate = session.CompletedDate,
+                                result = new
+                                {
+                                    skinType = result.SkinType,
+                                    resultText = result.ResultText
+                                }
+                            });
+                        }
                     }
                 }
 

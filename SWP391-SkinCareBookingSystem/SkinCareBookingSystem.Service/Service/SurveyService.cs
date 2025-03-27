@@ -179,10 +179,13 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId)
         {
             var recommendedServices = await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
+            if (recommendedServices == null || !recommendedServices.Any())
+            {
+                return new List<SkincareService>();
+            }
+            
             var serviceIds = recommendedServices.Select(rs => rs.ServiceId).ToList();
             
-            // This would need a method to fetch services by IDs
-            // For now, returning an empty list
             return new List<SkincareService>();
         }
 
@@ -198,7 +201,6 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveyQuestion> GetFirstQuestionAsync()
         {
-            // Logic to get the first question - may need to be customized
             var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
             return allQuestions.FirstOrDefault(q => q.QuestionId.StartsWith("Q1"));
         }
