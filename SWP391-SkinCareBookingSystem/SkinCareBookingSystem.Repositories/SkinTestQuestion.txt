@@ -1,1105 +1,261 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SkinCareBookingSystem.BusinessObject.Entity
-{
-    public class RecommendedService
-    {
-        public int Id { get; set; }
-        public int Priority { get; set; } // Higher number means higher priority
-        
-        // Relationships
-        public int SurveyResultId { get; set; }
-        public SurveyResult SurveyResult { get; set; }
-        
-        public int ServiceId { get; set; }
-        public SkincareService Service { get; set; }
-    }
-} 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SkinCareBookingSystem.BusinessObject.Entity
-{
-    public class SurveyOption
-    {
-        public int Id { get; set; }
-        public string OptionText { get; set; }
-        public string NextQuestionId { get; set; } // ID of the next question or RESULT_X for results
-        
-        // Relationships
-        public int QuestionId { get; set; }
-        public SurveyQuestion Question { get; set; }
-        public ICollection<SurveyResponse> Responses { get; set; }
-    }
-} 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SkinCareBookingSystem.BusinessObject.Entity
-{
-    public class SurveyQuestion
-    {
-        public int Id { get; set; }
-        public string QuestionId { get; set; } // Matches the ID in the Node (e.g., Q1, Q2, etc.)
-        public string QuestionText { get; set; }
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-
-        // Relationships
-        public ICollection<SurveyOption> Options { get; set; }
-        public ICollection<SurveyResponse> Responses { get; set; }
-    }
-} 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SkinCareBookingSystem.BusinessObject.Entity
-{
-    public class SurveyResponse
-    {
-        public int Id { get; set; }
-        public DateTime ResponseDate { get; set; } = DateTime.Now;
-        
-        // Foreign keys
-        public int SessionId { get; set; }
-        public int QuestionId { get; set; }
-        public int OptionId { get; set; }
-        
-        // Navigation properties
-        public SurveySession Session { get; set; }
-        public SurveyQuestion Question { get; set; }
-        public SurveyOption Option { get; set; }
-    }
-} 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SkinCareBookingSystem.BusinessObject.Entity
-{
-    public class SurveyResult
-    {
-        public int Id { get; set; }
-        public string ResultId { get; set; } // e.g., RESULT_1, RESULT_2
-        public string ResultText { get; set; } // Detailed description of the result
-        public string SkinType { get; set; } // Oily, Dry, Combination, etc.
-        public string RecommendationText { get; set; } // General recommendation
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-        
-        // Relationships
-        public ICollection<SurveySession> Sessions { get; set; }
-        public ICollection<RecommendedService> RecommendedServices { get; set; }
-    }
-} 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SkinCareBookingSystem.BusinessObject.Entity
-{
-    public class SurveySession
-    {
-        public int Id { get; set; }
-        public DateTime CompletedDate { get; set; } = DateTime.Now;
-        public bool IsCompleted { get; set; } = true;
-        
-        // Relationships
-        public int? UserId { get; set; } // Nullable for anonymous users
-        public User User { get; set; }
-        
-        public int SurveyResultId { get; set; }
-        public SurveyResult SurveyResult { get; set; }
-        
-        public ICollection<SurveyResponse> Responses { get; set; }
-    }
-} 
-using Microsoft.AspNetCore.Mvc;
-using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Repositories.Repositories;
-using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Service.Service;
-using SkinCareBookingSystem.Service.Interfaces;
-using System.Security.Claims;
-
-namespace SkinCareBookingSystem.Controller.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class SurveyController : ControllerBase
-    {
-        private readonly ISurveyService _surveyService;
-        private readonly ISurveyRepository _surveyRepository;
-
-        public SurveyController(ISurveyService surveyService, ISurveyRepository surveyRepository)
-        {
-            _surveyService = surveyService;
-            _surveyRepository = surveyRepository;
-        }
-
-        #region Existing File-based Survey API
-        [HttpGet("question/{questionId}")]
-        public ActionResult<object> GetQuestion(string questionId)
-        {
-            var (question, choices) = _surveyService.GetQuestion(questionId);
-            if (question == null)
-                return NotFound("Question not found");
-
-            // Convert choices dictionary to array of objects
-            var options = choices.Select((kvp, index) => new
-            {
-                label = kvp.Key,
-                nextId = kvp.Value
-            }).ToArray();
-
-            return Ok(new { question, options });
-        }
-
-        [HttpGet("next")]
-        public ActionResult<object> GetNextQuestion([FromQuery] string currentQuestionId, [FromQuery] int optionIndex)
-        {
-            var choices = _surveyService.GetQuestion(currentQuestionId).Item2;
-            if (choices == null || optionIndex < 0 || optionIndex >= choices.Count)
-                return BadRequest("Invalid question or option index");
-
-            var choiceKey = choices.Keys.ElementAt(optionIndex);
-            var nextQuestionId = choices[choiceKey];
-
-            return Ok(new { nextQuestionId });
-        }
-
-        [HttpGet("isEndQuestion/{questionId}")]
-        public ActionResult<bool> IsEndQuestion(string questionId)
-        {
-            return Ok(_surveyService.IsEndQuestion(questionId));
-        }
-
-        [HttpGet("start")]
-        public ActionResult<object> StartSurvey()
-        {
-            return GetQuestion("Q1");
-        }
-
-        [HttpGet("all")]
-        public ActionResult<Dictionary<string, object>> GetAllQuestions()
-        {
-            var surveyTree = _surveyRepository.LoadSurvey();
-            var result = new Dictionary<string, object>();
-
-            foreach (var node in surveyTree)
-            {
-                var options = node.Value.Choices.Select((kvp, index) => new
-                {
-                    label = kvp.Key,
-                    nextId = kvp.Value
-                }).ToArray();
-
-                result[node.Key] = new { question = node.Value.Content, options };
-            }
-
-            return Ok(result);
-        }
-
-        [HttpPut("update")]
-        public IActionResult UpdateQuestion([FromBody] Node updatedNode)
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-
-                if (surveyTree.ContainsKey(updatedNode.Id))
-                {
-                    surveyTree[updatedNode.Id] = updatedNode;
-                    _surveyRepository.SaveSurvey(surveyTree);
-                    return Ok("Updated successfully");
-                }
-
-                return NotFound("Question not found");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("add")]
-        public IActionResult AddQuestion([FromBody] Node newNode)
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-
-                if (surveyTree.ContainsKey(newNode.Id))
-                {
-                    return BadRequest("Question ID already exists");
-                }
-
-                surveyTree[newNode.Id] = newNode;
-                _surveyRepository.SaveSurvey(surveyTree);
-                return Ok("Added successfully");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpDelete("delete/{questionId}")]
-        public IActionResult DeleteQuestion(string questionId)
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-
-                if (!surveyTree.ContainsKey(questionId))
-                {
-                    return NotFound("Question not found");
-                }
-
-                surveyTree.Remove(questionId);
-                _surveyRepository.SaveSurvey(surveyTree);
-                return Ok("Deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-        #endregion
-
-        #region Database-backed Survey API
-        // Get the currently logged in user ID (or null if anonymous)
-        private int? GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return userId;
-            }
-            return null;
-        }
-
-        [HttpGet("db/start")]
-        public async Task<ActionResult<object>> StartDatabaseSurvey()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var session = await _surveyService.StartSessionAsync(userId);
-                var firstQuestion = await _surveyService.GetFirstQuestionAsync();
-                
-                if (firstQuestion == null)
-                {
-                    return NotFound("No survey questions found");
-                }
-
-                var options = await _surveyService.GetOptionsForQuestionAsync(firstQuestion.Id);
-                
-                return Ok(new 
-                { 
-                    sessionId = session.Id,
-                    questionId = firstQuestion.Id,
-                    questionIdString = firstQuestion.QuestionId,
-                    question = firstQuestion.QuestionText,
-                    options = options.Select(o => new { id = o.Id, text = o.OptionText }).ToList()
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("db/answer")]
-        public async Task<ActionResult<object>> AnswerQuestion([FromBody] AnswerRequestDto request)
-        {
-            try
-            {
-                if (request.SessionId <= 0 || request.QuestionId <= 0 || request.OptionId <= 0)
-                {
-                    return BadRequest("Invalid request parameters");
-                }
-
-                // Record the response
-                await _surveyService.RecordResponseAsync(request.SessionId, request.QuestionId, request.OptionId);
-                
-                // Get the next question or result
-                var nextStep = await _surveyService.GetNextQuestionOrResultAsync(
-                    request.SessionId, 
-                    request.QuestionId, 
-                    request.OptionId);
-                
-                return Ok(nextStep);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("db/results/{sessionId}")]
-        public async Task<ActionResult<object>> GetSessionResults(int sessionId)
-        {
-            try
-            {
-                var session = await _surveyService.GetSessionByIdAsync(sessionId);
-                if (session == null)
-                {
-                    return NotFound("Survey session not found");
-                }
-
-                if (!session.IsCompleted)
-                {
-                    return BadRequest("Survey session not completed");
-                }
-
-                var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId);
-                if (result == null)
-                {
-                    return NotFound("Survey result not found");
-                }
-
-                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsByResultIdAsync(result.Id);
-                
-                return Ok(new
-                {
-                    sessionId = session.Id,
-                    completedDate = session.CompletedDate,
-                    result = new
-                    {
-                        id = result.Id,
-                        resultId = result.ResultId,
-                        resultText = result.ResultText,
-                        skinType = result.SkinType,
-                        recommendationText = result.RecommendationText
-                    },
-                    recommendedServices = recommendedServices.Select(s => new
-                    {
-                        id = s.Id,
-                        name = s.ServiceName,
-                        description = s.ServiceDescription,
-                        price = s.Price
-                    }).ToList()
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("db/user-history")]
-        public async Task<ActionResult<object>> GetUserSurveyHistory()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == null)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                var sessions = await _surveyService.GetSessionsByUserIdAsync(userId.Value);
-                var history = new List<object>();
-
-                foreach (var session in sessions)
-                {
-                    var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId);
-                    if (result != null)
-                    {
-                        history.Add(new
-                        {
-                            sessionId = session.Id,
-                            completedDate = session.CompletedDate,
-                            result = new
-                            {
-                                skinType = result.SkinType,
-                                resultText = result.ResultText
-                            }
-                        });
-                    }
-                }
-
-                return Ok(history);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        #region Admin API
-        [HttpGet("db/admin/questions")]
-        public async Task<ActionResult<List<SurveyQuestion>>> GetAllDatabaseQuestions()
-        {
-            try
-            {
-                var questions = await _surveyService.GetAllQuestionsAsync();
-                return Ok(questions);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("db/admin/question/{id}")]
-        public async Task<ActionResult<SurveyQuestion>> GetQuestionById(int id)
-        {
-            try
-            {
-                var question = await _surveyService.GetQuestionByIdAsync(id);
-                if (question == null)
-                {
-                    return NotFound("Question not found");
-                }
-                return Ok(question);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("db/admin/question")]
-        public async Task<ActionResult<SurveyQuestion>> AddDatabaseQuestion([FromBody] SurveyQuestion question)
-        {
-            try
-            {
-                var result = await _surveyService.AddQuestionAsync(question);
-                return CreatedAtAction(nameof(GetQuestionById), new { id = result.Id }, result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPut("db/admin/question/{id}")]
-        public async Task<ActionResult<SurveyQuestion>> UpdateDatabaseQuestion(int id, [FromBody] SurveyQuestion question)
-        {
-            if (id != question.Id)
-            {
-                return BadRequest("ID mismatch");
-            }
-
-            try
-            {
-                var result = await _surveyService.UpdateQuestionAsync(question);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpDelete("db/admin/question/{id}")]
-        public async Task<ActionResult> DeleteDatabaseQuestion(int id)
-        {
-            try
-            {
-                var result = await _surveyService.DeleteQuestionAsync(id);
-                if (!result)
-                {
-                    return NotFound("Question not found");
-                }
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("db/admin/results")]
-        public async Task<ActionResult<List<SurveyResult>>> GetAllResults()
-        {
-            try
-            {
-                var results = await _surveyService.GetAllResultsAsync();
-                return Ok(results);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("db/admin/recommended-service")]
-        public async Task<ActionResult<RecommendedService>> AddRecommendedService([FromBody] RecommendedService service)
-        {
-            try
-            {
-                var result = await _surveyService.AddRecommendedServiceAsync(service);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpDelete("db/admin/recommended-service/{id}")]
-        public async Task<ActionResult> DeleteRecommendedService(int id)
-        {
-            try
-            {
-                var result = await _surveyService.DeleteRecommendedServiceAsync(id);
-                if (!result)
-                {
-                    return NotFound("Recommended service not found");
-                }
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-        #endregion
-        #endregion
-    }
-
-    public class AnswerRequestDto
-    {
-        public int SessionId { get; set; }
-        public int QuestionId { get; set; }
-        public int OptionId { get; set; }
-    }
-}
-using Microsoft.EntityFrameworkCore;
-using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Repositories.Data;
-
-namespace SkinCareBookingSystem.Repositories.Repositories
-{
-    public class SurveyRepository: ISurveyRepository
-    {
-        private readonly string _filePath = "survey.txt";
-        private readonly AppDbContext _context;
-
-        public SurveyRepository(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        public Dictionary<string, Node> LoadSurvey()
-        {
-            var surveyTree = new Dictionary<string, Node>();
-
-            foreach (string line in File.ReadAllLines(_filePath))
-            {
-                var parts = line.Split('|');
-                if (parts.Length < 2) continue;
-
-                var node = new Node { Id = parts[0], Content = parts[1] };
-
-                for (int i = 2; i < parts.Length; i++)
-                {
-                    var choiceParts = parts[i].Split(':');
-                    if (choiceParts.Length == 2)
-                    {
-                        node.Choices[choiceParts[0]] = choiceParts[1];
-                    }
-                }
-
-                surveyTree[node.Id] = node;
-            }
-
-            return surveyTree;
-        }
-        public void SaveSurvey(Dictionary<string, Node> surveyTree)
-        {
-            using (StreamWriter writer = new StreamWriter("survey.txt"))
-            {
-                foreach (var node in surveyTree.Values)
-                {
-                    string line = node.Id + "|" + node.Content;
-
-                    foreach (var choice in node.Choices)
-                    {
-                        line += "|" + choice.Key + ":" + choice.Value;
-                    }
-
-                    writer.WriteLine(line);
-                }
-            }
-        }
-
-        public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
-        {
-            return await _context.SurveyQuestions
-                .Include(q => q.Options)
-                .ToListAsync();
-        }
-
-        public async Task<SurveyQuestion> GetQuestionByIdAsync(int id)
-        {
-            return await _context.SurveyQuestions
-                .Include(q => q.Options)
-                .FirstOrDefaultAsync(q => q.Id == id);
-        }
-
-        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
-        {
-            return await _context.SurveyQuestions
-                .Include(q => q.Options)
-                .FirstOrDefaultAsync(q => q.QuestionId == questionId);
-        }
-
-        public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
-        {
-            _context.SurveyQuestions.Add(question);
-            await _context.SaveChangesAsync();
-            return question;
-        }
-
-        public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
-        {
-            _context.Entry(question).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return question;
-        }
-
-        public async Task<bool> DeleteQuestionAsync(int id)
-        {
-            var question = await _context.SurveyQuestions.FindAsync(id);
-            if (question == null) return false;
-
-            _context.SurveyQuestions.Remove(question);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId)
-        {
-            return await _context.SurveyOptions
-                .Where(o => o.QuestionId == questionId)
-                .ToListAsync();
-        }
-
-        public async Task<SurveyOption> GetOptionByIdAsync(int id)
-        {
-            return await _context.SurveyOptions.FindAsync(id);
-        }
-
-        public async Task<SurveyOption> AddOptionAsync(SurveyOption option)
-        {
-            _context.SurveyOptions.Add(option);
-            await _context.SaveChangesAsync();
-            return option;
-        }
-
-        public async Task<SurveyOption> UpdateOptionAsync(SurveyOption option)
-        {
-            _context.Entry(option).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return option;
-        }
-
-        public async Task<bool> DeleteOptionAsync(int id)
-        {
-            var option = await _context.SurveyOptions.FindAsync(id);
-            if (option == null) return false;
-
-            _context.SurveyOptions.Remove(option);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<List<SurveyResult>> GetAllResultsAsync()
-        {
-            return await _context.SurveyResults.ToListAsync();
-        }
-
-        public async Task<SurveyResult> GetResultByIdAsync(int id)
-        {
-            return await _context.SurveyResults.FindAsync(id);
-        }
-
-        public async Task<SurveyResult> GetResultByResultIdAsync(string resultId)
-        {
-            return await _context.SurveyResults
-                .FirstOrDefaultAsync(r => r.ResultId == resultId);
-        }
-
-        public async Task<SurveyResult> AddResultAsync(SurveyResult result)
-        {
-            _context.SurveyResults.Add(result);
-            await _context.SaveChangesAsync();
-            return result;
-        }
-
-        public async Task<SurveyResult> UpdateResultAsync(SurveyResult result)
-        {
-            _context.Entry(result).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return result;
-        }
-
-        public async Task<bool> DeleteResultAsync(int id)
-        {
-            var result = await _context.SurveyResults.FindAsync(id);
-            if (result == null) return false;
-
-            _context.SurveyResults.Remove(result);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<SurveySession> CreateSessionAsync(SurveySession session)
-        {
-            _context.SurveySessions.Add(session);
-            await _context.SaveChangesAsync();
-            return session;
-        }
-
-        public async Task<SurveySession> GetSessionByIdAsync(int id)
-        {
-            return await _context.SurveySessions
-                .Include(s => s.Responses)
-                .Include(s => s.SurveyResult)
-                .FirstOrDefaultAsync(s => s.Id == id);
-        }
-
-        public async Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId)
-        {
-            return await _context.SurveySessions
-                .Include(s => s.SurveyResult)
-                .Where(s => s.UserId == userId && s.IsCompleted)
-                .OrderByDescending(s => s.CompletedDate)
-                .ToListAsync();
-        }
-
-        public async Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId)
-        {
-            var session = await _context.SurveySessions.FindAsync(sessionId);
-            if (session == null) return null;
-
-            session.SurveyResultId = resultId;
-            session.IsCompleted = true;
-            session.CompletedDate = DateTime.Now;
-
-            _context.Entry(session).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return session;
-        }
-
-        public async Task<SurveyResponse> AddResponseAsync(SurveyResponse response)
-        {
-            _context.SurveyResponses.Add(response);
-            await _context.SaveChangesAsync();
-            return response;
-        }
-
-        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
-        {
-            return await _context.SurveyResponses
-                .Where(r => r.SessionId == sessionId)
-                .ToListAsync();
-        }
-
-        public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
-        {
-            return await _context.RecommendedServices
-                .Where(rs => rs.SurveyResultId == resultId)
-                .ToListAsync();
-        }
-
-        public async Task<RecommendedService> AddRecommendedServiceAsync(RecommendedService service)
-        {
-            _context.RecommendedServices.Add(service);
-            await _context.SaveChangesAsync();
-            return service;
-        }
-
-        public async Task<bool> DeleteRecommendedServiceAsync(int id)
-        {
-            var service = await _context.RecommendedServices.FindAsync(id);
-            if (service == null) return false;
-
-            _context.RecommendedServices.Remove(service);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-    }
-}
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Service.Interfaces;
-using SkinCareBookingSystem.BusinessObject.Entity;
-
-namespace SkinCareBookingSystem.Service.Service
-{
-    public class SurveyService : ISurveyService
-    {
-        private readonly ISurveyRepository _surveyRepository;
-
-        public SurveyService(ISurveyRepository surveyRepository)
-        {
-            _surveyRepository = surveyRepository;
-        }
-
-        public (string question, Dictionary<string, string> choices) GetQuestion(string questionId)
-        {
-            var surveyTree = _surveyRepository.LoadSurvey();
-            
-            if (!surveyTree.ContainsKey(questionId))
-                return (null, null);
-
-            var node = surveyTree[questionId];
-            return (node.Content, node.Choices);
-        }
-
-        public string GetNextQuestionId(string currentQuestionId, string choice)
-        {
-            var surveyTree = _surveyRepository.LoadSurvey();
-            
-            if (!surveyTree.ContainsKey(currentQuestionId))
-                return null;
-
-            var node = surveyTree[currentQuestionId];
-            return node.Choices.ContainsKey(choice) ? node.Choices[choice] : null;
-        }
-
-        public bool IsEndQuestion(string questionId)
-        {
-            return questionId.StartsWith("RESULT_");
-        }
-
-        // Implement the remaining methods from ISurveyService interface
-        public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
-        {
-            return await _surveyRepository.GetAllQuestionsAsync();
-        }
-
-        public async Task<SurveyQuestion> GetQuestionByIdAsync(int id)
-        {
-            return await _surveyRepository.GetQuestionByIdAsync(id);
-        }
-
-        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
-        {
-            return await _surveyRepository.GetQuestionByQuestionIdAsync(questionId);
-        }
-
-        public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
-        {
-            return await _surveyRepository.AddQuestionAsync(question);
-        }
-
-        public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
-        {
-            return await _surveyRepository.UpdateQuestionAsync(question);
-        }
-
-        public async Task<bool> DeleteQuestionAsync(int id)
-        {
-            return await _surveyRepository.DeleteQuestionAsync(id);
-        }
-
-        public async Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId)
-        {
-            return await _surveyRepository.GetOptionsForQuestionAsync(questionId);
-        }
-
-        public async Task<SurveyOption> AddOptionAsync(SurveyOption option)
-        {
-            return await _surveyRepository.AddOptionAsync(option);
-        }
-
-        public async Task<SurveyOption> UpdateOptionAsync(SurveyOption option)
-        {
-            return await _surveyRepository.UpdateOptionAsync(option);
-        }
-
-        public async Task<bool> DeleteOptionAsync(int id)
-        {
-            return await _surveyRepository.DeleteOptionAsync(id);
-        }
-
-        public async Task<List<SurveyResult>> GetAllResultsAsync()
-        {
-            return await _surveyRepository.GetAllResultsAsync();
-        }
-
-        public async Task<SurveyResult> GetResultByIdAsync(int id)
-        {
-            return await _surveyRepository.GetResultByIdAsync(id);
-        }
-
-        public async Task<SurveyResult> GetResultByResultIdAsync(string resultId)
-        {
-            return await _surveyRepository.GetResultByResultIdAsync(resultId);
-        }
-
-        public async Task<SurveyResult> AddResultAsync(SurveyResult result)
-        {
-            return await _surveyRepository.AddResultAsync(result);
-        }
-
-        public async Task<SurveyResult> UpdateResultAsync(SurveyResult result)
-        {
-            return await _surveyRepository.UpdateResultAsync(result);
-        }
-
-        public async Task<bool> DeleteResultAsync(int id)
-        {
-            return await _surveyRepository.DeleteResultAsync(id);
-        }
-
-        public async Task<SurveySession> StartSessionAsync(int? userId)
-        {
-            var session = new SurveySession
-            {
-                UserId = userId,
-                IsCompleted = false,
-                CompletedDate = DateTime.Now
-            };
-
-            return await _surveyRepository.CreateSessionAsync(session);
-        }
-
-        public async Task<SurveySession> GetSessionByIdAsync(int id)
-        {
-            return await _surveyRepository.GetSessionByIdAsync(id);
-        }
-
-        public async Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId)
-        {
-            return await _surveyRepository.GetSessionsByUserIdAsync(userId);
-        }
-
-        public async Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId)
-        {
-            return await _surveyRepository.CompleteSessionAsync(sessionId, resultId);
-        }
-
-        public async Task<SurveyResponse> RecordResponseAsync(int sessionId, int questionId, int optionId)
-        {
-            var response = new SurveyResponse
-            {
-                SessionId = sessionId,
-                QuestionId = questionId,
-                OptionId = optionId,
-                ResponseDate = DateTime.Now
-            };
-
-            return await _surveyRepository.AddResponseAsync(response);
-        }
-
-        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
-        {
-            return await _surveyRepository.GetResponsesBySessionIdAsync(sessionId);
-        }
-
-        public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
-        {
-            return await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
-        }
-
-        public async Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId)
-        {
-            var recommendedServices = await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
-            var serviceIds = recommendedServices.Select(rs => rs.ServiceId).ToList();
-            
-            // This would need a method to fetch services by IDs
-            // For now, returning an empty list
-            return new List<SkincareService>();
-        }
-
-        public async Task<RecommendedService> AddRecommendedServiceAsync(RecommendedService service)
-        {
-            return await _surveyRepository.AddRecommendedServiceAsync(service);
-        }
-
-        public async Task<bool> DeleteRecommendedServiceAsync(int id)
-        {
-            return await _surveyRepository.DeleteRecommendedServiceAsync(id);
-        }
-
-        public async Task<SurveyQuestion> GetFirstQuestionAsync()
-        {
-            // Logic to get the first question - may need to be customized
-            var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
-            return allQuestions.FirstOrDefault(q => q.QuestionId.StartsWith("Q1"));
-        }
-
-        public async Task<object> GetNextQuestionOrResultAsync(int sessionId, int currentQuestionId, int selectedOptionId)
-        {
-            // Record the response
-            await RecordResponseAsync(sessionId, currentQuestionId, selectedOptionId);
-            
-            // Get the selected option
-            var option = await _surveyRepository.GetOptionByIdAsync(selectedOptionId);
-            if (option == null)
-                return null;
-            
-            // If next question ID refers to a result, process completion
-            var nextId = option.NextQuestionId;
-            if (nextId.StartsWith("RESULT_"))
-            {
-                var result = await GetResultByResultIdAsync(nextId);
-                if (result != null)
-                {
-                    await CompleteSessionAsync(sessionId, result.Id);
-                    return new { 
-                        isResult = true,
-                        result = result,
-                        recommendedServices = await GetRecommendedServicesDetailsByResultIdAsync(result.Id)
-                    };
-                }
-            }
-            else
-            {
-                // Get the next question
-                var nextQuestion = await GetQuestionByQuestionIdAsync(nextId);
-                if (nextQuestion != null)
-                {
-                    var options = await GetOptionsForQuestionAsync(nextQuestion.Id);
-                    return new {
-                        isResult = false,
-                        questionId = nextQuestion.Id,
-                        question = nextQuestion.QuestionText,
-                        options = options
-                    };
-                }
-            }
-            
-            return null;
-        }
-
-        public async Task<SurveyResult> ProcessSurveyCompletionAsync(int sessionId, string resultId)
-        {
-            var result = await GetResultByResultIdAsync(resultId);
-            if (result == null)
-                return null;
-                
-            await CompleteSessionAsync(sessionId, result.Id);
-            return result;
-        }
-    }
-}
- this is other code, use it to update mine
+﻿  // -------------------------------------------
+  // Q1: CÂU HỎI KHỞI ĐỘNG
+  // -------------------------------------------
+  Q1: {
+    question: "Sau khi rửa mặt khoảng 30 phút, bạn thấy tình trạng da như thế nào?",
+    options: [
+      {
+        label: "A. Bị khô căng, thậm chí bong tróc",
+        nextId: "Q2A" // Nhánh Da Khô
+      },
+      {
+        label: "B. Bóng dầu nhiều, đặc biệt ở vùng chữ T",
+        nextId: "Q2B" // Nhánh Da Dầu
+      },
+      {
+        label: "C. Vùng chữ T có dầu nhưng vùng má lại khô (hoặc bình thường)",
+        nextId: "Q2C" // Nhánh Da Hỗn Hợp
+      },
+      {
+        label: "D. Tương đối cân bằng, không quá khô, cũng không quá dầu",
+        nextId: "Q2D" // Nhánh Da Thường
+      },
+      {
+        label: "E. Thường hay bị ửng đỏ, mẩn hoặc châm chích khi thay đổi sản phẩm/môi trường",
+        nextId: "Q2E" // Nhánh Da Nhạy Cảm
+      }
+    ]
+  },
+
+  // -------------------------------------------
+  // NHÁNH A: DA KHÔ
+  // -------------------------------------------
+  Q2A: {
+    question: "Bạn có thường xuyên thấy da bong tróc ở khóe môi, hai bên má hoặc vùng mũi không?",
+    options: [
+      {
+        label: "Rất thường xuyên, da bong tróc rõ rệt",
+        nextId: "Q3A" // Tiếp tục khô
+      },
+      {
+        label: "Thỉnh thoảng thôi, không quá liên tục",
+        nextId: "Q3A" // Vẫn hỏi tiếp Q3A để phân mức độ
+      }
+    ]
+  },
+  Q3A: {
+    question: "Da bạn có hay ngứa rát, châm chích khi bôi mỹ phẩm mới hoặc khi trời trở lạnh?",
+    options: [
+      {
+        label: "Có, mình dễ kích ứng, mẩn đỏ hoặc châm chích",
+        nextId: "RESULT_DA_KHO_NHAY_CAM"
+      },
+      {
+        label: "Không, chỉ khô nhưng ít khi bị kích ứng",
+        nextId: "RESULT_DA_KHO"
+      }
+    ]
+  },
+
+  // -------------------------------------------
+  // NHÁNH B: DA DẦU
+  // -------------------------------------------
+  Q2B: {
+    question: "Sau khi rửa mặt khoảng 1 tiếng, bạn có cảm thấy da lại bóng nhẫy không?",
+    options: [
+      {
+        label: "Có, hầu như lúc nào cũng bóng dầu trở lại",
+        nextId: "Q3B"
+      },
+      {
+        label: "Bớt dầu hơn chút, nhưng vùng chữ T vẫn rõ dầu",
+        nextId: "Q3B"
+      }
+    ]
+  },
+  Q3B: {
+    question: "Bạn có dễ bị mẩn đỏ, ngứa khi dùng sản phẩm chứa cồn hay hương liệu mạnh không?",
+    options: [
+      {
+        label: "Có, mình dễ bị châm chích, mẩn khi sản phẩm không hợp",
+        nextId: "RESULT_DA_DAU_NHAY_CAM"
+      },
+      {
+        label: "Không, da dầu nhưng ít khi kích ứng, chỉ nổi mụn nếu bít tắc",
+        nextId: "RESULT_DA_DAU"
+      }
+    ]
+  },
+
+  // -------------------------------------------
+  // NHÁNH C: DA HỖN HỢP
+  // -------------------------------------------
+  Q2C: {
+    question: "Bạn cảm thấy vùng má của mình thế nào (so với vùng chữ T)?",
+    options: [
+      {
+        label: "Má khô hoặc hơi bong, trong khi vùng T thì dầu",
+        nextId: "Q3C"
+      },
+      {
+        label: "Má vẫn ẩm mượt hoặc bình thường, vùng T chỉ hơi bóng dầu",
+        nextId: "Q3C"
+      }
+    ]
+  },
+  Q3C: {
+    question: "Da bạn có hay nổi mẩn đỏ ở vùng má hoặc hai bên cánh mũi khi thời tiết thay đổi?",
+    options: [
+      {
+        label: "Có, mình dễ bị ửng đỏ, có vẻ hơi nhạy cảm",
+        nextId: "RESULT_DA_HON_HOP_NHAY_CAM"
+      },
+      {
+        label: "Không, chỉ bị dầu ở T-zone và đôi khi khô nhẹ ở má",
+        nextId: "RESULT_DA_HON_HOP"
+      }
+    ]
+  },
+
+  // -------------------------------------------
+  // NHÁNH D: DA THƯỜNG
+  // -------------------------------------------
+  Q2D: {
+    question: "Bạn có hay gặp vấn đề về da như nổi mụn, mẩn đỏ hoặc bong tróc không?",
+    options: [
+      {
+        label: "Hiếm lắm, đa số da vẫn ổn định",
+        nextId: "Q3D"
+      },
+      {
+        label: "Thỉnh thoảng có bị, nhưng thường do stress hoặc thay đổi nội tiết",
+        nextId: "Q3D"
+      }
+    ]
+  },
+  Q3D: {
+    question: "Khi ở môi trường điều hòa/lạnh cả ngày, da bạn phản ứng thế nào?",
+    options: [
+      {
+        label: "Vẫn mịn màng, ít bị khô căng",
+        nextId: "RESULT_DA_THUONG"
+      },
+      {
+        label: "Có hơi khô hoặc đổ dầu nhẹ, nhưng không quá đáng kể",
+        nextId: "RESULT_DA_THUONG"
+      }
+    ]
+  },
+
+  // -------------------------------------------
+  // NHÁNH E: DA NHẠY CẢM
+  // -------------------------------------------
+  Q2E: {
+    question: "Bạn từng bị nổi mẩn, ngứa, hoặc châm chích mạnh khi thử sản phẩm mới chưa?",
+    options: [
+      {
+        label: "Có, khá thường xuyên, mình sợ đổi mỹ phẩm mới",
+        nextId: "Q3E"
+      },
+      {
+        label: "Chỉ khi sản phẩm đó có thành phần tẩy rửa mạnh, còn loại nhẹ thì ổn",
+        nextId: "Q3E"
+      }
+    ]
+  },
+  Q3E: {
+    question: "Ngoài độ nhạy cảm, da bạn thiên về khô hay dầu hơn?",
+    options: [
+      {
+        label: "Thiên về khô, sờ vào hay cảm giác căng",
+        nextId: "RESULT_DA_KHO_NHAY_CAM"
+      },
+      {
+        label: "Thiên về dầu, thường đổ dầu nhiều",
+        nextId: "RESULT_DA_DAU_NHAY_CAM"
+      },
+      {
+        label: "Không quá khô hay dầu, có lẽ nhạy cảm + hỗn hợp hoặc thường",
+        nextId: "RESULT_DA_THUONG_NHAY_CAM"
+      }
+    ]
+  },
+
+  // -------------------------------------------
+  // CÁC NÚT KẾT QUẢ CUỐI CÙNG (RESULT_...)
+  // -------------------------------------------
+  RESULT_DA_KHO: {
+    question:
+      "KẾT LUẬN: DA BẠN THIÊN VỀ KHÔ.\n\n" +
+      "- Dễ mất nước, bong tróc nếu không dưỡng ẩm.\n" +
+      "- Nên dùng kem dưỡng giàu ẩm, uống đủ nước.\n" +
+      "- Ưu tiên sản phẩm dịu nhẹ, tránh tẩy rửa mạnh.\n\n" +
+      "Tips: Thoa kem dưỡng khi da còn ẩm để 'khóa' độ ẩm tốt hơn.",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+  RESULT_DA_KHO_NHAY_CAM: {
+    question:
+      "KẾT LUẬN: DA BẠN KHÔ & NHẠY CẢM.\n\n" +
+      "- Da khô thiếu ẩm + dễ kích ứng.\n" +
+      "- Tránh sản phẩm chứa hương liệu, cồn, AHA/BHA quá mạnh.\n" +
+      "- Nên test sản phẩm ở vùng nhỏ trước khi dùng toàn mặt.\n\n" +
+      "Tips: Tăng cường hàng rào bảo vệ da với kem dưỡng phục hồi.",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+
+  RESULT_DA_DAU: {
+    question:
+      "KẾT LUẬN: DA BẠN THIÊN VỀ DẦU.\n\n" +
+      "- Dễ đổ dầu, lỗ chân lông to.\n" +
+      "- Chú ý làm sạch sâu, nhưng đừng quên cấp ẩm.\n" +
+      "- Ưu điểm: Da dầu thường chậm lão hóa hơn.\n\n" +
+      "Tips: Dùng toner cân bằng, sản phẩm kiềm dầu, mask đất sét định kỳ.",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+  RESULT_DA_DAU_NHAY_CAM: {
+    question:
+      "KẾT LUẬN: DA BẠN DẦU & NHẠY CẢM.\n\n" +
+      "- Vừa đổ dầu, vừa dễ kích ứng.\n" +
+      "- Tránh tẩy rửa quá mạnh, chú trọng duy trì pH cân bằng.\n" +
+      "- Sản phẩm kiềm dầu nhẹ nhàng, tránh cồn & hương liệu.\n\n" +
+      "Tips: Chọn gel dưỡng mỏng nhẹ để không bít tắc, nhưng vẫn có hàng rào bảo vệ da.",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+
+  RESULT_DA_HON_HOP: {
+    question:
+      "KẾT LUẬN: DA BẠN THUỘC HỖN HỢP.\n\n" +
+      "- Vùng chữ T đổ dầu, vùng má khô hoặc bình thường.\n" +
+      "- Cần chăm sóc 'phân vùng': kiềm dầu vùng T, cấp ẩm vùng má.\n\n" +
+      "Tips: Có thể dùng 2 loại mặt nạ riêng cho T-zone và má (multimasking).",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+  RESULT_DA_HON_HOP_NHAY_CAM: {
+    question:
+      "KẾT LUẬN: DA BẠN HỖN HỢP & NHẠY CẢM.\n\n" +
+      "- Vừa phải cân bằng dầu - khô, vừa chú ý thành phần dịu nhẹ.\n" +
+      "- Dễ mẩn đỏ ở vùng má hoặc cánh mũi.\n\n" +
+      "Tips: Tránh layering quá nhiều sản phẩm cùng lúc, test kỹ khi đổi mỹ phẩm.",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+
+  RESULT_DA_THUONG: {
+    question:
+      "KẾT LUẬN: DA BẠN THUỘC DA THƯỜNG.\n\n" +
+      "- Tương đối cân bằng, ít khô căng hoặc đổ dầu.\n" +
+      "- Đừng chủ quan, vẫn cần chăm sóc cơ bản: làm sạch - dưỡng ẩm - chống nắng.\n\n" +
+      "Tips: Bạn có lợi thế lớn, chỉ cần duy trì thói quen skincare hợp lý là xịn rồi!",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+  RESULT_DA_THUONG_NHAY_CAM: {
+    question:
+      "KẾT LUẬN: DA BẠN THƯỜNG & NHẠY CẢM.\n\n" +
+      "- Da không quá dầu/khô nhưng vẫn dễ kích ứng bởi tác nhân bên ngoài.\n" +
+      "- Chú ý chọn mỹ phẩm dịu nhẹ, không chứa nhiều hương liệu.\n\n" +
+      "Tips: Test sản phẩm mới ở vùng quai hàm/cổ tay trước khi bôi khắp mặt.",
+    options: [{ label: "Hoàn thành", nextId: "END" }]
+  },
+
+  // -------------------------------------------
+  // KẾT THÚC
+  // -------------------------------------------
