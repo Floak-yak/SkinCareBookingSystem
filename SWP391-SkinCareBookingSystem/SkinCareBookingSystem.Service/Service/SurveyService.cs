@@ -1,13 +1,11 @@
-using Microsoft.EntityFrameworkCore;
-using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Service.Dto.Survey;
-using SkinCareBookingSystem.Service.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SkinCareBookingSystem.Repositories.Interfaces;
+using SkinCareBookingSystem.Service.Interfaces;
+using SkinCareBookingSystem.BusinessObject.Entity;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -20,284 +18,243 @@ namespace SkinCareBookingSystem.Service.Service
             _surveyRepository = surveyRepository;
         }
 
-        public async Task<Survey> GetQuestionByIdAsync(string questionId)
+        public (string question, Dictionary<string, string> choices) GetQuestion(string questionId)
         {
-            return await _surveyRepository.GetQuestionByIdAsync(questionId);
+            var surveyTree = _surveyRepository.LoadSurvey();
+            
+            if (!surveyTree.ContainsKey(questionId))
+                return (null, null);
+
+            var node = surveyTree[questionId];
+            return (node.Content, node.Choices);
         }
 
-        public async Task<Survey> GetFirstQuestionAsync()
+        public string GetNextQuestionId(string currentQuestionId, string choice)
         {
-            return await _surveyRepository.GetFirstQuestionAsync();
-        }
-
-        public async Task<Survey> GetNextQuestionAsync(string currentQuestionId, string selectedOptionId)
-        {
-            var currentQuestion = await _surveyRepository.GetQuestionByIdAsync(currentQuestionId);
-            if (currentQuestion == null)
+            var surveyTree = _surveyRepository.LoadSurvey();
+            
+            if (!surveyTree.ContainsKey(currentQuestionId))
                 return null;
 
-            var selectedOption = currentQuestion.Options.FirstOrDefault(o => o.Id == selectedOptionId);
-            if (selectedOption == null)
-                return null;
-
-            return await _surveyRepository.GetQuestionByIdAsync(selectedOption.NextQuestionId);
+            var node = surveyTree[currentQuestionId];
+            return node.Choices.ContainsKey(choice) ? node.Choices[choice] : null;
         }
 
-        public async Task<Survey> GetResultByIdAsync(string resultId)
+        public bool IsEndQuestion(string questionId)
         {
-            return await _surveyRepository.GetResultByIdAsync(resultId);
+            return questionId.StartsWith("RESULT_");
         }
 
-        public async Task<IEnumerable<Survey>> GetAllQuestionsAsync()
+        // Implement the remaining methods from ISurveyService interface
+        public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
         {
             return await _surveyRepository.GetAllQuestionsAsync();
         }
 
-        public async Task<SurveyResponseDto> CreateSurveyAsync(CreateSurveyDto createSurveyDto)
+        public async Task<SurveyQuestion> GetQuestionByIdAsync(int id)
         {
-            try
-            {
-                var validationErrors = ValidateCreateSurveyDto(createSurveyDto);
-                if (validationErrors.Any())
-                {
-                    return new SurveyResponseDto
-                    {
-                        Success = false,
-                        Message = "Validation failed.",
-                        Errors = validationErrors
-                    };
-                }
-
-                var existingSurvey = await _surveyRepository.GetQuestionByIdAsync(createSurveyDto.QuestionId);
-                if (existingSurvey != null)
-                {
-                    return new SurveyResponseDto
-                    {
-                        Success = false,
-                        Message = $"Survey question with identifier {createSurveyDto.QuestionId} already exists.",
-                        Errors = new List<string> { $"Survey question with identifier {createSurveyDto.QuestionId} already exists." }
-                    };
-                }
-
-                var survey = new Survey
-                {
-                    QuestionIdentifier = createSurveyDto.QuestionId,
-                    Question = createSurveyDto.Question,
-                    IsResult = createSurveyDto.IsResult,
-                    Options = createSurveyDto.Options.Select(o => new Option
-                    {
-                        Label = o.OptionText,
-                        NextQuestionId = o.NextQuestionId
-                    }).ToList()
-                };
-
-                var success = await _surveyRepository.SaveSurveyAsync(survey);
-                if (success)
-                {
-                    return new SurveyResponseDto
-                    {
-                        Success = true,
-                        Message = "Survey question created successfully.",
-                        Data = survey
-                    };
-                }
-
-                return new SurveyResponseDto
-                {
-                    Success = false,
-                    Message = "Failed to create survey question.",
-                    Errors = new List<string> { "Database operation failed." }
-                };
-            }
-            catch (Exception ex)
-            {
-                return new SurveyResponseDto
-                {
-                    Success = false,
-                    Message = $"Error creating survey question: {ex.Message}",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
+            return await _surveyRepository.GetQuestionByIdAsync(id);
         }
 
-        public async Task<SurveyResponseDto> UpdateSurveyAsync(string questionId, UpdateSurveyDto updateSurveyDto)
+        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
         {
-            try
+            return await _surveyRepository.GetQuestionByQuestionIdAsync(questionId);
+        }
+
+        public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
+        {
+            return await _surveyRepository.AddQuestionAsync(question);
+        }
+
+        public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
+        {
+            return await _surveyRepository.UpdateQuestionAsync(question);
+        }
+
+        public async Task<bool> DeleteQuestionAsync(int id)
+        {
+            return await _surveyRepository.DeleteQuestionAsync(id);
+        }
+
+        public async Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId)
+        {
+            return await _surveyRepository.GetOptionsForQuestionAsync(questionId);
+        }
+
+        public async Task<SurveyOption> AddOptionAsync(SurveyOption option)
+        {
+            return await _surveyRepository.AddOptionAsync(option);
+        }
+
+        public async Task<SurveyOption> UpdateOptionAsync(SurveyOption option)
+        {
+            return await _surveyRepository.UpdateOptionAsync(option);
+        }
+
+        public async Task<bool> DeleteOptionAsync(int id)
+        {
+            return await _surveyRepository.DeleteOptionAsync(id);
+        }
+
+        public async Task<List<SurveyResult>> GetAllResultsAsync()
+        {
+            return await _surveyRepository.GetAllResultsAsync();
+        }
+
+        public async Task<SurveyResult> GetResultByIdAsync(int id)
+        {
+            return await _surveyRepository.GetResultByIdAsync(id);
+        }
+
+        public async Task<SurveyResult> GetResultByResultIdAsync(string resultId)
+        {
+            return await _surveyRepository.GetResultByResultIdAsync(resultId);
+        }
+
+        public async Task<SurveyResult> AddResultAsync(SurveyResult result)
+        {
+            return await _surveyRepository.AddResultAsync(result);
+        }
+
+        public async Task<SurveyResult> UpdateResultAsync(SurveyResult result)
+        {
+            return await _surveyRepository.UpdateResultAsync(result);
+        }
+
+        public async Task<bool> DeleteResultAsync(int id)
+        {
+            return await _surveyRepository.DeleteResultAsync(id);
+        }
+
+        public async Task<SurveySession> StartSessionAsync(int? userId)
+        {
+            var session = new SurveySession
             {
-                var validationErrors = ValidateUpdateSurveyDto(updateSurveyDto);
-                if (validationErrors.Any())
+                UserId = userId,
+                IsCompleted = false,
+                CompletedDate = DateTime.Now
+            };
+
+            return await _surveyRepository.CreateSessionAsync(session);
+        }
+
+        public async Task<SurveySession> GetSessionByIdAsync(int id)
+        {
+            return await _surveyRepository.GetSessionByIdAsync(id);
+        }
+
+        public async Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId)
+        {
+            return await _surveyRepository.GetSessionsByUserIdAsync(userId);
+        }
+
+        public async Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId)
+        {
+            return await _surveyRepository.CompleteSessionAsync(sessionId, resultId);
+        }
+
+        public async Task<SurveyResponse> RecordResponseAsync(int sessionId, int questionId, int optionId)
+        {
+            var response = new SurveyResponse
+            {
+                SessionId = sessionId,
+                QuestionId = questionId,
+                OptionId = optionId,
+                ResponseDate = DateTime.Now
+            };
+
+            return await _surveyRepository.AddResponseAsync(response);
+        }
+
+        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
+        {
+            return await _surveyRepository.GetResponsesBySessionIdAsync(sessionId);
+        }
+
+        public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
+        {
+            return await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
+        }
+
+        public async Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId)
+        {
+            var recommendedServices = await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
+            var serviceIds = recommendedServices.Select(rs => rs.ServiceId).ToList();
+            
+            // This would need a method to fetch services by IDs
+            // For now, returning an empty list
+            return new List<SkincareService>();
+        }
+
+        public async Task<RecommendedService> AddRecommendedServiceAsync(RecommendedService service)
+        {
+            return await _surveyRepository.AddRecommendedServiceAsync(service);
+        }
+
+        public async Task<bool> DeleteRecommendedServiceAsync(int id)
+        {
+            return await _surveyRepository.DeleteRecommendedServiceAsync(id);
+        }
+
+        public async Task<SurveyQuestion> GetFirstQuestionAsync()
+        {
+            // Logic to get the first question - may need to be customized
+            var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
+            return allQuestions.FirstOrDefault(q => q.QuestionId.StartsWith("Q1"));
+        }
+
+        public async Task<object> GetNextQuestionOrResultAsync(int sessionId, int currentQuestionId, int selectedOptionId)
+        {
+            // Record the response
+            await RecordResponseAsync(sessionId, currentQuestionId, selectedOptionId);
+            
+            // Get the selected option
+            var option = await _surveyRepository.GetOptionByIdAsync(selectedOptionId);
+            if (option == null)
+                return null;
+            
+            // If next question ID refers to a result, process completion
+            var nextId = option.NextQuestionId;
+            if (nextId.StartsWith("RESULT_"))
+            {
+                var result = await GetResultByResultIdAsync(nextId);
+                if (result != null)
                 {
-                    return new SurveyResponseDto
-                    {
-                        Success = false,
-                        Message = "Validation failed.",
-                        Errors = validationErrors
+                    await CompleteSessionAsync(sessionId, result.Id);
+                    return new { 
+                        isResult = true,
+                        result = result,
+                        recommendedServices = await GetRecommendedServicesDetailsByResultIdAsync(result.Id)
                     };
                 }
-
-                var existingSurvey = await _surveyRepository.GetQuestionByIdAsync(questionId);
-                if (existingSurvey == null)
+            }
+            else
+            {
+                // Get the next question
+                var nextQuestion = await GetQuestionByQuestionIdAsync(nextId);
+                if (nextQuestion != null)
                 {
-                    return new SurveyResponseDto
-                    {
-                        Success = false,
-                        Message = $"Survey question with identifier {questionId} not found.",
-                        Errors = new List<string> { $"Survey question with identifier {questionId} not found." }
+                    var options = await GetOptionsForQuestionAsync(nextQuestion.Id);
+                    return new {
+                        isResult = false,
+                        questionId = nextQuestion.Id,
+                        question = nextQuestion.QuestionText,
+                        options = options
                     };
                 }
+            }
+            
+            return null;
+        }
 
-                existingSurvey.Question = updateSurveyDto.Question;
-                existingSurvey.IsResult = updateSurveyDto.IsResult;
-
-                var existingOptionIds = existingSurvey.Options.Select(o => o.Id).ToList();
-                var updatedOptionIds = updateSurveyDto.Options
-                    .Where(o => !string.IsNullOrEmpty(o.Id))
-                    .Select(o => o.Id)
-                    .ToList();
+        public async Task<SurveyResult> ProcessSurveyCompletionAsync(int sessionId, string resultId)
+        {
+            var result = await GetResultByResultIdAsync(resultId);
+            if (result == null)
+                return null;
                 
-                var optionsToRemove = existingSurvey.Options.Where(o => !updatedOptionIds.Contains(o.Id)).ToList();
-                foreach (var option in optionsToRemove)
-                {
-                    existingSurvey.Options.Remove(option);
-                }
-
-                foreach (var optionDto in updateSurveyDto.Options)
-                {
-                    if (string.IsNullOrEmpty(optionDto.Id)) // New option
-                    {
-                        existingSurvey.Options.Add(new Option
-                        {
-                            Label = optionDto.OptionText,
-                            NextQuestionId = optionDto.NextQuestionId
-                        });
-                    }
-                    else // Update existing option
-                    {
-                        var existingOption = existingSurvey.Options.FirstOrDefault(o => o.Id == optionDto.Id);
-                        if (existingOption != null)
-                        {
-                            existingOption.Label = optionDto.OptionText;
-                            existingOption.NextQuestionId = optionDto.NextQuestionId;
-                        }
-                    }
-                }
-
-                var success = await _surveyRepository.SaveSurveyAsync(existingSurvey);
-                if (success)
-                {
-                    return new SurveyResponseDto
-                    {
-                        Success = true,
-                        Message = "Survey question updated successfully.",
-                        Data = existingSurvey
-                    };
-                }
-
-                return new SurveyResponseDto
-                {
-                    Success = false,
-                    Message = "Failed to update survey question.",
-                    Errors = new List<string> { "Database operation failed." }
-                };
-            }
-            catch (Exception ex)
-            {
-                return new SurveyResponseDto
-                {
-                    Success = false,
-                    Message = $"Error updating survey question: {ex.Message}",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
+            await CompleteSessionAsync(sessionId, result.Id);
+            return result;
         }
-
-        public async Task<SurveyResponseDto> DeleteSurveyAsync(string questionId)
-        {
-            try
-            {
-                var success = await _surveyRepository.DeleteSurveyAsync(questionId);
-                if (success)
-                {
-                    return new SurveyResponseDto
-                    {
-                        Success = true,
-                        Message = $"Survey question with identifier {questionId} deleted successfully."
-                    };
-                }
-
-                return new SurveyResponseDto
-                {
-                    Success = false,
-                    Message = $"Survey question with identifier {questionId} not found or could not be deleted.",
-                    Errors = new List<string> { $"Survey question with identifier {questionId} not found or could not be deleted." }
-                };
-            }
-            catch (Exception ex)
-            {
-                return new SurveyResponseDto
-                {
-                    Success = false,
-                    Message = $"Error deleting survey question: {ex.Message}",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
-        }
-
-        #region Validation Methods
-        private List<string> ValidateCreateSurveyDto(CreateSurveyDto dto)
-        {
-            var errors = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(dto.QuestionId))
-                errors.Add("Question identifier is required.");
-
-            if (string.IsNullOrWhiteSpace(dto.Question))
-                errors.Add("Question text is required.");
-
-            if (!dto.IsResult && (dto.Options == null || !dto.Options.Any()))
-                errors.Add("Non-result questions must have at least one option.");
-
-            if (dto.Options != null)
-            {
-                for (int i = 0; i < dto.Options.Count; i++)
-                {
-                    var option = dto.Options[i];
-                    if (string.IsNullOrWhiteSpace(option.OptionText))
-                        errors.Add($"Option {i+1} text is required.");
-
-                    if (!dto.IsResult && string.IsNullOrWhiteSpace(option.NextQuestionId))
-                        errors.Add($"Option {i+1} next question ID is required for non-result questions.");
-                }
-            }
-
-            return errors;
-        }
-
-        private List<string> ValidateUpdateSurveyDto(UpdateSurveyDto dto)
-        {
-            var errors = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(dto.Question))
-                errors.Add("Question text is required.");
-
-            if (!dto.IsResult && (dto.Options == null || !dto.Options.Any()))
-                errors.Add("Non-result questions must have at least one option.");
-
-            if (dto.Options != null)
-            {
-                for (int i = 0; i < dto.Options.Count; i++)
-                {
-                    var option = dto.Options[i];
-                    if (string.IsNullOrWhiteSpace(option.OptionText))
-                        errors.Add($"Option {i+1} text is required.");
-
-                    if (!dto.IsResult && string.IsNullOrWhiteSpace(option.NextQuestionId))
-                        errors.Add($"Option {i+1} next question ID is required for non-result questions.");
-                }
-            }
-
-            return errors;
-        }
-        #endregion
     }
 }

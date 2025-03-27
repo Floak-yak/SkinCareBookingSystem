@@ -1,22 +1,52 @@
-using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Service.Dto.Survey;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SkinCareBookingSystem.BusinessObject.Entity;
 
 namespace SkinCareBookingSystem.Service.Interfaces
 {
     public interface ISurveyService
     {
-        Task<Survey> GetQuestionByIdAsync(string questionId);
-        Task<Survey> GetFirstQuestionAsync();
-        Task<Survey> GetNextQuestionAsync(string currentQuestionId, string selectedOptionId);
-        Task<Survey> GetResultByIdAsync(string resultId);
-        Task<IEnumerable<Survey>> GetAllQuestionsAsync();
-        Task<SurveyResponseDto> CreateSurveyAsync(CreateSurveyDto createSurveyDto);
-        Task<SurveyResponseDto> UpdateSurveyAsync(string questionId, UpdateSurveyDto updateSurveyDto);
-        Task<SurveyResponseDto> DeleteSurveyAsync(string questionId);
+        (string question, Dictionary<string, string> choices) GetQuestion(string questionId);
+        string GetNextQuestionId(string currentQuestionId, string choice);
+        bool IsEndQuestion(string questionId);
+        
+        Task<List<SurveyQuestion>> GetAllQuestionsAsync();
+        Task<SurveyQuestion> GetQuestionByIdAsync(int id);
+        Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId);
+        Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question);
+        Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question);
+        Task<bool> DeleteQuestionAsync(int id);
+        
+        Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId);
+        Task<SurveyOption> AddOptionAsync(SurveyOption option);
+        Task<SurveyOption> UpdateOptionAsync(SurveyOption option);
+        Task<bool> DeleteOptionAsync(int id);
+        
+        Task<List<SurveyResult>> GetAllResultsAsync();
+        Task<SurveyResult> GetResultByIdAsync(int id);
+        Task<SurveyResult> GetResultByResultIdAsync(string resultId);
+        Task<SurveyResult> AddResultAsync(SurveyResult result);
+        Task<SurveyResult> UpdateResultAsync(SurveyResult result);
+        Task<bool> DeleteResultAsync(int id);
+        
+        Task<SurveySession> StartSessionAsync(int? userId);
+        Task<SurveySession> GetSessionByIdAsync(int id);
+        Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId);
+        Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId);
+        
+        Task<SurveyResponse> RecordResponseAsync(int sessionId, int questionId, int optionId);
+        Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId);
+        
+        Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId);
+        Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId);
+        Task<RecommendedService> AddRecommendedServiceAsync(RecommendedService service);
+        Task<bool> DeleteRecommendedServiceAsync(int id);
+        
+        Task<SurveyQuestion> GetFirstQuestionAsync();
+        Task<object> GetNextQuestionOrResultAsync(int sessionId, int currentQuestionId, int selectedOptionId);
+        Task<SurveyResult> ProcessSurveyCompletionAsync(int sessionId, string resultId);
     }
 }

@@ -162,62 +162,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("Images");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Node", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Attributes")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NextNodeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ParentNodeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SurveyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SurveyId");
-
-                    b.ToTable("Nodes");
-                });
-
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Option", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NextQuestionId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuestionId");
-
-                    b.ToTable("Options");
-                });
-
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
                 {
                     b.Property<int>("Id")
@@ -291,6 +235,37 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasIndex("ImageId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.RecommendedService", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SurveyResultId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SurveyResultId1")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("SurveyResultId");
+
+                    b.HasIndex("SurveyResultId1");
+
+                    b.ToTable("RecommendedServices");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Schedule", b =>
@@ -409,28 +384,164 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("SkincareServices");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Survey", b =>
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", b =>
                 {
-                    b.Property<int>("QuestionId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuestionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsResult")
+                    b.Property<string>("NextQuestionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OptionText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("SurveyOptions");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Question")
+                    b.Property<string>("QuestionId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("QuestionIdentifier")
+                    b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("QuestionId");
+                    b.HasKey("Id");
 
-                    b.ToTable("Surveys");
+                    b.ToTable("SurveyQuestions");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyResponse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ResponseDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SurveyOptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SurveyQuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OptionId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("SurveyOptionId");
+
+                    b.HasIndex("SurveyQuestionId");
+
+                    b.ToTable("SurveyResponses");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecommendationText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResultId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResultText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SkinType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SurveyResults");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CompletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SurveyResultId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SurveyResultId1")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SurveyResultId");
+
+                    b.HasIndex("SurveyResultId1");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SurveySessions");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
@@ -618,28 +729,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Post");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Node", b =>
-                {
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Survey", "Survey")
-                        .WithMany("Nodes")
-                        .HasForeignKey("SurveyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Survey");
-                });
-
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Option", b =>
-                {
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Survey", "Question")
-                        .WithMany("Options")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-                });
-
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Category", "Category")
@@ -680,6 +769,29 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.RecommendedService", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", "SurveyResult")
+                        .WithMany()
+                        .HasForeignKey("SurveyResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", null)
+                        .WithMany("RecommendedServices")
+                        .HasForeignKey("SurveyResultId1");
+
+                    b.Navigation("Service");
+
+                    b.Navigation("SurveyResult");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Schedule", b =>
@@ -738,6 +850,74 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyResponse", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", "Option")
+                        .WithMany()
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", "Session")
+                        .WithMany("Responses")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", null)
+                        .WithMany("Responses")
+                        .HasForeignKey("SurveyOptionId");
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", null)
+                        .WithMany("Responses")
+                        .HasForeignKey("SurveyQuestionId");
+
+                    b.Navigation("Option");
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", "SurveyResult")
+                        .WithMany()
+                        .HasForeignKey("SurveyResultId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", null)
+                        .WithMany("Sessions")
+                        .HasForeignKey("SurveyResultId1");
+
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("SurveyResult");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
@@ -816,11 +996,28 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("ServicesDetails");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Survey", b =>
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", b =>
                 {
-                    b.Navigation("Nodes");
+                    b.Navigation("Responses");
+                });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", b =>
+                {
                     b.Navigation("Options");
+
+                    b.Navigation("Responses");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", b =>
+                {
+                    b.Navigation("RecommendedServices");
+
+                    b.Navigation("Sessions");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", b =>
+                {
+                    b.Navigation("Responses");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.User", b =>
