@@ -66,6 +66,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         }
 
         public async Task<List<Schedule>> GetSchedulesBySkinTherapistId(int skinTherapistId) =>
-            await _context.Schedules.Include(s => s.ScheduleLogs).Where(s => s.UserId == skinTherapistId).ToListAsync();
+            await _context.Schedules.Include(s => s.ScheduleLogs).ThenInclude(sl => sl.BookingServiceSchedules).Where(s => s.UserId == skinTherapistId).ToListAsync();
     }
 } 

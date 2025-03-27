@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.Schedule;
 using SkinCareBookingSystem.Service.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -28,9 +29,14 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("GetScheduleBySkinTherapistId")]
-        public Task<IActionResult> GetScheduleBySkinTherapistId([FromQuery] int skinTherapistId)
+        public async Task<IActionResult> GetScheduleBySkinTherapistId([FromQuery] int skinTherapistId)
         {
-            throw new NotImplementedException();
+            if (skinTherapistId <= 0)
+                throw new Exception("Invalid id");
+            List<ScheduleResponse> schedules = await _scheduleService.GetSchedulesBySkinTherapistId(skinTherapistId);
+            if (schedules is null)
+                return NotFound("No schedule found");
+            return Ok(schedules);
         }
 
         [HttpGet("Weekly")]
