@@ -1,5 +1,5 @@
 using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.Survey;
 using System;
 using System.Collections.Generic;
 using System.Linq;

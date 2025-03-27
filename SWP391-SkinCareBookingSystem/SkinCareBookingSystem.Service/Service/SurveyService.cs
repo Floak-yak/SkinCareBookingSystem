@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.Survey;
 using SkinCareBookingSystem.Service.Interfaces;
 using System;
 using System.Collections.Generic;

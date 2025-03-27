@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Service.Dto;
+using SkinCareBookingSystem.Service.Dto.Survey;
 using SkinCareBookingSystem.Service.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
