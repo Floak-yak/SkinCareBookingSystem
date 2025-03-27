@@ -2,40 +2,59 @@
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Data;
+using System.IO;
 
 namespace SkinCareBookingSystem.Repositories.Repositories
 {
     public class SurveyRepository: ISurveyRepository
     {
-        private readonly string _filePath = "survey.txt";
+        private readonly string _filePath;
         private readonly AppDbContext _context;
 
         public SurveyRepository(AppDbContext context)
         {
             _context = context;
+            
+            // Get the base directory and construct the absolute path to the file
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            // Navigate up to the solution root
+            string solutionDirectory = Path.GetFullPath(Path.Combine(baseDirectory, "..\\..\\..\\.."));
+            _filePath = Path.Combine(solutionDirectory, "SkinCareBookingSystem.Repositories", "SkinTestQuestion.txt");
         }
 
         public Dictionary<string, Node> LoadSurvey()
         {
             var surveyTree = new Dictionary<string, Node>();
 
-            foreach (string line in File.ReadAllLines(_filePath))
+            try
             {
-                var parts = line.Split('|');
-                if (parts.Length < 2) continue;
-
-                var node = new Node { Id = parts[0], Content = parts[1] };
-
-                for (int i = 2; i < parts.Length; i++)
+                if (!File.Exists(_filePath))
                 {
-                    var choiceParts = parts[i].Split(':');
-                    if (choiceParts.Length == 2)
-                    {
-                        node.Choices[choiceParts[0]] = choiceParts[1];
-                    }
+                    throw new FileNotFoundException($"Survey file not found at path: {_filePath}");
                 }
 
-                surveyTree[node.Id] = node;
+                foreach (string line in File.ReadAllLines(_filePath))
+                {
+                    var parts = line.Split('|');
+                    if (parts.Length < 2) continue;
+
+                    var node = new Node { Id = parts[0], Content = parts[1] };
+
+                    for (int i = 2; i < parts.Length; i++)
+                    {
+                        var choiceParts = parts[i].Split(':');
+                        if (choiceParts.Length == 2)
+                        {
+                            node.Choices[choiceParts[0]] = choiceParts[1];
+                        }
+                    }
+
+                    surveyTree[node.Id] = node;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading survey: {ex.Message}");
             }
 
             return surveyTree;
