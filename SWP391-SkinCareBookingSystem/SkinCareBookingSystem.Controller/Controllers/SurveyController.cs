@@ -4,6 +4,7 @@ using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SkinCareBookingSystem.Api.Controllers
 {
@@ -18,34 +19,73 @@ namespace SkinCareBookingSystem.Api.Controllers
             _surveyService = surveyService;
         }
 
-        [HttpGet("start")]
-        public async Task<ActionResult<Survey>> GetFirstQuestion()
+        [HttpGet]
+        public async Task<ActionResult<SurveyResponseDto>> GetAll()
         {
-            var question = await _surveyService.GetFirstQuestionAsync();
-            if (question == null)
+            var questions = await _surveyService.GetAllQuestionsAsync();
+            
+            return Ok(new SurveyResponseDto
             {
-                return NotFound("Survey starting question not found.");
-            }
-            return Ok(question);
+                Success = true,
+                Message = "Survey questions retrieved successfully.",
+                Data = questions
+            });
         }
 
-        [HttpGet("question/{id}")]
-        public async Task<ActionResult<Survey>> GetQuestion(string id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<SurveyResponseDto>> GetById(string id)
         {
             var question = await _surveyService.GetQuestionByIdAsync(id);
+            
             if (question == null)
             {
-                return NotFound($"Question with ID {id} not found.");
+                return NotFound(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = $"Question with ID {id} not found."
+                });
             }
-            return Ok(question);
+            
+            return Ok(new SurveyResponseDto
+            {
+                Success = true,
+                Message = "Survey question retrieved successfully.",
+                Data = question
+            });
+        }
+
+        [HttpGet("first")]
+        public async Task<ActionResult<SurveyResponseDto>> GetFirst()
+        {
+            var question = await _surveyService.GetFirstQuestionAsync();
+            
+            if (question == null)
+            {
+                return NotFound(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = "Survey starting question not found."
+                });
+            }
+            
+            return Ok(new SurveyResponseDto
+            {
+                Success = true,
+                Message = "Starting question retrieved successfully.",
+                Data = question
+            });
         }
 
         [HttpPost("next")]
-        public async Task<ActionResult<Survey>> GetNextQuestion([FromBody] NextQuestionRequest request)
+        public async Task<ActionResult<SurveyResponseDto>> GetNext([FromBody] NextQuestionRequest request)
         {
             if (string.IsNullOrEmpty(request.CurrentQuestionId) || string.IsNullOrEmpty(request.SelectedOptionId))
             {
-                return BadRequest("Current question ID and option ID required.");
+                return BadRequest(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = "Current question ID and option ID required."
+                });
             }
 
             var nextQuestion = await _surveyService.GetNextQuestionAsync(
@@ -54,26 +94,33 @@ namespace SkinCareBookingSystem.Api.Controllers
 
             if (nextQuestion == null)
             {
-                return NotFound("Next question not found.");
+                return NotFound(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = "Next question not found."
+                });
             }
 
-            return Ok(nextQuestion);
+            return Ok(new SurveyResponseDto
+            {
+                Success = true,
+                Message = "Next question retrieved successfully.",
+                Data = nextQuestion
+            });
         }
 
-        [HttpGet("isResult/{id}")]
-        public async Task<ActionResult<bool>> IsResultQuestion(string id)
-        {
-            var isResult = await _surveyService.IsResultQuestionAsync(id);
-            return Ok(isResult);
-        }
-
-        [HttpGet("result/{id}")]
-        public async Task<ActionResult<Survey>> GetResult(string id)
+        [HttpGet("results/{id}")]
+        public async Task<ActionResult<SurveyResponseDto>> GetResult(string id)
         {
             var result = await _surveyService.GetResultByIdAsync(id);
+            
             if (result == null)
             {
-                return NotFound($"Result with ID {id} not found.");
+                return NotFound(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = $"Result with ID {id} not found."
+                });
             }
             
             if (result.IsResult)
@@ -81,7 +128,79 @@ namespace SkinCareBookingSystem.Api.Controllers
                 result.Options = new List<Option>();
             }
             
-            return Ok(result);
+            return Ok(new SurveyResponseDto
+            {
+                Success = true,
+                Message = "Result retrieved successfully.",
+                Data = result
+            });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<SurveyResponseDto>> Create([FromBody] CreateSurveyDto createSurveyDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid model state",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
+                });
+            }
+
+            var response = await _surveyService.CreateSurveyAsync(createSurveyDto);
+            
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return StatusCode(201, response); // 201 Created
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<SurveyResponseDto>> Update(string id, [FromBody] UpdateSurveyDto updateSurveyDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new SurveyResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid model state",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
+                });
+            }
+
+            var response = await _surveyService.UpdateSurveyAsync(id, updateSurveyDto);
+            
+            if (!response.Success)
+            {
+                if (response.Message.Contains("not found"))
+                {
+                    return NotFound(response);
+                }
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<SurveyResponseDto>> Delete(string id)
+        {
+            var response = await _surveyService.DeleteSurveyAsync(id);
+            
+            if (!response.Success)
+            {
+                if (response.Message.Contains("not found"))
+                {
+                    return NotFound(response);
+                }
+                return BadRequest(response);
+            }
+
+            return Ok(response);
         }
     }
 }

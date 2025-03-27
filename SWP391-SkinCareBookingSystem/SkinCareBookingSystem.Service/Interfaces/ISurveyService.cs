@@ -1,4 +1,5 @@
 using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.Service.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,10 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<Survey> GetQuestionByIdAsync(string questionId);
         Task<Survey> GetFirstQuestionAsync();
         Task<Survey> GetNextQuestionAsync(string currentQuestionId, string selectedOptionId);
-        Task<bool> IsResultQuestionAsync(string questionId);
         Task<Survey> GetResultByIdAsync(string resultId);
+        Task<IEnumerable<Survey>> GetAllQuestionsAsync();
+        Task<SurveyResponseDto> CreateSurveyAsync(CreateSurveyDto createSurveyDto);
+        Task<SurveyResponseDto> UpdateSurveyAsync(string questionId, UpdateSurveyDto updateSurveyDto);
+        Task<SurveyResponseDto> DeleteSurveyAsync(string questionId);
     }
 }

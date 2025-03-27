@@ -28,7 +28,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<Survey> GetFirstQuestionAsync()
         {
-            // Assuming "Q1" is always the first question
             return await GetQuestionByIdAsync("Q1");
         }
 
@@ -50,14 +49,38 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             try
             {
-                if (survey.QuestionId == 0) // New survey
+                if (survey.QuestionId == 0)
                 {
                     await _context.Surveys.AddAsync(survey);
                 }
-                else // Update existing
+                else
                 {
                     _context.Surveys.Update(survey);
                 }
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteSurveyAsync(string questionId)
+        {
+            try
+            {
+                var survey = await _context.Surveys
+                    .Include(s => s.Options)
+                    .FirstOrDefaultAsync(s => s.QuestionIdentifier == questionId);
+
+                if (survey == null)
+                    return false;
+
+                _context.RemoveRange(survey.Options);
+                
+                _context.Surveys.Remove(survey);
+                
                 await _context.SaveChangesAsync();
                 return true;
             }

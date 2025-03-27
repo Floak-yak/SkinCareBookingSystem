@@ -14,5 +14,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         Task<Survey> GetResultByIdAsync(string resultId);
         Task<IEnumerable<Survey>> GetAllQuestionsAsync();
         Task<bool> SaveSurveyAsync(Survey survey);
+        Task<bool> DeleteSurveyAsync(string questionId);
     }
 }

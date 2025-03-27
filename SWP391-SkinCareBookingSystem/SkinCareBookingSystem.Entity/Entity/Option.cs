@@ -14,7 +14,6 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         
         public bool IsResultOption => NextQuestionId?.StartsWith("RESULT_") ?? false;
         
-        // Reference to the Survey this option belongs to
         public int QuestionId { get; set; }
         public Survey Question { get; set; }
     }
