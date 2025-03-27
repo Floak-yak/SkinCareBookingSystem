@@ -68,25 +68,25 @@ namespace SkinCareBookingSystem.Service.Service
                     };
                 }
 
-                var existingSurvey = await _surveyRepository.GetQuestionByIdAsync(createSurveyDto.QuestionIdentifier);
+                var existingSurvey = await _surveyRepository.GetQuestionByIdAsync(createSurveyDto.QuestionId);
                 if (existingSurvey != null)
                 {
                     return new SurveyResponseDto
                     {
                         Success = false,
-                        Message = $"Survey question with identifier {createSurveyDto.QuestionIdentifier} already exists.",
-                        Errors = new List<string> { $"Survey question with identifier {createSurveyDto.QuestionIdentifier} already exists." }
+                        Message = $"Survey question with identifier {createSurveyDto.QuestionId} already exists.",
+                        Errors = new List<string> { $"Survey question with identifier {createSurveyDto.QuestionId} already exists." }
                     };
                 }
 
                 var survey = new Survey
                 {
-                    QuestionIdentifier = createSurveyDto.QuestionIdentifier,
+                    QuestionIdentifier = createSurveyDto.QuestionId,
                     Question = createSurveyDto.Question,
                     IsResult = createSurveyDto.IsResult,
                     Options = createSurveyDto.Options.Select(o => new Option
                     {
-                        OptionText = o.OptionText,
+                        Label = o.OptionText,
                         NextQuestionId = o.NextQuestionId
                     }).ToList()
                 };
@@ -150,7 +150,10 @@ namespace SkinCareBookingSystem.Service.Service
                 existingSurvey.IsResult = updateSurveyDto.IsResult;
 
                 var existingOptionIds = existingSurvey.Options.Select(o => o.Id).ToList();
-                var updatedOptionIds = updateSurveyDto.Options.Select(o => o.Id).Where(id => id != 0).ToList();
+                var updatedOptionIds = updateSurveyDto.Options
+                    .Where(o => !string.IsNullOrEmpty(o.Id))
+                    .Select(o => o.Id)
+                    .ToList();
                 
                 var optionsToRemove = existingSurvey.Options.Where(o => !updatedOptionIds.Contains(o.Id)).ToList();
                 foreach (var option in optionsToRemove)
@@ -160,20 +163,20 @@ namespace SkinCareBookingSystem.Service.Service
 
                 foreach (var optionDto in updateSurveyDto.Options)
                 {
-                    if (optionDto.Id == 0)
+                    if (string.IsNullOrEmpty(optionDto.Id)) // New option
                     {
                         existingSurvey.Options.Add(new Option
                         {
-                            OptionText = optionDto.OptionText,
+                            Label = optionDto.OptionText,
                             NextQuestionId = optionDto.NextQuestionId
                         });
                     }
-                    else
+                    else // Update existing option
                     {
                         var existingOption = existingSurvey.Options.FirstOrDefault(o => o.Id == optionDto.Id);
                         if (existingOption != null)
                         {
-                            existingOption.OptionText = optionDto.OptionText;
+                            existingOption.Label = optionDto.OptionText;
                             existingOption.NextQuestionId = optionDto.NextQuestionId;
                         }
                     }
@@ -245,7 +248,7 @@ namespace SkinCareBookingSystem.Service.Service
         {
             var errors = new List<string>();
 
-            if (string.IsNullOrWhiteSpace(dto.QuestionIdentifier))
+            if (string.IsNullOrWhiteSpace(dto.QuestionId))
                 errors.Add("Question identifier is required.");
 
             if (string.IsNullOrWhiteSpace(dto.Question))

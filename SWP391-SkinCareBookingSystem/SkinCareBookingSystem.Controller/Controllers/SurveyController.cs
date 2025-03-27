@@ -27,7 +27,7 @@ namespace SkinCareBookingSystem.Api.Controllers
             return Ok(new SurveyResponseDto
             {
                 Success = true,
-                Message = "Survey questions retrieved successfully.",
+                Message = "Survey questions.",
                 Data = questions
             });
         }
@@ -49,12 +49,12 @@ namespace SkinCareBookingSystem.Api.Controllers
             return Ok(new SurveyResponseDto
             {
                 Success = true,
-                Message = "Survey question retrieved successfully.",
+                Message = "Survey question.",
                 Data = question
             });
         }
 
-        [HttpGet("first")]
+        [HttpGet("start")]
         public async Task<ActionResult<SurveyResponseDto>> GetFirst()
         {
             var question = await _surveyService.GetFirstQuestionAsync();
@@ -71,7 +71,7 @@ namespace SkinCareBookingSystem.Api.Controllers
             return Ok(new SurveyResponseDto
             {
                 Success = true,
-                Message = "Starting question retrieved successfully.",
+                Message = "Starting question.",
                 Data = question
             });
         }
@@ -104,7 +104,7 @@ namespace SkinCareBookingSystem.Api.Controllers
             return Ok(new SurveyResponseDto
             {
                 Success = true,
-                Message = "Next question retrieved successfully.",
+                Message = "Next question.",
                 Data = nextQuestion
             });
         }
@@ -131,7 +131,7 @@ namespace SkinCareBookingSystem.Api.Controllers
             return Ok(new SurveyResponseDto
             {
                 Success = true,
-                Message = "Result retrieved successfully.",
+                Message = "Result.",
                 Data = result
             });
         }
@@ -156,7 +156,7 @@ namespace SkinCareBookingSystem.Api.Controllers
                 return BadRequest(response);
             }
 
-            return StatusCode(201, response); // 201 Created
+            return StatusCode(201, response);
         }
 
         [HttpPut("{id}")]
