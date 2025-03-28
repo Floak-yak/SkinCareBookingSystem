@@ -79,9 +79,15 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public void UpdateBooking(Booking booking) =>
             _context.Bookings.Update(booking);
 
-        public Task<Booking> GetBookingByScheduleLogId(int scheduleLogId)
+        public async Task<Booking> GetBookingByScheduleLogId(int scheduleLogId)
         {
-            throw new NotImplementedException();
+            return await _context.Bookings.FirstOrDefaultAsync(b => b.BookingServiceSchedules.First().ScheduleLogId == scheduleLogId);
+        }
+
+        public async Task<bool> DeleteBooking(Booking booking)
+        {
+            _context.Bookings.Remove(booking);
+            return await SaveChange();
         }
     }
 }

@@ -35,7 +35,22 @@ namespace SkinCareBookingSystem.Service.Service
             _userRepository = userRepository;
         }
         public async Task<CreatePaymentResult> CreateTransaction(Booking booking)
-        {
+        {            
+            int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
+            ItemData item = new ItemData(booking.BookingServiceSchedules.FirstOrDefault().Service.ServiceName, 1, decimal.ToInt32(booking.TotalPrice));
+            var cancelUrl = "";
+            var returnUrl = "";
+            List<ItemData> items = new List<ItemData>();
+            items.Add(item);
+            PaymentData paymentData = new PaymentData(orderCode, decimal.ToInt32(booking.TotalPrice), "Thanh toan doan hang", items, cancelUrl, returnUrl);
+
+            CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
+            if (createPayment is null)
+            {
+                await _bookingRepository.DeleteBooking(booking);
+                throw new Exception("Something wrong when create transaction");
+            }
+                
             Transaction transaction = new()
             {
                 CreatedDate = DateTime.UtcNow,
@@ -44,22 +59,14 @@ namespace SkinCareBookingSystem.Service.Service
                 UserId = booking.UserId,
                 User = booking.User,
                 BookingId = booking.Id,
+                OrderCode = createPayment.orderCode,
+                QrCode = createPayment.qrCode,
             };
 
             _transactionRepository.Create(transaction);
 
             if (!await _transactionRepository.SaveChange())
                 throw new Exception("Create transaction fail");
-
-            int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-            ItemData item = new ItemData(booking.BookingServiceSchedules.FirstOrDefault().Service.ServiceName, 1, decimal.ToInt32(booking.TotalPrice));
-            var cancelUrl = $"https://localhost:7101/api/Transaction/Cancel?transactionId={transaction.Id}";
-            var returnUrl = $"https://localhost:7101/api/Transaction/Checkout?transactionId={transaction.Id}";
-            List<ItemData> items = new List<ItemData>();
-            items.Add(item);
-            PaymentData paymentData = new PaymentData(orderCode, decimal.ToInt32(booking.TotalPrice), "Thanh toan doan hang", items, cancelUrl, returnUrl);
-
-            CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
 
             return createPayment;
         }
@@ -88,6 +95,19 @@ namespace SkinCareBookingSystem.Service.Service
             {
                 throw new Exception("Invalid Product");
             }
+
+            var cancelUrl = $"";
+            var returnUrl = $"";
+
+            PaymentData paymentData = new PaymentData(orderCode, totalPrice, "Thanh toan doan hang", items, cancelUrl, returnUrl);
+
+            CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
+
+            if (createPayment is null)
+            {
+                throw new Exception("Something wrong when create transaction");
+            }
+
             Transaction transaction = new()
             {
                 CreatedDate = DateTime.UtcNow,
@@ -95,20 +115,15 @@ namespace SkinCareBookingSystem.Service.Service
                 TranctionStatus = (TranctionStatus)0,
                 UserId = request.UserId,
                 User = user,
-                Products = products
+                Products = products,
+                OrderCode = createPayment.orderCode,
+                QrCode = createPayment.qrCode,
             };
 
             _transactionRepository.Create(transaction);
 
             if (!await _transactionRepository.SaveChange())
                 throw new Exception("Create transaction fail");
-
-            var cancelUrl = $"https://localhost:7101/api/Transaction/Cancel?transactionId={transaction.Id}";
-            var returnUrl = $"https://localhost:7101/api/Transaction/Checkout?transactionId={transaction.Id}";
-
-            PaymentData paymentData = new PaymentData(orderCode, totalPrice, "Thanh toan doan hang", items, cancelUrl, returnUrl);
-
-            CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
 
             return createPayment;
         }
@@ -156,6 +171,16 @@ namespace SkinCareBookingSystem.Service.Service
             Transaction transaction = await _transactionRepository.GetById(transactionId);
             if (transaction is null)
                 return false;
+            Booking booking = await _bookingRepository.GetBookingByIdAsync((int)transaction.BookingId);
+            if (booking is null)
+                return false;
+            if (status == 1)
+            {
+                booking.Status = BookingStatus.Waitting;
+            }
+            else 
+                booking.Status = (BookingStatus)status;
+
             transaction.TranctionStatus = (TranctionStatus)status;
             _transactionRepository.Update(transaction);
             return await _transactionRepository.SaveChange();
