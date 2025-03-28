@@ -117,7 +117,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 Schedule schedule = schedules.FirstOrDefault(s => s.DateWork.Date.ToShortDateString()
                         .Equals(dateTime.Date.ToShortDateString()));
                 if (schedule is null) continue;
-                if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift.Hour == dateTime.Hour && sl.TimeStartShift.Minute == dateTime.Minute) != null)
+                if (schedule.ScheduleLogs.FirstOrDefault(sl => sl.TimeStartShift.Hour == dateTime.Hour && sl.TimeStartShift.Minute == dateTime.Minute && !sl.IsCancel) != null)
                 {
                     removeUser.Add(user);
                     continue;
@@ -129,7 +129,8 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                         + Duration 
                         - dateTime.Hour*60 
                         - sl.TimeStartShift.Minute > 0
-                        && sl.TimeStartShift.Hour < dateTime.Hour) != null)
+                        && sl.TimeStartShift.Hour < dateTime.Hour
+                        && !sl.IsCancel) != null)
                 {
                     removeUser.Add(user);
                     continue;
@@ -140,7 +141,8 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                         + Duration
                         + dateTime.Hour * 60
                         + sl.TimeStartShift.Minute > 0
-                        && sl.TimeStartShift.Hour > dateTime.Hour) != null)
+                        && sl.TimeStartShift.Hour > dateTime.Hour
+                        && !sl.IsCancel) != null)
                 {
                     removeUser.Add(user);
                     continue;

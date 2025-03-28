@@ -115,9 +115,6 @@ namespace SkinCareBookingSystem.Service.Service
                 };
                 schedule.ScheduleLogs.Add(scheduleLog);
             }
-
-            if (!await _userRepository.SaveChange())
-                return null;
                       
             BookingServiceSchedule bookingService = new()
             {
@@ -145,7 +142,7 @@ namespace SkinCareBookingSystem.Service.Service
             _bookingRepository.CreateBooking(booking);
             if (!await _bookingRepository.SaveChange())
             {
-                return null;
+                throw new Exception("Create booking fail");
             }
 
             return booking;
