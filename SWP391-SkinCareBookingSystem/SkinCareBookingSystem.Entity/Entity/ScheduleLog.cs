@@ -11,6 +11,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int Id { get; set; }
         public int WorkingTime { get; set; }
         public DateTime TimeStartShift { get; set; }
+        public bool IsCancel { get; set; }
 
         #region Relationship
         public int ScheduleId { get; set; }

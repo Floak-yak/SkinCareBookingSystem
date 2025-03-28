@@ -11,5 +11,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
     {
         public Task<ScheduleLog> GetScheduleLogById(int scheduleId); 
         public Task<bool> RemoveScheduleLog(int scheduleId);
+        public void Update(ScheduleLog scheduleLog);
     }
 }
