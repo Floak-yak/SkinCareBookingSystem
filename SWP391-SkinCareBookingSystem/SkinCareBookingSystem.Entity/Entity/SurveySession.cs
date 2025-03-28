@@ -15,8 +15,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public int? UserId { get; set; }
         public User User { get; set; }
         
-        public int? SurveyResultId { get; set; }
-        public SurveyResult? SurveyResult { get; set; }
+        public int SurveyResultId { get; set; }
+        public SurveyResult SurveyResult { get; set; }
         
         public ICollection<SurveyResponse> Responses { get; set; }
     }

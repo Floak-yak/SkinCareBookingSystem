@@ -254,16 +254,11 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<int>("SurveyResultId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SurveyResultId1")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ServiceId");
 
                     b.HasIndex("SurveyResultId");
-
-                    b.HasIndex("SurveyResultId1");
 
                     b.ToTable("RecommendedServices");
                 });
@@ -524,10 +519,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("SurveyResultId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SurveyResultId1")
+                    b.Property<int>("SurveyResultId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UserId")
@@ -536,8 +528,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("SurveyResultId");
-
-                    b.HasIndex("SurveyResultId1");
 
                     b.HasIndex("UserId");
 
@@ -780,14 +770,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired();
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", "SurveyResult")
-                        .WithMany()
+                        .WithMany("RecommendedServices")
                         .HasForeignKey("SurveyResultId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", null)
-                        .WithMany("RecommendedServices")
-                        .HasForeignKey("SurveyResultId1");
 
                     b.Navigation("Service");
 
@@ -901,13 +887,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", "SurveyResult")
-                        .WithMany()
-                        .HasForeignKey("SurveyResultId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyResult", null)
                         .WithMany("Sessions")
-                        .HasForeignKey("SurveyResultId1");
+                        .HasForeignKey("SurveyResultId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
                         .WithMany()

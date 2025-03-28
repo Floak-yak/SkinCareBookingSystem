@@ -121,6 +121,7 @@ namespace SkinCareBookingSystem.Service.Service
                         new(ClaimTypes.Role, user.Role.ToString()),
                         new(ClaimTypes.Email, user.Email),
                         new(ClaimTypes.MobilePhone, user.PhoneNumber),
+                        new(ClaimTypes.NameIdentifier,user.Id.ToString()),
                     },
                     expires: DateTime.Now.AddMinutes(60),
                     signingCredentials: credentials

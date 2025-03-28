@@ -128,11 +128,16 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveySession> StartSessionAsync(int? userId)
         {
+            // Get default result to assign initially
+            var defaultResult = await _surveyRepository.GetAllResultsAsync();
+            int defaultResultId = defaultResult.Any() ? defaultResult.First().Id : 1;
+            
             var session = new SurveySession
             {
                 UserId = userId,
                 IsCompleted = false,
-                CompletedDate = DateTime.Now
+                CompletedDate = DateTime.Now,
+                SurveyResultId = defaultResultId // Initialize with default result ID
             };
 
             return await _surveyRepository.CreateSessionAsync(session);

@@ -152,7 +152,7 @@ namespace SkinCareBookingSystem.Repositories.Data
 
             modelBuilder.Entity<SurveySession>()
                 .HasOne(s => s.SurveyResult)
-                .WithMany()
+                .WithMany(r => r.Sessions)
                 .HasForeignKey(s => s.SurveyResultId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -176,7 +176,7 @@ namespace SkinCareBookingSystem.Repositories.Data
 
             modelBuilder.Entity<RecommendedService>()
                 .HasOne(rs => rs.SurveyResult)
-                .WithMany()
+                .WithMany(r => r.RecommendedServices)
                 .HasForeignKey(rs => rs.SurveyResultId)
                 .OnDelete(DeleteBehavior.Cascade);
 
