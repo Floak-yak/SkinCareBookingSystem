@@ -19,5 +19,16 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.ScheduleLogs.Include(sl => sl.Schedule).FirstOrDefaultAsync(sl => sl.Id == scheduleId);
         }
+
+        public async Task<bool> RemoveScheduleLog(int scheduleId)
+        {
+            ScheduleLog scheduleLog = await _context.ScheduleLogs.FirstOrDefaultAsync(s => s.Id == scheduleId);
+            if (scheduleLog != null)
+            {
+                _context.ScheduleLogs.Remove(scheduleLog);
+                return await _context.SaveChangesAsync() > 0;
+            }
+            return false;
+        }
     }
 }
