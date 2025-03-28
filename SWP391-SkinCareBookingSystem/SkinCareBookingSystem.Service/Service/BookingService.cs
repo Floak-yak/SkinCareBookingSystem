@@ -251,7 +251,15 @@ namespace SkinCareBookingSystem.Service.Service
             if (booking.Status == BookingStatus.Waitting || booking.Status == BookingStatus.Completed)
                 return false;
 
-            return await _bookingRepository.DeleteBooking(bookingId);
+            booking.Status = BookingStatus.Cancel;
+            _bookingRepository.UpdateBooking(booking);
+
+            if (await _scheduleLogRepository.RemoveScheduleLog(booking.BookingServiceSchedules.FirstOrDefault().ScheduleLogId))
+            {
+                throw new Exception("Some thing wrong when remove scheduleLog");
+            }
+
+            return await _bookingRepository.SaveChange();
         }
 
         public async Task<bool> UpdateBookingDateTime(UpdateBookingRequest request)
