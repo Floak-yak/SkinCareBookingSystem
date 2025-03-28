@@ -30,5 +30,12 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             }
             return false;
         }
+
+        public void Update(ScheduleLog scheduleLog)
+        {
+            if (scheduleLog == null)
+                return;
+            _context.ScheduleLogs.Update(scheduleLog);
+        }
     }
 }

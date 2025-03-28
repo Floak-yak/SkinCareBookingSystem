@@ -254,10 +254,14 @@ namespace SkinCareBookingSystem.Service.Service
             booking.Status = BookingStatus.Cancel;
             _bookingRepository.UpdateBooking(booking);
 
-            if (await _scheduleLogRepository.RemoveScheduleLog(booking.BookingServiceSchedules.FirstOrDefault().ScheduleLogId))
-            {
-                throw new Exception("Some thing wrong when remove scheduleLog");
-            }
+            ScheduleLog scheduleLog = await _scheduleLogRepository.GetScheduleLogById(booking.BookingServiceSchedules.FirstOrDefault().ScheduleLogId);
+
+            if (scheduleLog is null)
+                throw new Exception("ScheduleLog not found");
+
+            scheduleLog.IsCancel = true;
+
+            _scheduleLogRepository.Update(scheduleLog);
 
             return await _bookingRepository.SaveChange();
         }
