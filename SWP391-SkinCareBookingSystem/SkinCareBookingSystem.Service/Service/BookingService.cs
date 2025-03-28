@@ -129,7 +129,7 @@ namespace SkinCareBookingSystem.Service.Service
 
             Booking booking = new()
             {
-                Status = (BookingStatus)1,
+                Status = (BookingStatus)0,
                 CreatedTime = DateTime.UtcNow,
                 Date = date,
                 TotalPrice = skincareService.Price,

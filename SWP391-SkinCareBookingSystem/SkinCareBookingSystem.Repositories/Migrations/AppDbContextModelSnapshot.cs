@@ -269,12 +269,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SkincareServiceId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("TimeStartShift")
                         .HasColumnType("datetime2");
 
@@ -284,8 +278,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ScheduleId");
-
-                    b.HasIndex("SkincareServiceId");
 
                     b.ToTable("ScheduleLogs");
                 });
@@ -402,6 +394,13 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<long>("OrderCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("QrCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalMoney")
                         .HasColumnType("decimal(18,2)");
@@ -607,15 +606,7 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SkincareService", "SkincareService")
-                        .WithMany()
-                        .HasForeignKey("SkincareServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Schedule");
-
-                    b.Navigation("SkincareService");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.ServicesDetail", b =>
