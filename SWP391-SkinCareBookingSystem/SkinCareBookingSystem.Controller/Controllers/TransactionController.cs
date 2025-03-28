@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Net.payOS.Types;
+using Net.payOS;
 using SkinCareBookingSystem.Service.Dto.Transaction;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
@@ -11,11 +13,13 @@ namespace SkinCareBookingSystem.Controller.Controllers
     {
         private readonly IMapper _mapper;
         private readonly ITransactionService _transactionService;
+        private readonly PayOS _payOS;
 
-        public TransactionController(ITransactionService transactionService, IMapper mapper)
+        public TransactionController(ITransactionService transactionService, IMapper mapper, PayOS payOS)
         {
             _mapper = mapper;
             _transactionService = transactionService;
+            _payOS = payOS;
         }
 
         [HttpGet("Cancel")]
@@ -48,6 +52,17 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> GetAllTransactions()
         {
             return Ok(await _transactionService.GetAllTransactions());
+        }
+
+        [HttpGet("{orderId}")]
+        public async Task<IActionResult> GetPayment([FromRoute] int orderId)
+        {
+            PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(orderId);
+            if (paymentLinkInformation is null)
+            {
+                throw new ArgumentNullException("Invalid id -" + nameof(paymentLinkInformation));
+            }
+            return Ok(paymentLinkInformation.status);
         }
     }
 }
