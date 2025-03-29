@@ -27,6 +27,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         [HttpGet("Cancel")]
         public async Task<IActionResult> CancelTransaction([FromQuery] int transactionId)
         {
+            Transaction transaction = await _transactionService.
             if (!await _transactionService.UpdateTransaction(transactionId, -1))
             {
                 return BadRequest("Cancel fail");

@@ -179,10 +179,13 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
             if (status == 1)
             {
-                booking.Status = BookingStatus.Waitting;
+                booking.Status = BookingStatus.Waitting;                
             }
-            else 
+            else
+            {
+                await _payOS.cancelPaymentLink(transaction.OrderCode);
                 booking.Status = (BookingStatus)status;
+            }               
 
             transaction.TranctionStatus = (TranctionStatus)status;
             _transactionRepository.Update(transaction);
