@@ -13,8 +13,8 @@ namespace SkinCareBookingSystem.Service.Interfaces
 {
     public interface ITransactionService
     {
-        public Task<CreatePaymentResult> CreateTransaction(Booking booking);
-        public Task<CreatePaymentResult> CreateTransaction(CheckoutCartRequest request);
+        public Task<CreateTransactionResponse> CreateTransaction(Booking booking);
+        public Task<CreateTransactionResponse> CreateTransaction(CheckoutCartRequest request);
         public Task<bool> UpdateTransaction(int transactionId, int status);
         public Task<List<GetTransactionResponse>> GetTransactionByUserId(int userId); 
         public Task<List<GetTransactionResponse>> GetAllTransactions();

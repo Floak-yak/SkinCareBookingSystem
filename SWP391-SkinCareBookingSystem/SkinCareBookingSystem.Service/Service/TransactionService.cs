@@ -34,7 +34,7 @@ namespace SkinCareBookingSystem.Service.Service
             _productRepository = productRepository;
             _userRepository = userRepository;
         }
-        public async Task<CreatePaymentResult> CreateTransaction(Booking booking)
+        public async Task<CreateTransactionResponse> CreateTransaction(Booking booking)
         {            
             int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
             ItemData item = new ItemData(booking.BookingServiceSchedules.FirstOrDefault().Service.ServiceName, 1, decimal.ToInt32(booking.TotalPrice));
@@ -68,10 +68,10 @@ namespace SkinCareBookingSystem.Service.Service
             if (!await _transactionRepository.SaveChange())
                 throw new Exception("Create transaction fail");
 
-            return createPayment;
+            return new CreateTransactionResponse() { createPaymentResult = createPayment, transactionId = transaction.Id };
         }
 
-        public async Task<CreatePaymentResult> CreateTransaction(CheckoutCartRequest request)
+        public async Task<CreateTransactionResponse> CreateTransaction(CheckoutCartRequest request)
         {
             User user = await _userRepository.GetUserById(request.UserId);
             if (user == null)
@@ -125,7 +125,7 @@ namespace SkinCareBookingSystem.Service.Service
             if (!await _transactionRepository.SaveChange())
                 throw new Exception("Create transaction fail");
 
-            return createPayment;
+            return new CreateTransactionResponse() { createPaymentResult = createPayment, transactionId = transaction.Id };
         }
 
         public async Task<List<GetTransactionResponse>> GetAllTransactions()
