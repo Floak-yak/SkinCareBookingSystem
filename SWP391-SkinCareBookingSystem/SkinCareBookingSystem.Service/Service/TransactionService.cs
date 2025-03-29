@@ -147,6 +147,9 @@ namespace SkinCareBookingSystem.Service.Service
             return responses;
         }
 
+        public async Task<Transaction> GetTransactionByBookingId(int bookingId) =>
+            await _transactionRepository.GetTransactionByBookingId(bookingId);
+
         public async Task<List<GetTransactionResponse>> GetTransactionByUserId(int userId)
         {
             List<Transaction> transactions = await _transactionRepository.GetByUserId(userId);
