@@ -5,6 +5,8 @@ using Net.payOS;
 using SkinCareBookingSystem.Service.Dto.Transaction;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.Service.Service;
+using SkinCareBookingSystem.BusinessObject.Entity;
+using Transaction = SkinCareBookingSystem.BusinessObject.Entity.Transaction;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -60,9 +62,19 @@ namespace SkinCareBookingSystem.Controller.Controllers
             PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(orderId);
             if (paymentLinkInformation is null)
             {
-                throw new ArgumentNullException("Invalid id -" + nameof(paymentLinkInformation));
+                throw new ArgumentNullException("Invalid id - " + nameof(paymentLinkInformation));
             }
             return Ok(paymentLinkInformation.status);
+        }
+        [HttpGet("GetTransactionByBookingId")]
+        public async Task<IActionResult> GetTransactionByBookingId([FromQuery] int bookingId)
+        {
+            if (bookingId <= 0)
+                throw new InvalidOperationException("Invaid Id");
+            Transaction transaction = await _transactionService.GetTransactionByBookingId(bookingId);
+            if (transaction is null)
+                throw new InvalidOperationException("Invaid Id");
+            return Ok(transaction);
         }
     }
 }

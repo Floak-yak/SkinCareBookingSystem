@@ -34,6 +34,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 .FirstOrDefaultAsync(t => t.User.Bookings
                     .FirstOrDefault(b => b.Id == bookingId) != null && t.UserId == userId);
 
+        public async Task<Transaction> GetTransactionByBookingId(int bookingId) =>
+            await _context.Transactions.FirstOrDefaultAsync(t => t.BookingId == bookingId);
+
         public async Task<bool> SaveChange() =>
             await _context.SaveChangesAsync() > 0;
 
