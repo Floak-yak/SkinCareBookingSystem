@@ -76,5 +76,15 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 throw new InvalidOperationException("Invaid Id");
             return Ok(transaction);
         }
+        [HttpGet("GetTransactionById")]
+        public async Task<IActionResult> GetTransactionById([FromQuery] int transactionId)
+        {
+            if (transactionId <= 0)
+                throw new InvalidOperationException("Invaid Id");
+            Transaction transaction = await _transactionService.GetTransactionById(transactionId);
+            if (transaction is null)
+                throw new InvalidOperationException("Invaid Id");
+            return Ok(transaction);
+        }
     }
 }

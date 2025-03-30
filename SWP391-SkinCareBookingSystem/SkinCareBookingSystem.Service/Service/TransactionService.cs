@@ -150,6 +150,9 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<Transaction> GetTransactionByBookingId(int bookingId) =>
             await _transactionRepository.GetTransactionByBookingId(bookingId);
 
+        public async Task<Transaction> GetTransactionById(int transactionId) =>
+            await _transactionRepository.GetById(transactionId);
+
         public async Task<List<GetTransactionResponse>> GetTransactionByUserId(int userId)
         {
             List<Transaction> transactions = await _transactionRepository.GetByUserId(userId);
@@ -174,18 +177,21 @@ namespace SkinCareBookingSystem.Service.Service
             Transaction transaction = await _transactionRepository.GetById(transactionId);
             if (transaction is null)
                 return false;
-            Booking booking = await _bookingRepository.GetBookingByIdAsync((int)transaction.BookingId);
-            if (booking is null)
-                return false;
-            if (status == 1)
+            if (transaction.BookingId is not null)
             {
-                booking.Status = BookingStatus.Waitting;                
-            }
-            else
-            {
-                await _payOS.cancelPaymentLink(transaction.OrderCode);
-                booking.Status = (BookingStatus)status;
-            }               
+                Booking booking = await _bookingRepository.GetBookingByIdAsync((int)transaction.BookingId);
+                if (booking is null)
+                    return false;
+                if (status == 1)
+                {
+                    booking.Status = BookingStatus.Waitting;
+                }
+                else
+                {
+                    await _payOS.cancelPaymentLink(transaction.OrderCode);
+                    booking.Status = (BookingStatus)status;
+                }
+            }                          
 
             transaction.TranctionStatus = (TranctionStatus)status;
             _transactionRepository.Update(transaction);
