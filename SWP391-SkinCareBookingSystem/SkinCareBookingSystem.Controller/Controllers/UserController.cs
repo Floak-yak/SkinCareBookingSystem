@@ -22,6 +22,30 @@ namespace SkinCareBookingSystem.Controller.Controllers
             _userService = userService;
         }
 
+        [HttpGet("WhoAmI")]
+        public async Task<IActionResult> WhoAmI()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            if (identity == null || !identity.IsAuthenticated)
+            {
+                return Unauthorized("User is not authenticated");
+            }
+
+            var userIdClaim = identity.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return BadRequest("Invalid user identity");
+            }
+
+            var user = await _userService.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(user);
+        }
+
         [HttpGet("GetUsers")]
         public async Task<IActionResult> GetUsers() =>
             Ok(await _userService.GetUsers());

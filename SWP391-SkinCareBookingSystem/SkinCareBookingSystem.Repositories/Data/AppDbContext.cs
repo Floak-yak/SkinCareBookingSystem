@@ -27,6 +27,14 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<Image> Images { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<ServicesDetail> ServicesDetails { get; set; }
+
+        // Survey-related entities
+        public DbSet<SurveyQuestion> SurveyQuestions { get; set; }
+        public DbSet<SurveyOption> SurveyOptions { get; set; }
+        public DbSet<SurveyResult> SurveyResults { get; set; }
+        public DbSet<SurveySession> SurveySessions { get; set; }
+        public DbSet<SurveyResponse> SurveyResponses { get; set; }
+        public DbSet<RecommendedService> RecommendedServices { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -127,6 +135,55 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .HasOne(bss => bss.ScheduleLog)
                 .WithMany(sl => sl.BookingServiceSchedules)
                 .HasForeignKey(bss => bss.ScheduleLogId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Survey relationships
+            modelBuilder.Entity<SurveyQuestion>()
+                .HasMany(q => q.Options)
+                .WithOne(o => o.Question)
+                .HasForeignKey(o => o.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SurveySession>()
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SurveySession>()
+                .HasOne(s => s.SurveyResult)
+                .WithMany(r => r.Sessions)
+                .HasForeignKey(s => s.SurveyResultId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SurveySession>()
+                .HasMany(s => s.Responses)
+                .WithOne(r => r.Session)
+                .HasForeignKey(r => r.SessionId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SurveyResponse>()
+                .HasOne(r => r.Question)
+                .WithMany()
+                .HasForeignKey(r => r.QuestionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SurveyResponse>()
+                .HasOne(r => r.Option)
+                .WithMany()
+                .HasForeignKey(r => r.OptionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RecommendedService>()
+                .HasOne(rs => rs.SurveyResult)
+                .WithMany(r => r.RecommendedServices)
+                .HasForeignKey(rs => rs.SurveyResultId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecommendedService>()
+                .HasOne(rs => rs.Service)
+                .WithMany()
+                .HasForeignKey(rs => rs.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

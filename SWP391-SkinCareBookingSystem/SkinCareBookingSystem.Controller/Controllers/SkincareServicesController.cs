@@ -27,8 +27,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("GetServices")]
-        public async Task<IActionResult> GetServices([FromQuery] int page = 1, [FromQuery] int pageSize = 10) =>
-            Ok(await _skincareServicesService.GetServices(page, pageSize));
+        public async Task<IActionResult> GetServices() =>
+            Ok(await _skincareServicesService.GetServices());
 
         [HttpGet("GetServiceById")]
         public async Task<IActionResult> GetServiceById([FromQuery] int id)
@@ -93,7 +93,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     request.Price,
                     request.WorkTime,
                     request.CategoryId,
-                    request.ImageId);
+                    request.ImageId,
+                    request.Benefits);
 
                 if (!result)
                 {
@@ -128,7 +129,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     request.Price,
                     request.WorkTime,
                     request.CategoryId,
-                    request.ImageId);
+                    request.ImageId,
+                    request.Benefits);
 
                 if (!result)
                     return BadRequest("Update service failed");

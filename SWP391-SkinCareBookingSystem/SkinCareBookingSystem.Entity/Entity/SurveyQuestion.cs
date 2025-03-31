@@ -8,14 +8,14 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
 {
     public class SurveyQuestion
     {
-        public string Id { get; set; }
-        public string Question { get; set; }
-        public List<SurveyOption> Options { get; set; } = new List<SurveyOption>();
-    }
+        public int Id { get; set; }
+        public string QuestionId { get; set; } // Matches the ID in the Node (e.g., Q1, Q2, etc.)
+        public string QuestionText { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-    public class SurveyOption
-    {
-        public string Label { get; set; }
-        public string NextId { get; set; }
+        // Relationships
+        public ICollection<SurveyOption> Options { get; set; }
+        public ICollection<SurveyResponse> Responses { get; set; }
     }
 } 

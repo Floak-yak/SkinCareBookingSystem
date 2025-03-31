@@ -24,10 +24,4 @@
     <ProjectReference Include="..\SkinCareBookingSystem.Service\SkinCareBookingSystem.Service.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="..\SkinCareBookingSystem.Repositories\SkinTestQuestion.txt" Link="SkinTestQuestion.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
 </Project>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace SkinCareBookingSystem.BusinessObject.Entity
 {
@@ -14,6 +15,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string ServiceDescription { get; set; }
         public int ImageId { get; set; }
         public Image Image { get; set; }
+        
+        public string Benefits { get; set; }
 
         #region Relationship
         public int CategoryId { get; set; }

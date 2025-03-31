@@ -27,59 +27,53 @@ namespace SkinCareBookingSystem.Service.Service
             _categoryRepository = categoryRepository;
         }
 
-        public async Task<bool> Create(string serviceName, string serviceDescription, decimal price, int workTime, int categoryId, int? imageId)
+        public async Task<bool> Create(string serviceName, string serviceDescription, decimal price, int workTime, int categoryId, int? imageId, string benefits)
         {
             try
             {
                 // Log input values
                 Console.WriteLine($"Creating service with: Name={serviceName}, Desc={serviceDescription}, Price={price}, WorkTime={workTime}, CategoryId={categoryId}, ImageId={imageId}");
-
-                if (string.IsNullOrEmpty(serviceName))
+                
+                // Additional validation
+                if (string.IsNullOrEmpty(serviceName) || string.IsNullOrEmpty(serviceDescription))
                 {
-                    Console.WriteLine("Service name is null or empty");
+                    Console.WriteLine("ServiceName or ServiceDescription is null or empty");
                     return false;
                 }
+                
+                serviceName = serviceName.Trim();
+                serviceDescription = serviceDescription.Trim();
+                
                 if (serviceName.Length > 100)
                 {
-                    Console.WriteLine("Service name is too long");
+                    Console.WriteLine("ServiceName exceeds 100 characters");
                     return false;
                 }
-                if (string.IsNullOrEmpty(serviceDescription))
-                {
-                    Console.WriteLine("Service description is null or empty");
-                    return false;
-                }
+                
                 if (serviceDescription.Length > 500)
                 {
-                    Console.WriteLine("Service description is too long");
+                    Console.WriteLine("ServiceDescription exceeds 500 characters");
                     return false;
                 }
+                
                 if (price <= 0)
                 {
                     Console.WriteLine("Price must be greater than 0");
                     return false;
                 }
+                
                 if (workTime < 1 || workTime > 90)
                 {
-                    Console.WriteLine("Work time must be between 1 and 90 minutes");
+                    Console.WriteLine("WorkTime must be between 1 and 90 minutes");
                     return false;
                 }
+                
                 if (categoryId <= 0)
                 {
-                    Console.WriteLine("Category ID must be greater than 0");
+                    Console.WriteLine("CategoryId must be greater than 0");
                     return false;
                 }
-
-                // Validate category exists
-                var category = await _categoryRepository.GetCategoryById(categoryId);
-                if (category == null)
-                {
-                    Console.WriteLine($"Category with ID {categoryId} not found");
-                    return false;
-                }
-                if (price < 100000 || price > 5000000)
-                    return false;
-
+                
                 if (await _skincareServicesRepository.IsServiceExist(serviceName))
                 {
                     Console.WriteLine("Service with this name already exists");
@@ -104,7 +98,8 @@ namespace SkinCareBookingSystem.Service.Service
                     Price = price,
                     WorkTime = workTime,
                     CategoryId = categoryId,
-                    ImageId = imageId ?? 1
+                    ImageId = imageId ?? 1,
+                    Benefits = benefits.Trim()
                 };
 
                 _skincareServicesRepository.Create(skincareServices);
@@ -166,15 +161,12 @@ namespace SkinCareBookingSystem.Service.Service
             }
         }
 
-        public async Task<List<SkincareService>> GetServices(int page = 1, int pageSize = 10)
+        public async Task<List<SkincareService>> GetServices()
         {
             try
             {
                 var services = await _skincareServicesRepository.GetServices();
-                return services
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
+                return services.ToList();
             }
             catch (Exception)
             {
@@ -187,7 +179,7 @@ namespace SkinCareBookingSystem.Service.Service
             try
             {
                 if (string.IsNullOrEmpty(search)) 
-                    return await GetServices(page, pageSize);
+                    return await GetServices();
                     
                 var services = await _skincareServicesRepository.Search(search);
                 return services
@@ -201,7 +193,7 @@ namespace SkinCareBookingSystem.Service.Service
             }
         }
 
-        public async Task<bool> Update(int id, string serviceName, string serviceDescription, decimal? price, int? workTime, int? categoryId, int? imageId)
+        public async Task<bool> Update(int id, string serviceName, string serviceDescription, decimal? price, int? workTime, int? categoryId, int? imageId, string benefits)
         {
             try
             {
@@ -255,6 +247,11 @@ namespace SkinCareBookingSystem.Service.Service
                 if (imageId.HasValue)
                 {
                     skincareService.ImageId = imageId.Value;
+                }
+
+                if (benefits != null)
+                {
+                    skincareService.Benefits = benefits.Trim();
                 }
 
                 _skincareServicesRepository.Update(skincareService);
