@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Cors;
 using System.IO;
 using SkinCareBookingSystem.Service.Dto.SkincareServiceDto;
 using Microsoft.AspNetCore.Http;
+using SkinCareBookingSystem.Repositories.Data;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -19,11 +20,13 @@ namespace SkinCareBookingSystem.Controller.Controllers
     {
         private readonly ISkincareServicesService _skincareServicesService;
         private readonly IImageService _imageService;
+        private readonly AppDbContext _context;
 
-        public SkincareServicesController(ISkincareServicesService skincareServicesService, IImageService imageService)
+        public SkincareServicesController(ISkincareServicesService skincareServicesService, IImageService imageService, AppDbContext context)
         {
             _skincareServicesService = skincareServicesService;
             _imageService = imageService;
+            _context = context;
         }
 
         [HttpGet("GetServices")]
@@ -148,14 +151,30 @@ namespace SkinCareBookingSystem.Controller.Controllers
         {
             try
             {
-                if (!await _skincareServicesService.Delete(id))
-                    return BadRequest("Delete service failed");
+                var service = await _skincareServicesService.GetServiceByid(id);
+                if (service == null)
+                {
+                    return NotFound(new { success = false, message = $"Service with ID {id} not found" });
+                }
 
-                return Ok("Delete service success");
+                // Check for associated bookings first
+                var hasBookings = _context.BookingServiceSchedules.Any(b => b.ServiceId == id);
+                if (hasBookings)
+                {
+                    return BadRequest(new { success = false, message = "Cannot delete service as it has associated bookings" });
+                }
+
+                var result = await _skincareServicesService.Delete(id);
+                if (!result)
+                {
+                    return BadRequest(new { success = false, message = "Delete service failed" });
+                }
+
+                return Ok(new { success = true, message = "Delete service success" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { success = false, message = $"Internal server error: {ex.Message}" });
             }
         }
     }

@@ -160,7 +160,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<List<SurveyResult>> GetAllResultsAsync()
         {
-            return await _context.SurveyResults.ToListAsync();
+            return await _context.SurveyResults
+                .Include(r => r.RecommendedServices)
+                .ToListAsync();
         }
 
         public async Task<SurveyResult> GetResultByIdAsync(int id)
@@ -183,9 +185,21 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyResult> UpdateResultAsync(SurveyResult result)
         {
-            _context.Entry(result).State = EntityState.Modified;
+            var existingResult = await _context.SurveyResults.FindAsync(result.Id);
+            if (existingResult == null)
+            {
+                return null;
+            }
+
+            // Update the properties of the existing result
+            existingResult.SkinType = result.SkinType;
+            existingResult.ResultText = result.ResultText;
+            existingResult.RecommendationText = result.RecommendationText;
+
+            _context.SurveyResults.Update(existingResult);
             await _context.SaveChangesAsync();
-            return result;
+
+            return existingResult;
         }
 
         public async Task<bool> DeleteResultAsync(int id)
@@ -250,6 +264,17 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 .ToListAsync();
         }
 
+        public async Task<SkincareService> GetServiceByIdAsync(int serviceId)
+        {
+            return await _context.SkincareServices.FindAsync(serviceId);
+        }
+
+        public async Task AddRecommendedServiceAsync(RecommendedService recommendedService)
+        {
+            _context.RecommendedServices.Add(recommendedService);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
         {
             return await _context.RecommendedServices
@@ -257,11 +282,11 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 .ToListAsync();
         }
 
-        public async Task<RecommendedService> AddRecommendedServiceAsync(RecommendedService service)
+        public async Task<List<SkincareService>> GetServicesByIdsAsync(List<int> serviceIds)
         {
-            _context.RecommendedServices.Add(service);
-            await _context.SaveChangesAsync();
-            return service;
+            return await _context.SkincareServices
+                .Where(service => serviceIds.Contains(service.Id))
+                .ToListAsync();
         }
 
         public async Task<bool> DeleteRecommendedServiceAsync(int id)

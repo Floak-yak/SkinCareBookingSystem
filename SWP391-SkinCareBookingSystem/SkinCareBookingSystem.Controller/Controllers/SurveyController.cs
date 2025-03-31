@@ -6,6 +6,7 @@ using SkinCareBookingSystem.Service.Service;
 using SkinCareBookingSystem.Service.Interfaces;
 using System.Security.Claims;
 using SkinCareBookingSystem.Service.Dto.Survey;
+using SkinCareBookingSystem.Repositories.Data;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -15,11 +16,13 @@ namespace SkinCareBookingSystem.Controller.Controllers
     {
         private readonly ISurveyService _surveyService;
         private readonly ISurveyRepository _surveyRepository;
+        private readonly AppDbContext _context;
 
-        public SurveyController(ISurveyService surveyService, ISurveyRepository surveyRepository)
+        public SurveyController(ISurveyService surveyService, ISurveyRepository surveyRepository, AppDbContext context)
         {
             _surveyService = surveyService;
             _surveyRepository = surveyRepository;
+            _context = context;
         }
 
         #region Existing File-based Survey API
@@ -395,12 +398,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return NotFound("Survey session not found");
                 }
 
-                if (!session.IsCompleted)
+                if (!session.IsCompleted || !session.SurveyResultId.HasValue)
                 {
                     return BadRequest("Survey session not completed");
                 }
 
-                var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId);
+                var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId.Value);
                 if (result == null)
                 {
                     return NotFound("Survey result not found");
@@ -451,19 +454,22 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
                 foreach (var session in sessions)
                 {
-                    var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId);
-                    if (result != null)
+                    if (session.SurveyResultId.HasValue)
                     {
-                        history.Add(new
+                        var result = await _surveyService.GetResultByIdAsync(session.SurveyResultId.Value);
+                        if (result != null)
                         {
-                            sessionId = session.Id,
-                            completedDate = session.CompletedDate,
-                            result = new
+                            history.Add(new
                             {
-                                skinType = result.SkinType,
-                                resultText = result.ResultText
-                            }
-                        });
+                                sessionId = session.Id,
+                                completedDate = session.CompletedDate,
+                                result = new
+                                {
+                                    skinType = result.SkinType,
+                                    resultText = result.ResultText
+                                }
+                            });
+                        }
                     }
                 }
 
@@ -707,8 +713,11 @@ namespace SkinCareBookingSystem.Controller.Controllers
         {
             if (id != question.Id)
             {
+                Console.WriteLine($"ID mismatch: URL ID = {id}, Body ID = {question.Id}");
                 return BadRequest("ID mismatch");
             }
+
+            Console.WriteLine($"Full Request Body: {System.Text.Json.JsonSerializer.Serialize(question)}");
 
             try
             {
@@ -740,26 +749,50 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("db/admin/results")]
-        public async Task<ActionResult<List<SurveyResult>>> GetAllResults()
+        public async Task<IActionResult> GetSurveyResultsWithRecommendedServices()
         {
             try
             {
                 var results = await _surveyService.GetAllResultsAsync();
-                return Ok(results);
+
+                var enrichedResults = new List<object>();
+
+                foreach (var result in results)
+                {
+                    var recommendedServices = await _surveyService.GetRecommendedServicesDetailsByResultIdAsync(result.Id);
+
+                    enrichedResults.Add(new
+                    {
+                        result.Id,
+                        result.ResultId,
+                        result.SkinType,
+                        result.ResultText,
+                        result.RecommendationText,
+                        RecommendedServices = recommendedServices.Select(service => new
+                        {
+                            service.Id,
+                            service.ServiceName,
+                            service.ServiceDescription,
+                            service.Price
+                        })
+                    });
+                }
+
+                return Ok(enrichedResults);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while fetching survey results.", error = ex.Message });
             }
         }
 
         [HttpPost("db/admin/recommended-service")]
-        public async Task<ActionResult<RecommendedService>> AddRecommendedService([FromBody] RecommendedService service)
+        public async Task<IActionResult> AddRecommendedService([FromBody] RecommendedServiceDto dto)
         {
             try
             {
-                var result = await _surveyService.AddRecommendedServiceAsync(service);
-                return Ok(result);
+                await _surveyService.AddRecommendedServiceAsync(dto.SurveyResultId, dto.ServiceId, dto.Priority);
+                return Ok("Recommended service added successfully.");
             }
             catch (Exception ex)
             {
@@ -767,21 +800,27 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpDelete("db/admin/recommended-service/{id}")]
-        public async Task<ActionResult> DeleteRecommendedService(int id)
+        [HttpPut("db/admin/results/{id}")]
+        public async Task<IActionResult> UpdateSurveyResult(int id, [FromBody] SurveyResult updatedResult)
         {
             try
             {
-                var result = await _surveyService.DeleteRecommendedServiceAsync(id);
-                if (!result)
+                if (id != updatedResult.Id)
                 {
-                    return NotFound("Recommended service not found");
+                    return BadRequest("ID mismatch between URL and body.");
                 }
-                return NoContent();
+
+                var result = await _surveyService.UpdateResultAsync(updatedResult);
+                if (result == null)
+                {
+                    return NotFound("Survey result not found.");
+                }
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while updating the survey result.", error = ex.Message });
             }
         }
         #endregion
