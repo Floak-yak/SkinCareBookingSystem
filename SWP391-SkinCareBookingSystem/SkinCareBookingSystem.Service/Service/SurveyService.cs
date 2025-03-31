@@ -128,16 +128,11 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveySession> StartSessionAsync(int? userId)
         {
-            // Get default result to assign initially
-            var defaultResult = await _surveyRepository.GetAllResultsAsync();
-            int defaultResultId = defaultResult.Any() ? defaultResult.First().Id : 1;
-            
             var session = new SurveySession
             {
                 UserId = userId,
                 IsCompleted = false,
-                CompletedDate = DateTime.Now,
-                SurveyResultId = defaultResultId // Initialize with default result ID
+                CompletedDate = DateTime.Now
             };
 
             return await _surveyRepository.CreateSessionAsync(session);
@@ -191,17 +186,9 @@ namespace SkinCareBookingSystem.Service.Service
             
             var serviceIds = recommendedServices.Select(rs => rs.ServiceId).ToList();
             
-            return new List<SkincareService>();
-        }
-
-        public async Task<RecommendedService> AddRecommendedServiceAsync(RecommendedService service)
-        {
-            return await _surveyRepository.AddRecommendedServiceAsync(service);
-        }
-
-        public async Task<bool> DeleteRecommendedServiceAsync(int id)
-        {
-            return await _surveyRepository.DeleteRecommendedServiceAsync(id);
+            var services = await _surveyRepository.GetServicesByIdsAsync(serviceIds);
+            
+            return services;
         }
 
         public async Task<SurveyQuestion> GetFirstQuestionAsync()
@@ -262,6 +249,24 @@ namespace SkinCareBookingSystem.Service.Service
                 
             await CompleteSessionAsync(sessionId, result.Id);
             return result;
+        }
+
+        public async Task<SkincareService> GetServiceByIdAsync(int serviceId)
+        {
+            return await _surveyRepository.GetServiceByIdAsync(serviceId);
+        }
+
+        public async Task AddRecommendedServiceAsync(int surveyResultId, int serviceId, int priority)
+        {
+            // Logic to add a recommended service
+            var recommendedService = new RecommendedService
+            {
+                SurveyResultId = surveyResultId,
+                ServiceId = serviceId,
+                Priority = priority
+            };
+
+            await _surveyRepository.AddRecommendedServiceAsync(recommendedService);
         }
     }
 }
