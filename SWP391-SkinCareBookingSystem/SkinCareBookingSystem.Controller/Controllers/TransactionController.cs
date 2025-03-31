@@ -24,7 +24,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             _payOS = payOS;
         }
 
-        [HttpGet("Cancel")]
+        [HttpPut("Cancel")]
         public async Task<IActionResult> CancelTransaction([FromQuery] int transactionId)
         {
             if (!await _transactionService.UpdateTransaction(transactionId, -1))
@@ -34,14 +34,14 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok("Cancel Success");
         }
 
-        [HttpGet("Checkout")]
+        [HttpPut("Checkout")]
         public async Task<IActionResult> CheckoutTransaction([FromQuery] int transactionId)
         {
             if (!await _transactionService.UpdateTransaction(transactionId, 1))
             {
-                return BadRequest("Cancel fail");
+                return BadRequest("Checkout fail");
             }
-            return Ok("Cancel Success");
+            return Ok("Checkout Success");
         }
 
         [HttpGet("GetTransactionByUserId")]
