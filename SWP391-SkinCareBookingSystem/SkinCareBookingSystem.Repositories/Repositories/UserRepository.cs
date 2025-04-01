@@ -20,8 +20,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<List<User>> GetUsers()
         {
-            return await _context.Users
-                .Include(u => u.TestInformationHistory)
+            return await _context.Users                
                 .Include(u => u.Posts)
                 .Include(u => u.Category)
                 .Include(u => u.Bookings)
@@ -32,8 +31,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<User> GetUserById(int userId)
         {
-            return await _context.Users
-                .Include(u => u.TestInformationHistory)
+            return await _context.Users                
                 .Include(u => u.Posts)
                 .Include(u => u.Category)
                 .Include(u => u.Bookings)
@@ -43,8 +41,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<User> GetUserByName(string userName)
         {
-            return await _context.Users
-                .Include(u => u.TestInformationHistory)
+            return await _context.Users                
                 .Include(u => u.Posts)
                 .Include(u => u.Category)
                 .Include(u => u.Bookings)
@@ -157,7 +154,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<List<User>> GetSkinTherapistsByCategoryId(int categoryId) =>
             await _context.Users
-                .Include(u => u.TestInformationHistory)
+                
                 .Include(u => u.Posts)
                 .Include(u => u.Category)
                 .Include(u => u.Bookings)
@@ -166,8 +163,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             .Where(u => u.CategoryId == categoryId).ToListAsync();
 
         public async Task<User> GetSkinTherapistById(int SkinTherapistId) =>
-            await _context.Users
-                .Include(u => u.TestInformationHistory)
+            await _context.Users                
                 .Include(u => u.Posts)
                 .Include(u => u.Category)
                 .Include(u => u.Bookings)

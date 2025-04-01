@@ -20,7 +20,6 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<SkincareService> SkincareServices { get; set; }
-        public DbSet<TestInformation> TestInformations { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<ScheduleLog> ScheduleLogs { get; set; }
         public DbSet<BookingServiceSchedule> BookingServiceSchedules { get; set; }
@@ -79,12 +78,6 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Posts)
                 .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<TestInformation>()
-                .HasOne(ti => ti.User)
-                .WithMany(u => u.TestInformationHistory)
-                .HasForeignKey(ti => ti.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Schedule>()

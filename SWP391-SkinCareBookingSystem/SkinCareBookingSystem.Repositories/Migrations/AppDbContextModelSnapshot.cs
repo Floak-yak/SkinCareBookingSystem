@@ -541,34 +541,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("SurveySessions");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("SkinStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("TestDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("TestType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("TestInformations");
-                });
-
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Transaction", b =>
                 {
                     b.Property<int>("Id")
@@ -915,17 +887,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.TestInformation", b =>
-                {
-                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
-                        .WithMany("TestInformationHistory")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Transaction", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
@@ -1022,8 +983,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Posts");
 
                     b.Navigation("Schedules");
-
-                    b.Navigation("TestInformationHistory");
 
                     b.Navigation("Transactions");
                 });

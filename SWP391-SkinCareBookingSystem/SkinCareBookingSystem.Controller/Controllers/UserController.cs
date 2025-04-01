@@ -101,12 +101,13 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
         {
             if (request is null)
-                return BadRequest(new ArgumentNullException().Message);           
-            if (await _userService.CreateAccount(request) is null)
+                return BadRequest(new ArgumentNullException().Message);
+            var result = await _userService.CreateAccount(request);
+            if (result is null)
             {
                 return BadRequest("Create fail");
             }
-            return Ok("Create success");
+            return Ok(result);
         }
 
         [HttpPut]
@@ -123,10 +124,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> VerifyAccount([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))
-                return BadRequest("Can't find token");
+                return Redirect("http://localhost:3000/verify-fail");
+
             if (!await _userService.VerifyAccount(token))
-                return BadRequest("Verify fail");
-            return Ok("Verify success");
+                return Redirect("http://localhost:3000/verify-fail");
+
+            return Redirect("http://localhost:3000/verify-success");
         }
 
         [HttpPut("ResetPassword")]
