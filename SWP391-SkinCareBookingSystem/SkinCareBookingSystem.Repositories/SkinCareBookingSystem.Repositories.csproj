@@ -24,10 +24,4 @@
     <ProjectReference Include="..\SkinCareBookingSystem.Entity\SkinCareBookingSystem.BusinessObject.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="SkinTestQuestion.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
 </Project>

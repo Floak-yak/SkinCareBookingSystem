@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace SkinCareBookingSystem.Service.Dto.SkincareServiceDto
 {
@@ -25,6 +26,8 @@ namespace SkinCareBookingSystem.Service.Dto.SkincareServiceDto
         public int WorkTime { get; set; }
 
         public int? ImageId { get; set; }
+        
+        public string Benefits { get; set; }
     }
 
     public class SkincareServiceUpdateDTO
@@ -44,5 +47,7 @@ namespace SkinCareBookingSystem.Service.Dto.SkincareServiceDto
         public int? WorkTime { get; set; }
 
         public int? ImageId { get; set; }
+        
+        public string Benefits { get; set; }
     }
 }

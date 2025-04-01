@@ -36,13 +36,13 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
-builder.Services.AddScoped<ISurveyService, SurveyService>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IServicesDetailRepository, ServicesDetailRepository>();
 builder.Services.AddScoped<IServicesDetailService, ServicesDetailService>();
 builder.Services.AddScoped<IScheduleLogRepository, ScheduleLogRepository>();
+builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
+builder.Services.AddScoped<ISurveyService, SurveyService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 IConfiguration configurationPayOs = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();

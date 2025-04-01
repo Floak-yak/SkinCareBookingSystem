@@ -103,6 +103,33 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
+        [HttpPut("UpdateTherapist")]
+        public async Task<IActionResult> UpdateBookingTherapist([FromBody] UpdateBookingTherapistRequest request)
+        {
+            if (request.BookingId <= 0)
+                return BadRequest("Invalid booking ID");
+
+            if (request.NewSkinTherapistId <= 0)
+                return BadRequest("Invalid skin therapist ID");
+
+            try
+            {
+                var result = await _bookingService.UpdateBookingTherapist(request);
+                if (!result)
+                    return BadRequest("Update booking failed");
+
+                return Ok("Booking updated successfully");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpDelete("Cancel")]
         public async Task<IActionResult> CancelBooking(int bookingId, int userId)
         {

@@ -1,211 +1,302 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using Microsoft.EntityFrameworkCore;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
+using SkinCareBookingSystem.Repositories.Data;
+using System.IO;
 
 namespace SkinCareBookingSystem.Repositories.Repositories
 {
-    public class SurveyRepository : ISurveyRepository
+    public class SurveyRepository: ISurveyRepository
     {
         private readonly string _filePath;
+        private readonly AppDbContext _context;
 
-        public SurveyRepository(string filePath = "SkinTestQuestion.txt")
+        public SurveyRepository(AppDbContext context)
         {
-            // Try to find the file in multiple possible locations
+            _context = context;
+            
+            // Get the base directory and construct the absolute path to the file
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string projectDirectory = Directory.GetCurrentDirectory();
-            
-            // Possible file paths in order of preference
-            var possiblePaths = new[]
-            {
-                Path.Combine(baseDirectory, filePath),                                  // bin directory
-                Path.Combine(projectDirectory, filePath),                               // current directory
-                Path.Combine(projectDirectory, "SkinCareBookingSystem.Repositories", filePath), // project repository folder
-                Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "SkinCareBookingSystem.Repositories", filePath)) // try going up from bin
-            };
-            
-            foreach (var path in possiblePaths)
-            {
-                if (File.Exists(path))
-                {
-                    _filePath = path;
-                    Console.WriteLine($"Found survey file at: {_filePath}");
-                    return;
-                }
-            }
-            
-            // Default to the first option if none found
-            _filePath = possiblePaths[0];
-            Console.WriteLine($"Could not find survey file. Will try to use: {_filePath}");
+            // Navigate up to the solution root
+            string solutionDirectory = Path.GetFullPath(Path.Combine(baseDirectory, "..\\..\\..\\.."));
+            _filePath = Path.Combine(solutionDirectory, "SkinCareBookingSystem.Repositories", "SkinTestQuestion.txt");
         }
 
-        public Dictionary<string, SurveyQuestion> LoadSurvey()
+        public Dictionary<string, Node> LoadSurvey()
         {
-            var surveyTree = new Dictionary<string, SurveyQuestion>();
+            var surveyTree = new Dictionary<string, Node>();
 
             try
             {
                 if (!File.Exists(_filePath))
                 {
-                    // For debugging purposes, log all the places we looked
-                    Console.WriteLine($"Survey file not found at: {_filePath}");
-                    Console.WriteLine($"Current directory: {Directory.GetCurrentDirectory()}");
-                    Console.WriteLine($"Base directory: {AppDomain.CurrentDomain.BaseDirectory}");
-                    
-                    throw new FileNotFoundException($"Survey file not found at: {_filePath}");
+                    throw new FileNotFoundException($"Survey file not found at path: {_filePath}");
                 }
 
-                string content = File.ReadAllText(_filePath);
-                
-                // Parse the structure using regex
-                var questionMatches = Regex.Matches(content, @"(\w+):\s*\{([^{}]+(?:\{[^{}]*\}[^{}]*)*)\}", RegexOptions.Singleline);
-                
-                foreach (Match questionMatch in questionMatches)
+                foreach (string line in File.ReadAllLines(_filePath))
                 {
-                    string questionId = questionMatch.Groups[1].Value.Trim();
-                    string questionContent = questionMatch.Groups[2].Value.Trim();
-                    
-                    // Extract the question text - now handling concatenated strings
-                    string questionText = ExtractQuestionText(questionContent);
-                    if (string.IsNullOrEmpty(questionText)) continue;
-                    
-                    // Create the question object
-                    var question = new SurveyQuestion
+                    var parts = line.Split('|');
+                    if (parts.Length < 2) continue;
+
+                    var node = new Node { Id = parts[0], Content = parts[1] };
+
+                    for (int i = 2; i < parts.Length; i++)
                     {
-                        Id = questionId,
-                        Question = questionText,
-                        Options = new List<SurveyOption>()
-                    };
-                    
-                    // Extract the options
-                    var optionsMatch = Regex.Match(questionContent, @"options:\s*\[(.*?)\]", RegexOptions.Singleline);
-                    if (optionsMatch.Success)
-                    {
-                        string optionsText = optionsMatch.Groups[1].Value;
-                        
-                        // Parse each option
-                        var optionMatches = Regex.Matches(optionsText, @"\{([^{}]+)\}", RegexOptions.Singleline);
-                        foreach (Match optionMatch in optionMatches)
+                        var choiceParts = parts[i].Split(':');
+                        if (choiceParts.Length == 2)
                         {
-                            string optionContent = optionMatch.Groups[1].Value;
-                            
-                            // Extract label
-                            var labelMatch = Regex.Match(optionContent, @"label:\s*""([^""]+)""");
-                            if (!labelMatch.Success) continue;
-                            
-                            string label = labelMatch.Groups[1].Value;
-                            
-                            // Extract nextId
-                            var nextIdMatch = Regex.Match(optionContent, @"nextId:\s*""([^""]+)""");
-                            string nextId = nextIdMatch.Success ? nextIdMatch.Groups[1].Value : "END";
-                            
-                            question.Options.Add(new SurveyOption
-                            {
-                                Label = label,
-                                NextId = nextId
-                            });
+                            node.Choices[choiceParts[0]] = choiceParts[1];
                         }
                     }
-                    
-                    surveyTree[questionId] = question;
+
+                    surveyTree[node.Id] = node;
                 }
-                
-                Console.WriteLine($"Successfully loaded {surveyTree.Count} questions from survey file.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading survey: {ex.Message}");
-                // Return an empty dictionary in case of error
-                return new Dictionary<string, SurveyQuestion>();
             }
 
             return surveyTree;
         }
-
-        // Helper method to extract and concatenate multi-line question text
-        private string ExtractQuestionText(string content)
+        public void SaveSurvey(Dictionary<string, Node> surveyTree)
         {
-            // Check if the question section exists
-            if (!content.Contains("question:")) return null;
-            
-            // Handle concatenated multi-line question
-            string questionSection = content.Substring(content.IndexOf("question:"));
-            // Cut at options if exists
-            if (questionSection.Contains("options:"))
+            using (StreamWriter writer = new StreamWriter("survey.txt"))
             {
-                questionSection = questionSection.Substring(0, questionSection.IndexOf("options:"));
-            }
-            
-            // Check if it contains "+" which indicates concatenation
-            bool isMultiLine = questionSection.Contains("+");
-            
-            if (!isMultiLine)
-            {
-                // Simple case - single line question
-                var singleLineMatch = Regex.Match(questionSection, @"question:\s*""([^""]+)""", RegexOptions.Singleline);
-                if (singleLineMatch.Success)
+                foreach (var node in surveyTree.Values)
                 {
-                    return singleLineMatch.Groups[1].Value;
+                    string line = node.Id + "|" + node.Content;
+
+                    foreach (var choice in node.Choices)
+                    {
+                        line += "|" + choice.Key + ":" + choice.Value;
+                    }
+
+                    writer.WriteLine(line);
                 }
             }
-            
-            // Extract each quoted string and concatenate
-            var stringMatches = Regex.Matches(questionSection, @"""([^""\\]*(?:\\.[^""\\]*)*)""");
-            if (stringMatches.Count == 0) return null;
-            
-            StringBuilder result = new StringBuilder();
-            foreach (Match m in stringMatches)
-            {
-                result.Append(m.Groups[1].Value);
-            }
-            
-            return result.ToString();
         }
 
-        public void SaveSurvey(Dictionary<string, SurveyQuestion> surveyTree)
+        public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
         {
-            try
+            return await _context.SurveyQuestions
+                .Include(q => q.Options)
+                .ToListAsync();
+        }
+
+        public async Task<SurveyQuestion> GetQuestionByIdAsync(int id)
+        {
+            return await _context.SurveyQuestions
+                .Include(q => q.Options)
+                .FirstOrDefaultAsync(q => q.Id == id);
+        }
+
+        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
+        {
+            return await _context.SurveyQuestions
+                .Include(q => q.Options)
+                .FirstOrDefaultAsync(q => q.QuestionId == questionId);
+        }
+
+        public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
+        {
+            _context.SurveyQuestions.Add(question);
+            await _context.SaveChangesAsync();
+            return question;
+        }
+
+        public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
+        {
+            _context.Entry(question).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return question;
+        }
+
+        public async Task<bool> DeleteQuestionAsync(int id)
+        {
+            var question = await _context.SurveyQuestions.FindAsync(id);
+            if (question == null) return false;
+
+            _context.SurveyQuestions.Remove(question);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId)
+        {
+            return await _context.SurveyOptions
+                .Where(o => o.QuestionId == questionId)
+                .ToListAsync();
+        }
+
+        public async Task<SurveyOption> GetOptionByIdAsync(int id)
+        {
+            return await _context.SurveyOptions.FindAsync(id);
+        }
+
+        public async Task<SurveyOption> AddOptionAsync(SurveyOption option)
+        {
+            _context.SurveyOptions.Add(option);
+            await _context.SaveChangesAsync();
+            return option;
+        }
+
+        public async Task<SurveyOption> UpdateOptionAsync(SurveyOption option)
+        {
+            _context.Entry(option).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return option;
+        }
+
+        public async Task<bool> DeleteOptionAsync(int id)
+        {
+            var option = await _context.SurveyOptions.FindAsync(id);
+            if (option == null) return false;
+
+            _context.SurveyOptions.Remove(option);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<SurveyResult>> GetAllResultsAsync()
+        {
+            return await _context.SurveyResults
+                .Include(r => r.RecommendedServices)
+                .ToListAsync();
+        }
+
+        public async Task<SurveyResult> GetResultByIdAsync(int id)
+        {
+            return await _context.SurveyResults.FindAsync(id);
+        }
+
+        public async Task<SurveyResult> GetResultByResultIdAsync(string resultId)
+        {
+            return await _context.SurveyResults
+                .FirstOrDefaultAsync(r => r.ResultId == resultId);
+        }
+
+        public async Task<SurveyResult> AddResultAsync(SurveyResult result)
+        {
+            _context.SurveyResults.Add(result);
+            await _context.SaveChangesAsync();
+            return result;
+        }
+
+        public async Task<SurveyResult> UpdateResultAsync(SurveyResult result)
+        {
+            var existingResult = await _context.SurveyResults.FindAsync(result.Id);
+            if (existingResult == null)
             {
-                using (StreamWriter writer = new StreamWriter(_filePath))
-                {
-                    foreach (var entry in surveyTree)
-                    {
-                        writer.WriteLine($"{entry.Key}: {{");
-                        writer.WriteLine($"  question: \"{entry.Value.Question}\",");
-                        writer.WriteLine("  options: [");
-                        
-                        for (int i = 0; i < entry.Value.Options.Count; i++)
-                        {
-                            var option = entry.Value.Options[i];
-                            writer.WriteLine($"    {{");
-                            writer.WriteLine($"      label: \"{option.Label}\",");
-                            writer.WriteLine($"      nextId: \"{option.NextId}\"");
-                            writer.Write($"    }}");
-                            
-                            if (i < entry.Value.Options.Count - 1)
-                            {
-                                writer.WriteLine(",");
-                            }
-                            else
-                            {
-                                writer.WriteLine();
-                            }
-                        }
-                        
-                        writer.WriteLine("  ]");
-                        writer.WriteLine("},");
-                    }
-                }
-                
-                Console.WriteLine($"Successfully saved {surveyTree.Count} questions to survey file at: {_filePath}");
+                return null;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving survey: {ex.Message}");
-            }
+
+            // Update the properties of the existing result
+            existingResult.SkinType = result.SkinType;
+            existingResult.ResultText = result.ResultText;
+            existingResult.RecommendationText = result.RecommendationText;
+
+            _context.SurveyResults.Update(existingResult);
+            await _context.SaveChangesAsync();
+
+            return existingResult;
+        }
+
+        public async Task<bool> DeleteResultAsync(int id)
+        {
+            var result = await _context.SurveyResults.FindAsync(id);
+            if (result == null) return false;
+
+            _context.SurveyResults.Remove(result);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<SurveySession> CreateSessionAsync(SurveySession session)
+        {
+            _context.SurveySessions.Add(session);
+            await _context.SaveChangesAsync();
+            return session;
+        }
+
+        public async Task<SurveySession> GetSessionByIdAsync(int id)
+        {
+            return await _context.SurveySessions
+                .Include(s => s.Responses)
+                .Include(s => s.SurveyResult)
+                .FirstOrDefaultAsync(s => s.Id == id);
+        }
+
+        public async Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId)
+        {
+            return await _context.SurveySessions
+                .Include(s => s.SurveyResult)
+                .Where(s => s.UserId == userId && s.IsCompleted)
+                .OrderByDescending(s => s.CompletedDate)
+                .ToListAsync();
+        }
+
+        public async Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId)
+        {
+            var session = await _context.SurveySessions.FindAsync(sessionId);
+            if (session == null) return null;
+
+            session.SurveyResultId = resultId;
+            session.IsCompleted = true;
+            session.CompletedDate = DateTime.Now;
+
+            _context.Entry(session).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return session;
+        }
+
+        public async Task<SurveyResponse> AddResponseAsync(SurveyResponse response)
+        {
+            _context.SurveyResponses.Add(response);
+            await _context.SaveChangesAsync();
+            return response;
+        }
+
+        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
+        {
+            return await _context.SurveyResponses
+                .Where(r => r.SessionId == sessionId)
+                .ToListAsync();
+        }
+
+        public async Task<SkincareService> GetServiceByIdAsync(int serviceId)
+        {
+            return await _context.SkincareServices.FindAsync(serviceId);
+        }
+
+        public async Task AddRecommendedServiceAsync(RecommendedService recommendedService)
+        {
+            _context.RecommendedServices.Add(recommendedService);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
+        {
+            return await _context.RecommendedServices
+                .Where(rs => rs.SurveyResultId == resultId)
+                .ToListAsync();
+        }
+
+        public async Task<List<SkincareService>> GetServicesByIdsAsync(List<int> serviceIds)
+        {
+            return await _context.SkincareServices
+                .Where(service => serviceIds.Contains(service.Id))
+                .ToListAsync();
+        }
+
+        public async Task<bool> DeleteRecommendedServiceAsync(int id)
+        {
+            var service = await _context.RecommendedServices.FindAsync(id);
+            if (service == null) return false;
+
+            _context.RecommendedServices.Remove(service);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
