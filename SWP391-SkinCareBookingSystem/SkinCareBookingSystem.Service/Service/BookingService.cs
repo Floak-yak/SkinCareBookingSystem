@@ -86,7 +86,6 @@ namespace SkinCareBookingSystem.Service.Service
                 skintherapist.Schedules.Add(scheduleCreate);
             }
 
-            //Check category of skintherapist with skinservice. Avoid trouble from value
             if (skincareService.CategoryId != skintherapist.CategoryId)
                 throw new InvalidOperationException("Category is not match with category of service" + nameof(request.CategoryId));
 
@@ -320,6 +319,88 @@ namespace SkinCareBookingSystem.Service.Service
             booking.Status = BookingStatus.Completed;
             _bookingRepository.UpdateBooking(booking);
             return await _bookingRepository.SaveChange();
+        }
+
+        public async Task<bool> UpdateBookingTherapist(UpdateBookingTherapistRequest request)
+        {
+            try
+            {
+                Booking booking = await _bookingRepository.GetBookingByIdAsync(request.BookingId);
+                if (booking == null) 
+                    throw new InvalidOperationException("Booking ID not found");
+
+                User newTherapist = await _userRepository.GetSkinTherapistById(request.NewSkinTherapistId);
+                if (newTherapist == null || !newTherapist.IsVerified || newTherapist.Role != Role.SkinTherapist)
+                    throw new InvalidOperationException("Invalid therapist ID");
+
+                var serviceSchedule = booking.BookingServiceSchedules?.FirstOrDefault();
+                if (serviceSchedule == null) 
+                    throw new InvalidOperationException("No booking service schedule found");
+
+                SkincareService service = await _skincareServiceRepository.GetServiceById(serviceSchedule.ServiceId);
+                if (service == null) 
+                    throw new InvalidOperationException("Service not found");
+
+                if (service.CategoryId != newTherapist.CategoryId) 
+                    throw new InvalidOperationException("Therapist's category not match");
+
+                ScheduleLog currentScheduleLog = await _scheduleLogRepository.GetScheduleLogById(serviceSchedule.ScheduleLogId);
+                if (currentScheduleLog == null) throw new InvalidOperationException("Current schedule log not found");
+
+                if (currentScheduleLog.Schedule.UserId == request.NewSkinTherapistId) return true;
+
+                DateTime shiftTime = currentScheduleLog.TimeStartShift;
+                
+                List<User> freeTherapists = await _userRepository.GetSkinTherapistsFreeInTimeSpan(
+                    shiftTime, 
+                    service.WorkTime, 
+                    service.CategoryId);
+
+                if (freeTherapists == null || !freeTherapists.Any(t => t.Id == request.NewSkinTherapistId))
+                    throw new InvalidOperationException("Therapist is not available");
+
+                currentScheduleLog.IsCancel = true;
+                _scheduleLogRepository.Update(currentScheduleLog);
+
+                if (newTherapist.Schedules == null)
+                    newTherapist.Schedules = new List<Schedule>();
+
+                Schedule newTherapistSchedule = newTherapist.Schedules.FirstOrDefault(s => s.DateWork.Date == shiftTime.Date);
+                if (newTherapistSchedule == null)
+                {
+                    newTherapistSchedule = new Schedule
+                    {
+                        DateWork = shiftTime.Date,
+                        User = newTherapist,
+                        UserId = newTherapist.Id,
+                        ScheduleLogs = new List<ScheduleLog>()
+                    };
+                    newTherapist.Schedules.Add(newTherapistSchedule);
+                }
+
+                ScheduleLog newScheduleLog = new ScheduleLog
+                {
+                    TimeStartShift = shiftTime,
+                    WorkingTime = service.WorkTime,
+                    Schedule = newTherapistSchedule,
+                    ScheduleId = newTherapistSchedule.Id
+                };
+
+                if (newTherapistSchedule.ScheduleLogs == null)
+                    newTherapistSchedule.ScheduleLogs = new List<ScheduleLog>();
+
+                newTherapistSchedule.ScheduleLogs.Add(newScheduleLog);
+
+                serviceSchedule.ScheduleLog = newScheduleLog;
+                serviceSchedule.ScheduleLogId = newScheduleLog.Id;
+
+                _bookingRepository.UpdateBooking(booking);
+                return await _bookingRepository.SaveChange();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }
