@@ -81,7 +81,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<Booking> GetBookingByScheduleLogId(int scheduleLogId)
         {
-            return await _context.Bookings.FirstOrDefaultAsync(b => b.BookingServiceSchedules.First().ScheduleLogId == scheduleLogId);
+            return await _context.Bookings.FirstOrDefaultAsync(b => b.BookingServiceSchedules.FirstOrDefault(b => b.ScheduleLogId == scheduleLogId && !b.ScheduleLog.IsCancel) != null);
         }
 
         public async Task<bool> DeleteBooking(Booking booking)
