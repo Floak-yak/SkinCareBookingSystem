@@ -292,6 +292,9 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsCancel")
+                        .HasColumnType("bit");
+
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
 
