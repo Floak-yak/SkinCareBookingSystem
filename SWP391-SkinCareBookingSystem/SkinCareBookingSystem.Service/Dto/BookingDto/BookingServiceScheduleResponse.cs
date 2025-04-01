@@ -12,6 +12,6 @@ namespace SkinCareBookingSystem.Service.Dto.BookingDto
         public int ServiceId { get; set; }
         public int BookingId { get; set; }
         public int ScheduleLogId { get; set; }
-        public ScheduleLog ScheduleLog { get; set; }
+        public BusinessObject.Entity.ScheduleLog ScheduleLog { get; set; }
     }
 }
