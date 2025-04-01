@@ -23,7 +23,6 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         #region Relationship
         public int? CategoryId { get; set; }
         public Category? Category { get; set; }
-        public ICollection<TestInformation>? TestInformationHistory { get; set; }
         public ICollection<Post>? Posts { get; set; }
         public ICollection<Booking>? Bookings { get; set; }
         public ICollection<Schedule>? Schedules { get; set; }
