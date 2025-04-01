@@ -101,7 +101,7 @@ namespace SkinCareBookingSystem.Service.Service
             {
                 foreach (var scheduleLog in schedule.ScheduleLogs)
                 {
-                    scheduleLog.ServiceName = skincareServiceList.FirstOrDefault(sk => sk.Id == scheduleLog.BookingServiceSchedules.First().ServiceId).ServiceName;
+                    scheduleLog.ServiceName = skincareServiceList.FirstOrDefault(sk => sk.Id == scheduleLog.BookingServiceSchedules.FirstOrDefault(b => !b.ScheduleLog.IsCancel).ServiceId).ServiceName;
                 }
             }
             return result;
