@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace SkinCareBookingSystem.Service.Dto.Survey
 {
@@ -12,28 +8,5 @@ namespace SkinCareBookingSystem.Service.Dto.Survey
         public string QuestionText { get; set; }
         public bool IsActive { get; set; } = true;
         public List<QuestionOptionDto> Options { get; set; } = new List<QuestionOptionDto>();
-    }
-
-    public class QuestionOptionDto
-    {
-        public string OptionText { get; set; }
-        public string NextQuestionId { get; set; }
-    }
-
-    public class QuestionUpdateDto
-    {
-        public int Id { get; set; }
-        public string QuestionId { get; set; }
-        public string QuestionText { get; set; }
-        public bool IsActive { get; set; }
-        public List<QuestionOptionUpdateDto> Options { get; set; } = new List<QuestionOptionUpdateDto>();
-    }
-
-    public class QuestionOptionUpdateDto
-    {
-        public int? Id { get; set; }  // Null for new options, existing ID for updates
-        public string OptionText { get; set; }
-        public string NextQuestionId { get; set; }
-        public bool IsDeleted { get; set; } = false;  // Flag to mark options for deletion
     }
 }

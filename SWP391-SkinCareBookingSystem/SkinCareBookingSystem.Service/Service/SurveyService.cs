@@ -268,5 +268,26 @@ namespace SkinCareBookingSystem.Service.Service
 
             await _surveyRepository.AddRecommendedServiceAsync(recommendedService);
         }
+
+        public async Task<bool> DeleteRecommendedServiceAsync(int id)
+        {
+            return await _surveyRepository.DeleteRecommendedServiceAsync(id);
+        }
+
+        public async Task UpdateRecommendedServiceAsync(int id, int serviceId, int priority)
+        {
+            var existingService = (await _surveyRepository.GetRecommendedServicesByResultIdAsync(id))
+                .FirstOrDefault(s => s.Id == id);
+
+            if (existingService == null)
+            {
+                throw new KeyNotFoundException($"Recommended service with ID {id} not found");
+            }
+
+            existingService.ServiceId = serviceId;
+            existingService.Priority = priority;
+
+            await _surveyRepository.UpdateRecommendedServiceAsync(existingService);
+        }
     }
 }

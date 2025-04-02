@@ -292,11 +292,18 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<bool> DeleteRecommendedServiceAsync(int id)
         {
             var service = await _context.RecommendedServices.FindAsync(id);
-            if (service == null) return false;
+            if (service == null)
+                return false;
 
             _context.RecommendedServices.Remove(service);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task UpdateRecommendedServiceAsync(RecommendedService recommendedService)
+        {
+            _context.RecommendedServices.Update(recommendedService);
+            await _context.SaveChangesAsync();
         }
     }
 }

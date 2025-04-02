@@ -757,28 +757,22 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                // Get existing question
                 var existingQuestion = await _surveyService.GetQuestionByIdAsync(id);
                 if (existingQuestion == null)
                 {
                     return NotFound("Question not found");
                 }
 
-                // Update question properties
                 existingQuestion.QuestionId = request.QuestionId;
                 existingQuestion.QuestionText = request.QuestionText;
                 existingQuestion.IsActive = request.IsActive;
 
-                // Update the question
                 var updatedQuestion = await _surveyService.UpdateQuestionAsync(existingQuestion);
 
-                // Handle options
                 if (request.Options != null)
                 {
-                    // Get existing options
                     var existingOptions = await _surveyService.GetOptionsForQuestionAsync(id);
                     
-                    // Delete options marked for deletion
                     foreach (var optionDto in request.Options.Where(o => o.IsDeleted))
                     {
                         if (optionDto.Id.HasValue)
@@ -787,12 +781,10 @@ namespace SkinCareBookingSystem.Controller.Controllers
                         }
                     }
 
-                    // Update or add options
                     foreach (var optionDto in request.Options.Where(o => !o.IsDeleted))
                     {
                         if (optionDto.Id.HasValue)
                         {
-                            // Update existing option
                             var existingOption = existingOptions.FirstOrDefault(o => o.Id == optionDto.Id);
                             if (existingOption != null)
                             {
@@ -803,7 +795,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
                         }
                         else
                         {
-                            // Add new option
                             var newOption = new SurveyOption
                             {
                                 QuestionId = id,
@@ -815,7 +806,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     }
                 }
 
-                // Get updated question with options for response
                 var questionWithOptions = await _surveyService.GetQuestionByIdAsync(id);
                 var options = await _surveyService.GetOptionsForQuestionAsync(id);
 
@@ -911,22 +901,81 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPut("db/admin/results/{id}")]
-        public async Task<IActionResult> UpdateSurveyResult(int id, [FromBody] SurveyResult updatedResult)
+        public async Task<ActionResult<object>> UpdateSurveyResult(int id, [FromBody] SurveyResultUpdateDto request)
         {
             try
             {
-                if (id != updatedResult.Id)
+                if (id != request.Id)
                 {
                     return BadRequest("ID mismatch between URL and body.");
                 }
 
-                var result = await _surveyService.UpdateResultAsync(updatedResult);
-                if (result == null)
+                var existingResult = await _surveyService.GetResultByIdAsync(id);
+                if (existingResult == null)
                 {
                     return NotFound("Survey result not found.");
                 }
 
-                return Ok(result);
+                existingResult.ResultId = request.ResultId;
+                existingResult.ResultText = request.ResultText;
+                existingResult.SkinType = request.SkinType;
+                existingResult.RecommendationText = request.RecommendationText;
+
+                var updatedResult = await _surveyService.UpdateResultAsync(existingResult);
+
+                if (request.RecommendedServices != null)
+                {
+                    var existingServices = await _surveyService.GetRecommendedServicesByResultIdAsync(id);
+                    
+                    foreach (var serviceDto in request.RecommendedServices.Where(s => s.IsDeleted))
+                    {
+                        if (serviceDto.Id.HasValue)
+                        {
+                            await _surveyService.DeleteRecommendedServiceAsync(serviceDto.Id.Value);
+                        }
+                    }
+
+                    foreach (var serviceDto in request.RecommendedServices.Where(s => !s.IsDeleted))
+                    {
+                        if (serviceDto.Id.HasValue)
+                        {
+                            var existingService = existingServices.FirstOrDefault(s => s.Id == serviceDto.Id);
+                            if (existingService != null)
+                            {
+                                await _surveyService.UpdateRecommendedServiceAsync(
+                                    serviceDto.Id.Value,
+                                    serviceDto.ServiceId,
+                                    serviceDto.Priority);
+                            }
+                        }
+                        else
+                        {
+                            await _surveyService.AddRecommendedServiceAsync(
+                                id,
+                                serviceDto.ServiceId,
+                                serviceDto.Priority);
+                        }
+                    }
+                }
+
+                var resultWithServices = await _surveyService.GetResultByIdAsync(id);
+                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsByResultIdAsync(id);
+
+                return Ok(new
+                {
+                    id = resultWithServices.Id,
+                    resultId = resultWithServices.ResultId,
+                    resultText = resultWithServices.ResultText,
+                    skinType = resultWithServices.SkinType,
+                    recommendationText = resultWithServices.RecommendationText,
+                    recommendedServices = recommendedServices.Select(s => new
+                    {
+                        id = s.Id,
+                        serviceName = s.ServiceName,
+                        serviceDescription = s.ServiceDescription,
+                        price = s.Price
+                    }).ToList()
+                });
             }
             catch (Exception ex)
             {

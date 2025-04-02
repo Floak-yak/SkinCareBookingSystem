@@ -47,5 +47,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task AddRecommendedServiceAsync(int surveyResultId, int serviceId, int priority);
         Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId);
         Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId);
+        Task<bool> DeleteRecommendedServiceAsync(int id);
+        Task UpdateRecommendedServiceAsync(int id, int serviceId, int priority);
     }
 }
