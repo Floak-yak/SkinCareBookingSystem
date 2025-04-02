@@ -748,20 +748,91 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPut("db/admin/question/{id}")]
-        public async Task<ActionResult<SurveyQuestion>> UpdateDatabaseQuestion(int id, [FromBody] SurveyQuestion question)
+        public async Task<ActionResult<object>> UpdateDatabaseQuestion(int id, [FromBody] QuestionUpdateDto request)
         {
-            if (id != question.Id)
-            {
-                Console.WriteLine($"ID mismatch: URL ID = {id}, Body ID = {question.Id}");
-                return BadRequest("ID mismatch");
-            }
-
-            Console.WriteLine($"Full Request Body: {System.Text.Json.JsonSerializer.Serialize(question)}");
-
             try
             {
-                var result = await _surveyService.UpdateQuestionAsync(question);
-                return Ok(result);
+                if (id != request.Id)
+                {
+                    return BadRequest("ID mismatch between URL and body");
+                }
+
+                // Get existing question
+                var existingQuestion = await _surveyService.GetQuestionByIdAsync(id);
+                if (existingQuestion == null)
+                {
+                    return NotFound("Question not found");
+                }
+
+                // Update question properties
+                existingQuestion.QuestionId = request.QuestionId;
+                existingQuestion.QuestionText = request.QuestionText;
+                existingQuestion.IsActive = request.IsActive;
+
+                // Update the question
+                var updatedQuestion = await _surveyService.UpdateQuestionAsync(existingQuestion);
+
+                // Handle options
+                if (request.Options != null)
+                {
+                    // Get existing options
+                    var existingOptions = await _surveyService.GetOptionsForQuestionAsync(id);
+                    
+                    // Delete options marked for deletion
+                    foreach (var optionDto in request.Options.Where(o => o.IsDeleted))
+                    {
+                        if (optionDto.Id.HasValue)
+                        {
+                            await _surveyService.DeleteOptionAsync(optionDto.Id.Value);
+                        }
+                    }
+
+                    // Update or add options
+                    foreach (var optionDto in request.Options.Where(o => !o.IsDeleted))
+                    {
+                        if (optionDto.Id.HasValue)
+                        {
+                            // Update existing option
+                            var existingOption = existingOptions.FirstOrDefault(o => o.Id == optionDto.Id);
+                            if (existingOption != null)
+                            {
+                                existingOption.OptionText = optionDto.OptionText;
+                                existingOption.NextQuestionId = optionDto.NextQuestionId;
+                                await _surveyService.UpdateOptionAsync(existingOption);
+                            }
+                        }
+                        else
+                        {
+                            // Add new option
+                            var newOption = new SurveyOption
+                            {
+                                QuestionId = id,
+                                OptionText = optionDto.OptionText,
+                                NextQuestionId = optionDto.NextQuestionId
+                            };
+                            await _surveyService.AddOptionAsync(newOption);
+                        }
+                    }
+                }
+
+                // Get updated question with options for response
+                var questionWithOptions = await _surveyService.GetQuestionByIdAsync(id);
+                var options = await _surveyService.GetOptionsForQuestionAsync(id);
+
+                return Ok(new
+                {
+                    id = questionWithOptions.Id,
+                    questionId = questionWithOptions.QuestionId,
+                    questionText = questionWithOptions.QuestionText,
+                    isActive = questionWithOptions.IsActive,
+                    createdDate = questionWithOptions.CreatedDate,
+                    options = options.Select(o => new
+                    {
+                        id = o.Id,
+                        optionText = o.OptionText,
+                        nextQuestionId = o.NextQuestionId
+                    }).ToList()
+                });
             }
             catch (Exception ex)
             {
