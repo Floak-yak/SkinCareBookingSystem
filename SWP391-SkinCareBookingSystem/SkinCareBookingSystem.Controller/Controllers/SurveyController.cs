@@ -695,12 +695,51 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("db/admin/question")]
-        public async Task<ActionResult<SurveyQuestion>> AddDatabaseQuestion([FromBody] SurveyQuestion question)
+        public async Task<ActionResult<object>> AddDatabaseQuestion([FromBody] QuestionRequestDto request)
         {
             try
             {
-                var result = await _surveyService.AddQuestionAsync(question);
-                return CreatedAtAction(nameof(GetQuestionById), new { id = result.Id }, result);
+                var question = new SurveyQuestion
+                {
+                    QuestionId = request.QuestionId,
+                    QuestionText = request.QuestionText,
+                    IsActive = request.IsActive,
+                    CreatedDate = DateTime.Now
+                };
+
+                var addedQuestion = await _surveyService.AddQuestionAsync(question);
+
+                if (request.Options != null && request.Options.Any())
+                {
+                    foreach (var optionDto in request.Options)
+                    {
+                        var option = new SurveyOption
+                        {
+                            QuestionId = addedQuestion.Id,
+                            OptionText = optionDto.OptionText,
+                            NextQuestionId = optionDto.NextQuestionId
+                        };
+                        await _surveyService.AddOptionAsync(option);
+                    }
+                }
+
+                var questionWithOptions = await _surveyService.GetQuestionByIdAsync(addedQuestion.Id);
+                var options = await _surveyService.GetOptionsForQuestionAsync(addedQuestion.Id);
+
+                return Ok(new
+                {
+                    id = questionWithOptions.Id,
+                    questionId = questionWithOptions.QuestionId,
+                    questionText = questionWithOptions.QuestionText,
+                    isActive = questionWithOptions.IsActive,
+                    createdDate = questionWithOptions.CreatedDate,
+                    options = options.Select(o => new
+                    {
+                        id = o.Id,
+                        optionText = o.OptionText,
+                        nextQuestionId = o.NextQuestionId
+                    }).ToList()
+                });
             }
             catch (Exception ex)
             {

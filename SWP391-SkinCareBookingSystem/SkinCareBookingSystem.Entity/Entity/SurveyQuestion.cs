@@ -15,7 +15,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         // Relationships
-        public ICollection<SurveyOption> Options { get; set; }
-        public ICollection<SurveyResponse> Responses { get; set; }
+        public ICollection<SurveyOption>? Options { get; set; }
+        public ICollection<SurveyResponse>? Responses { get; set; }
     }
 } 
