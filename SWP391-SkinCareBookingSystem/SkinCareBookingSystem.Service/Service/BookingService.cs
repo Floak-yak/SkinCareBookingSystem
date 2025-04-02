@@ -310,9 +310,9 @@ namespace SkinCareBookingSystem.Service.Service
             ScheduleLog scheduleLog = await _scheduleLogRepository.GetScheduleLogById(scheduleLogId);
             if (scheduleLog is null)
                 throw new InvalidOperationException("Invalid scheduleLogId");
-            if (scheduleLog.TimeStartShift.Hour > DateTime.UtcNow.Hour)
+            if (scheduleLog.TimeStartShift.Hour > DateTime.Now.Hour)
                 throw new InvalidOperationException("Can not checkout before the shift start time!!!");
-            if (scheduleLog.TimeStartShift.Hour == DateTime.UtcNow.Hour && scheduleLog.TimeStartShift.Minute > DateTime.UtcNow.Minute)
+            if (scheduleLog.TimeStartShift.Hour == DateTime.Now.Hour && scheduleLog.TimeStartShift.Minute > DateTime.Now.Minute)
                 throw new InvalidOperationException("Can not checkout before the shift start time!!!");
             Booking booking = await _bookingRepository.GetBookingByScheduleLogId(scheduleLogId);
             if (scheduleLog is null)
