@@ -101,7 +101,8 @@ namespace SkinCareBookingSystem.Service.Service
                 ScheduleLog scheduleLog = new ScheduleLog()
                 {
                     TimeStartShift = date,
-                    WorkingTime = skincareService.WorkTime
+                    WorkingTime = skincareService.WorkTime,
+                    IsCancel = false,
                 };
                 schedule.ScheduleLogs.Add(scheduleLog);
             }
