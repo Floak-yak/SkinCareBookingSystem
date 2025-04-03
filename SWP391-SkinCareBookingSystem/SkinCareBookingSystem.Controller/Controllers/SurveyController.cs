@@ -25,300 +25,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
             _context = context;
         }
 
-        #region Existing File-based Survey API
-        [HttpGet("question/{questionId}")]
-        public ActionResult<object> GetQuestion(string questionId)
-        {
-            var (question, choices) = _surveyService.GetQuestion(questionId);
-            if (question == null)
-                return NotFound("Question not found");
-
-            // Convert choices dictionary to array of objects
-            var options = choices.Select((kvp, index) => new
-            {
-                label = kvp.Key,
-                nextId = kvp.Value
-            }).ToArray();
-
-            return Ok(new { question, options });
-        }
-
-        [HttpGet("next")]
-        public ActionResult<object> GetNextQuestion([FromQuery] string currentQuestionId, [FromQuery] int optionIndex)
-        {
-            var choices = _surveyService.GetQuestion(currentQuestionId).Item2;
-            if (choices == null || optionIndex < 0 || optionIndex >= choices.Count)
-                return BadRequest("Invalid question or option index");
-
-            var choiceKey = choices.Keys.ElementAt(optionIndex);
-            var nextQuestionId = choices[choiceKey];
-
-            return Ok(new { nextQuestionId });
-        }
-
-        [HttpGet("isEndQuestion/{questionId}")]
-        public ActionResult<bool> IsEndQuestion(string questionId)
-        {
-            return Ok(_surveyService.IsEndQuestion(questionId));
-        }
-
-        [HttpGet("start")]
-        public ActionResult<object> StartSurvey()
-        {
-            return GetQuestion("Q1");
-        }
-
-        [HttpGet("all")]
-        public ActionResult<Dictionary<string, object>> GetAllQuestions()
-        {
-            var surveyTree = _surveyRepository.LoadSurvey();
-            var result = new Dictionary<string, object>();
-
-            foreach (var node in surveyTree)
-            {
-                var options = node.Value.Choices.Select((kvp, index) => new
-                {
-                    label = kvp.Key,
-                    nextId = kvp.Value
-                }).ToArray();
-
-                result[node.Key] = new { question = node.Value.Content, options };
-            }
-
-            return Ok(result);
-        }
-
-        [HttpPut("update")]
-        public IActionResult UpdateQuestion([FromBody] Node updatedNode)
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-
-                if (surveyTree.ContainsKey(updatedNode.Id))
-                {
-                    surveyTree[updatedNode.Id] = updatedNode;
-                    _surveyRepository.SaveSurvey(surveyTree);
-                    return Ok("Updated successfully");
-                }
-
-                return NotFound("Question not found");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("add")]
-        public IActionResult AddQuestion([FromBody] Node newNode)
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-
-                if (surveyTree.ContainsKey(newNode.Id))
-                {
-                    return BadRequest("Question ID already exists");
-                }
-
-                surveyTree[newNode.Id] = newNode;
-                _surveyRepository.SaveSurvey(surveyTree);
-                return Ok("Added successfully");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpDelete("delete/{questionId}")]
-        public IActionResult DeleteQuestion(string questionId)
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-
-                if (!surveyTree.ContainsKey(questionId))
-                {
-                    return NotFound("Question not found");
-                }
-
-                surveyTree.Remove(questionId);
-                _surveyRepository.SaveSurvey(surveyTree);
-                return Ok("Deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("verify")]
-        public ActionResult<object> VerifyFileSurvey()
-        {
-            try
-            {
-                var surveyTree = _surveyRepository.LoadSurvey();
-                var errors = new List<string>();
-                var warnings = new List<string>();
-
-                // Check if the survey has a starting question (Q1)
-                if (!surveyTree.ContainsKey("Q1"))
-                {
-                    errors.Add("Survey is missing starting question (Q1)");
-                }
-
-                // Get all questionIDs and result IDs
-                var allIds = surveyTree.Keys.ToList();
-                var questionIds = allIds.Where(id => !id.StartsWith("RESULT_")).ToList();
-                var resultIds = allIds.Where(id => id.StartsWith("RESULT_")).ToList();
-
-                // Check for referenced questions or results that don't exist
-                foreach (var node in surveyTree.Values)
-                {
-                    foreach (var nextId in node.Choices.Values)
-                    {
-                        if (!allIds.Contains(nextId))
-                        {
-                            errors.Add($"Question '{node.Id}' references non-existent ID '{nextId}'");
-                        }
-                    }
-
-                    // Check if node has no choices
-                    if (node.Choices.Count == 0 && !node.Id.StartsWith("RESULT_"))
-                    {
-                        errors.Add($"Question '{node.Id}' has no choices");
-                    }
-                }
-
-                // Check for questions that are not reachable from Q1
-                HashSet<string> reachableIds = new HashSet<string>();
-                Queue<string> toVisit = new Queue<string>();
-                toVisit.Enqueue("Q1");
-
-                while (toVisit.Count > 0)
-                {
-                    var currentId = toVisit.Dequeue();
-                    if (reachableIds.Contains(currentId)) continue;
-                    reachableIds.Add(currentId);
-
-                    if (surveyTree.TryGetValue(currentId, out Node node))
-                    {
-                        foreach (var nextId in node.Choices.Values)
-                        {
-                            toVisit.Enqueue(nextId);
-                        }
-                    }
-                }
-
-                foreach (var id in allIds)
-                {
-                    if (!reachableIds.Contains(id) && !id.StartsWith("RESULT_"))
-                    {
-                        warnings.Add($"Question '{id}' is not reachable from Q1");
-                    }
-                }
-
-                // Check for cycles in the survey
-                foreach (var startId in questionIds)
-                {
-                    var visited = new HashSet<string>();
-                    var path = new List<string>();
-                    var cyclePath = DetectCycle(startId, surveyTree, visited, path);
-                    if (cyclePath != null)
-                    {
-                        errors.Add($"Cycle detected: {string.Join(" → ", cyclePath)}");
-                        break; // One cycle is enough to report
-                    }
-                }
-
-                // Check for dead ends (questions that don't lead to a result)
-                foreach (var id in questionIds)
-                {
-                    if (!LeadsToResult(id, surveyTree, new HashSet<string>()))
-                    {
-                        warnings.Add($"Question '{id}' does not lead to a result (possible dead end)");
-                    }
-                }
-
-                var isValid = errors.Count == 0;
-
-                return Ok(new
-                {
-                    isValid,
-                    errors,
-                    warnings,
-                    statistics = new
-                    {
-                        totalQuestions = questionIds.Count,
-                        totalResults = resultIds.Count,
-                        unreachableQuestions = allIds.Count - reachableIds.Count
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error verifying survey: {ex.Message}");
-            }
-        }
-
-        private List<string> DetectCycle(string currentId, Dictionary<string, Node> surveyTree, HashSet<string> visited, List<string> path)
-        {
-            if (currentId.StartsWith("RESULT_")) return null; // Results don't have next questions
-            if (!surveyTree.ContainsKey(currentId)) return null; // Non-existent node
-            
-            if (visited.Contains(currentId))
-            {
-                // Find the start of the cycle
-                int cycleStart = path.IndexOf(currentId);
-                if (cycleStart >= 0)
-                {
-                    return path.GetRange(cycleStart, path.Count - cycleStart);
-                }
-                return null;
-            }
-
-            visited.Add(currentId);
-            path.Add(currentId);
-
-            var node = surveyTree[currentId];
-            foreach (var nextId in node.Choices.Values)
-            {
-                var cyclePath = DetectCycle(nextId, surveyTree, visited, path);
-                if (cyclePath != null)
-                {
-                    return cyclePath;
-                }
-            }
-
-            // Backtrack
-            path.RemoveAt(path.Count - 1);
-            return null;
-        }
-
-        private bool LeadsToResult(string currentId, Dictionary<string, Node> surveyTree, HashSet<string> visited)
-        {
-            if (currentId.StartsWith("RESULT_")) return true;
-            if (!surveyTree.ContainsKey(currentId) || visited.Contains(currentId)) return false;
-            
-            visited.Add(currentId);
-            var node = surveyTree[currentId];
-            
-            foreach (var nextId in node.Choices.Values)
-            {
-                if (LeadsToResult(nextId, surveyTree, visited))
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
-        #endregion
-
-        #region Database-backed Survey API
-        // Get the currently logged in user ID (or null if anonymous)
         private int? GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -329,7 +35,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return null;
         }
 
-        [HttpGet("db/start")]
+        [HttpGet("start")]
         public async Task<ActionResult<object>> StartDatabaseSurvey()
         {
             try
@@ -360,7 +66,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpPost("db/answer")]
+        [HttpPost("answer")]
         public async Task<ActionResult<object>> AnswerQuestion([FromBody] AnswerRequestDto request)
         {
             try
@@ -387,7 +93,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpGet("db/results/{sessionId}")]
+        [HttpGet("results/{sessionId}")]
         public async Task<ActionResult<object>> GetSessionResults(int sessionId)
         {
             try
@@ -438,7 +144,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpGet("db/user-history")]
+        [HttpGet("user-history")]
         public async Task<ActionResult<object>> GetUserSurveyHistory()
         {
             try
@@ -481,7 +187,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpGet("db/verify")]
+        [HttpGet("verify")]
         public async Task<ActionResult<object>> VerifyDatabaseSurvey()
         {
             try
@@ -662,7 +368,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         #region Admin API
-        [HttpGet("db/admin/questions")]
+        [HttpGet("admin/questions")]
         public async Task<ActionResult<List<SurveyQuestion>>> GetAllDatabaseQuestions()
         {
             try
@@ -676,7 +382,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpGet("db/admin/question/{id}")]
+        [HttpGet("admin/question/{id}")]
         public async Task<ActionResult<SurveyQuestion>> GetQuestionById(int id)
         {
             try
@@ -694,7 +400,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpPost("db/admin/question")]
+        [HttpPost("admin/question")]
         public async Task<ActionResult<object>> AddDatabaseQuestion([FromBody] QuestionRequestDto request)
         {
             try
@@ -747,7 +453,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpPut("db/admin/question/{id}")]
+        [HttpPut("admin/question/{id}")]
         public async Task<ActionResult<object>> UpdateDatabaseQuestion(int id, [FromBody] QuestionUpdateDto request)
         {
             try
@@ -830,7 +536,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpDelete("db/admin/question/{id}")]
+        [HttpDelete("admin/question/{id}")]
         public async Task<ActionResult> DeleteDatabaseQuestion(int id)
         {
             try
@@ -848,7 +554,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpGet("db/admin/results")]
+        [HttpGet("admin/results")]
         public async Task<IActionResult> GetSurveyResultsWithRecommendedServices()
         {
             try
@@ -886,7 +592,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpPost("db/admin/recommended-service")]
+        [HttpPost("admin/recommended-service")]
         public async Task<IActionResult> AddRecommendedService([FromBody] RecommendedServiceDto dto)
         {
             try
@@ -900,7 +606,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        [HttpPut("db/admin/results/{id}")]
+        [HttpPut("admin/results/{id}")]
         public async Task<ActionResult<object>> UpdateSurveyResult(int id, [FromBody] SurveyResultUpdateDto request)
         {
             try
@@ -982,7 +688,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return StatusCode(500, new { message = "An error occurred while updating the survey result.", error = ex.Message });
             }
         }
-        #endregion
         #endregion
     }
 }

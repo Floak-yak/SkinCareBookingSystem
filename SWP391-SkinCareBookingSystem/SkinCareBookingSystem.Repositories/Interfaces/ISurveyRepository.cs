@@ -9,9 +9,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
 {
     public interface ISurveyRepository
     {
-        public Dictionary<string, Node> LoadSurvey();
-        public void SaveSurvey(Dictionary<string, Node> surveyTree);
-
         Task<List<SurveyQuestion>> GetAllQuestionsAsync();
         Task<SurveyQuestion> GetQuestionByIdAsync(int id);
         Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId);
