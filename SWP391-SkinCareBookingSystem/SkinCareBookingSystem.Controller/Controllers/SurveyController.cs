@@ -36,7 +36,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("start")]
-        public async Task<ActionResult<object>> StartDatabaseSurvey()
+        public async Task<ActionResult<object>> StartSurvey()
         {
             try
             {
@@ -188,7 +188,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("verify")]
-        public async Task<ActionResult<object>> VerifyDatabaseSurvey()
+        public async Task<ActionResult<object>> VerifySurvey()
         {
             try
             {
@@ -274,7 +274,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 {
                     var visited = new HashSet<string>();
                     var path = new List<string>();
-                    var cyclePath = await DetectDatabaseCycle(question.QuestionId, allQuestions, visited, path);
+                    var cyclePath = await DetectCycle(question.QuestionId, allQuestions, visited, path);
                     if (cyclePath != null)
                     {
                         warnings.Add($"Potential cycle detected: {string.Join(" → ", cyclePath)}");
@@ -309,7 +309,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error verifying database survey: {ex.Message}");
+                return StatusCode(500, $"Error verifying survey: {ex.Message}");
             }
         }
 
@@ -331,7 +331,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
-        private async Task<List<string>> DetectDatabaseCycle(string currentId, List<SurveyQuestion> allQuestions, HashSet<string> visited, List<string> path)
+        private async Task<List<string>> DetectCycle(string currentId, List<SurveyQuestion> allQuestions, HashSet<string> visited, List<string> path)
         {
             if (currentId.StartsWith("RESULT_")) return null; // Results don't have next questions
             
@@ -355,7 +355,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             var options = await _surveyService.GetOptionsForQuestionAsync(question.Id);
             foreach (var option in options)
             {
-                var cyclePath = await DetectDatabaseCycle(option.NextQuestionId, allQuestions, visited, path);
+                var cyclePath = await DetectCycle(option.NextQuestionId, allQuestions, visited, path);
                 if (cyclePath != null)
                 {
                     return cyclePath;
@@ -369,7 +369,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
         #region Admin API
         [HttpGet("admin/questions")]
-        public async Task<ActionResult<List<SurveyQuestion>>> GetAllDatabaseQuestions()
+        public async Task<ActionResult<List<SurveyQuestion>>> GetAllQuestions()
         {
             try
             {
@@ -401,7 +401,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("admin/question")]
-        public async Task<ActionResult<object>> AddDatabaseQuestion([FromBody] QuestionRequestDto request)
+        public async Task<ActionResult<object>> AddQuestion([FromBody] QuestionRequestDto request)
         {
             try
             {
@@ -454,7 +454,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPut("admin/question/{id}")]
-        public async Task<ActionResult<object>> UpdateDatabaseQuestion(int id, [FromBody] QuestionUpdateDto request)
+        public async Task<ActionResult<object>> UpdateQuestion(int id, [FromBody] QuestionUpdateDto request)
         {
             try
             {
@@ -537,7 +537,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpDelete("admin/question/{id}")]
-        public async Task<ActionResult> DeleteDatabaseQuestion(int id)
+        public async Task<ActionResult> DeleteQuestion(int id)
         {
             try
             {
