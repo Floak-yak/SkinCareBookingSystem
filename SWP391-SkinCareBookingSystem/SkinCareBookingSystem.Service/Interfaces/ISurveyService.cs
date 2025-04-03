@@ -48,5 +48,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd);
         Task<List<UserSkinTypeScore>> GetSkinTypeScoresAsync(int sessionId);
         Task<SurveyResult> GetSkinTypeByScoreAsync(int sessionId);
+        Task<List<object>> GetSessionResponsesWithScoresAsync(int sessionId);
     }
 }

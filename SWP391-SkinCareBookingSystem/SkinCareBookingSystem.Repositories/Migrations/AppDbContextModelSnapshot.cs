@@ -394,16 +394,19 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("NextQuestionId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("OptionText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
+
+                    b.Property<string>("SkinTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -450,6 +453,9 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<int>("OptionId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
@@ -458,6 +464,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.Property<int>("SessionId")
                         .HasColumnType("int");
+
+                    b.Property<string>("SkinTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SurveyOptionId")
                         .HasColumnType("int");
@@ -633,6 +643,31 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.HasIndex("ImageId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.UserSkinTypeScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SkinTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("UserSkinTypeScores");
                 });
 
             modelBuilder.Entity("ProductTransaction", b =>
@@ -914,6 +949,17 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Image");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.UserSkinTypeScore", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", "Session")
+                        .WithMany("SkinTypeScores")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Booking", b =>
                 {
                     b.Navigation("BookingServiceSchedules");
@@ -974,6 +1020,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveySession", b =>
                 {
                     b.Navigation("Responses");
+
+                    b.Navigation("SkinTypeScores");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.User", b =>

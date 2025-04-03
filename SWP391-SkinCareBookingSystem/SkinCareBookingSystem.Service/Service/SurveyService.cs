@@ -126,11 +126,17 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveyResponse> RecordResponseAsync(int sessionId, int questionId, int optionId)
         {
+            var option = await _surveyRepository.GetOptionByIdAsync(optionId);
+            if (option == null)
+                throw new ArgumentException($"Invalid option ID: {optionId}");
+                
             var response = new SurveyResponse
             {
                 SessionId = sessionId,
                 QuestionId = questionId,
                 OptionId = optionId,
+                Points = option.Points,
+                SkinTypeId = option.SkinTypeId,
                 ResponseDate = DateTime.Now
             };
 
@@ -236,6 +242,16 @@ namespace SkinCareBookingSystem.Service.Service
                         recommendedServices = recommendedServices
                     };
                 }
+                else
+                {
+                    return new
+                    {
+                        isResult = true,
+                        isEnd = true,
+                        sessionId = session.Id,
+                        message = "Survey completed no result."
+                    };
+                }
             }
             else
             {
@@ -254,24 +270,31 @@ namespace SkinCareBookingSystem.Service.Service
                     }).ToList()
                 };
             }
-            
-            return null;
         }
 
         public async Task<object> ProcessSurveyAnswerAsync(int sessionId, int questionId, int optionId)
         {
-            await RecordResponseAsync(sessionId, questionId, optionId);
+            var response = await RecordResponseAsync(sessionId, questionId, optionId);
             
-            var option = await _surveyRepository.GetOptionByIdAsync(optionId);
-            if (option == null)
-                return null;
-                
-            if (!string.IsNullOrEmpty(option.SkinTypeId))
+            if (!string.IsNullOrEmpty(response.SkinTypeId))
             {
-                await UpdateSkinTypeScoreAsync(sessionId, option.SkinTypeId, option.Points);
+                await UpdateSkinTypeScoreAsync(sessionId, response.SkinTypeId, response.Points);
             }
             
-            return await GetNextQuestionAsync(sessionId);
+            var nextQuestion = await GetNextQuestionAsync(sessionId);
+            
+            if (nextQuestion == null)
+            {
+                return new
+                {
+                    isResult = true,
+                    isEnd = true,
+                    sessionId = sessionId,
+                    message = "Survey completed."
+                };
+            }
+            
+            return nextQuestion;
         }
 
         public async Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd)
@@ -295,6 +318,45 @@ namespace SkinCareBookingSystem.Service.Service
             var matchingResult = allResults.FirstOrDefault(r => r.ResultId == winningSkinTypeId);
             
             return matchingResult;
+        }
+
+        public async Task<List<object>> GetSessionResponsesWithScoresAsync(int sessionId)
+        {
+            var responses = await _surveyRepository.GetResponsesAsync(sessionId);
+            if (responses == null || !responses.Any())
+                return new List<object>();
+            
+            var result = new List<object>();
+            
+            foreach (var response in responses)
+            {
+                var question = await _surveyRepository.GetQuestionByIdAsync(response.QuestionId);
+                var option = await _surveyRepository.GetOptionByIdAsync(response.OptionId);
+                
+                if (question != null && option != null)
+                {
+                    result.Add(new
+                    {
+                        responseId = response.Id,
+                        responseDate = response.ResponseDate,
+                        question = new
+                        {
+                            id = question.Id,
+                            questionId = question.QuestionId,
+                            questionText = question.QuestionText
+                        },
+                        selectedOption = new
+                        {
+                            id = option.Id,
+                            optionText = option.OptionText,
+                            points = response.Points,
+                            skinTypeId = response.SkinTypeId
+                        }
+                    });
+                }
+            }
+            
+            return result;
         }
     }
 }

@@ -257,6 +257,40 @@ namespace SkinCareBookingSystem.Controller.Controllers
             }
         }
 
+        [HttpGet("session/{sessionId}")]
+        public async Task<ActionResult<object>> GetSessionResponses(int sessionId)
+        {
+            try
+            {
+                var session = await _surveyService.GetSessionByIdAsync(sessionId);
+                if (session == null)
+                {
+                    return NotFound("Session not found");
+                }
+                
+                var responses = await _surveyService.GetSessionResponsesWithScoresAsync(sessionId);
+                
+                var skinTypeScores = await _surveyService.GetSkinTypeScoresAsync(sessionId);
+                
+                return Ok(new 
+                {
+                    sessionId = session.Id,
+                    isCompleted = session.IsCompleted,
+                    completedDate = session.CompletedDate,
+                    responses = responses,
+                    skinTypeScores = skinTypeScores.Select(s => new
+                    {
+                        skinTypeId = s.SkinTypeId,
+                        score = s.Score
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         #region Admin API
         [HttpGet("admin/questions")]
         public async Task<ActionResult<List<SurveyQuestion>>> GetAllQuestions()
