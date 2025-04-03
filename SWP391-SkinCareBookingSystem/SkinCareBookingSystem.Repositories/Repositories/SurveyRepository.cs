@@ -2,79 +2,16 @@
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Data;
-using System.IO;
 
 namespace SkinCareBookingSystem.Repositories.Repositories
 {
     public class SurveyRepository: ISurveyRepository
     {
-        private readonly string _filePath;
         private readonly AppDbContext _context;
 
         public SurveyRepository(AppDbContext context)
         {
             _context = context;
-            
-            // Get the base directory and construct the absolute path to the file
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            // Navigate up to the solution root
-            string solutionDirectory = Path.GetFullPath(Path.Combine(baseDirectory, "..\\..\\..\\.."));
-            _filePath = Path.Combine(solutionDirectory, "SkinCareBookingSystem.Repositories", "SkinTestQuestion.txt");
-        }
-
-        public Dictionary<string, Node> LoadSurvey()
-        {
-            var surveyTree = new Dictionary<string, Node>();
-
-            try
-            {
-                if (!File.Exists(_filePath))
-                {
-                    throw new FileNotFoundException($"Survey file not found at path: {_filePath}");
-                }
-
-                foreach (string line in File.ReadAllLines(_filePath))
-                {
-                    var parts = line.Split('|');
-                    if (parts.Length < 2) continue;
-
-                    var node = new Node { Id = parts[0], Content = parts[1] };
-
-                    for (int i = 2; i < parts.Length; i++)
-                    {
-                        var choiceParts = parts[i].Split(':');
-                        if (choiceParts.Length == 2)
-                        {
-                            node.Choices[choiceParts[0]] = choiceParts[1];
-                        }
-                    }
-
-                    surveyTree[node.Id] = node;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading survey: {ex.Message}");
-            }
-
-            return surveyTree;
-        }
-        public void SaveSurvey(Dictionary<string, Node> surveyTree)
-        {
-            using (StreamWriter writer = new StreamWriter("survey.txt"))
-            {
-                foreach (var node in surveyTree.Values)
-                {
-                    string line = node.Id + "|" + node.Content;
-
-                    foreach (var choice in node.Choices)
-                    {
-                        line += "|" + choice.Key + ":" + choice.Value;
-                    }
-
-                    writer.WriteLine(line);
-                }
-            }
         }
 
         public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
@@ -191,7 +128,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 return null;
             }
 
-            // Update the properties of the existing result
             existingResult.SkinType = result.SkinType;
             existingResult.ResultText = result.ResultText;
             existingResult.RecommendationText = result.RecommendationText;
@@ -219,7 +155,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return session;
         }
 
-        public async Task<SurveySession> GetSessionByIdAsync(int id)
+        public async Task<SurveySession> GetSessionAsync(int id)
         {
             return await _context.SurveySessions
                 .Include(s => s.Responses)
@@ -257,7 +193,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return response;
         }
 
-        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
+        public async Task<List<SurveyResponse>> GetResponsesAsync(int sessionId)
         {
             return await _context.SurveyResponses
                 .Where(r => r.SessionId == sessionId)
@@ -275,7 +211,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
+        public async Task<List<RecommendedService>> GetRecommendedServicesAsync(int resultId)
         {
             return await _context.RecommendedServices
                 .Where(rs => rs.SurveyResultId == resultId)
@@ -304,6 +240,58 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             _context.RecommendedServices.Update(recommendedService);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<UserSkinTypeScore> AddSkinTypeScoreAsync(UserSkinTypeScore score)
+        {
+            _context.UserSkinTypeScores.Add(score);
+            await _context.SaveChangesAsync();
+            return score;
+        }
+        
+        public async Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd)
+        {
+            var score = await _context.UserSkinTypeScores
+                .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.SkinTypeId == skinTypeId);
+                
+            if (score == null)
+            {
+                score = new UserSkinTypeScore
+                {
+                    SessionId = sessionId,
+                    SkinTypeId = skinTypeId,
+                    Score = pointsToAdd
+                };
+                _context.UserSkinTypeScores.Add(score);
+            }
+            else
+            {
+                score.Score += pointsToAdd;
+                _context.Entry(score).State = EntityState.Modified;
+            }
+            
+            await _context.SaveChangesAsync();
+            return score;
+        }
+        
+        public async Task<List<UserSkinTypeScore>> GetSkinTypeScoresAsync(int sessionId)
+        {
+            return await _context.UserSkinTypeScores
+                .Where(s => s.SessionId == sessionId)
+                .ToListAsync();
+        }
+        
+        public async Task<string> GetSkinTypeAsync(int sessionId)
+        {
+            var scores = await _context.UserSkinTypeScores
+                .Where(s => s.SessionId == sessionId)
+                .ToListAsync();
+                
+            if (scores == null || !scores.Any())
+                return null;
+                
+            var winningScore = scores.OrderByDescending(s => s.Score).FirstOrDefault();
+            return winningScore?.SkinTypeId;
         }
     }
 }

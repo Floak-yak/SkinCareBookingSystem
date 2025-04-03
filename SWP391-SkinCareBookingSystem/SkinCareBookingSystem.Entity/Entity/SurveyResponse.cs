@@ -10,6 +10,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     {
         public int Id { get; set; }
         public DateTime ResponseDate { get; set; } = DateTime.Now;
+        public int Points { get; set; }
+        public string SkinTypeId { get; set; }
         
         // Foreign keys
         public int SessionId { get; set; }

@@ -10,7 +10,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     {
         public int Id { get; set; }
         public string OptionText { get; set; }
-        public string NextQuestionId { get; set; } // ID of the next question or RESULT_X for results
+        public int Points { get; set; }
+        public string SkinTypeId { get; set; }
         
         // Relationships
         public int QuestionId { get; set; }

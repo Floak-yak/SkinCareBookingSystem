@@ -17,35 +17,6 @@ namespace SkinCareBookingSystem.Service.Service
         {
             _surveyRepository = surveyRepository;
         }
-
-        public (string question, Dictionary<string, string> choices) GetQuestion(string questionId)
-        {
-            var surveyTree = _surveyRepository.LoadSurvey();
-            
-            if (!surveyTree.ContainsKey(questionId))
-                return (null, null);
-
-            var node = surveyTree[questionId];
-            return (node.Content, node.Choices);
-        }
-
-        public string GetNextQuestionId(string currentQuestionId, string choice)
-        {
-            var surveyTree = _surveyRepository.LoadSurvey();
-            
-            if (!surveyTree.ContainsKey(currentQuestionId))
-                return null;
-
-            var node = surveyTree[currentQuestionId];
-            return node.Choices.ContainsKey(choice) ? node.Choices[choice] : null;
-        }
-
-        public bool IsEndQuestion(string questionId)
-        {
-            return questionId.StartsWith("RESULT_");
-        }
-
-        // Implement the remaining methods from ISurveyService interface
         public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
         {
             return await _surveyRepository.GetAllQuestionsAsync();
@@ -76,7 +47,7 @@ namespace SkinCareBookingSystem.Service.Service
             return await _surveyRepository.DeleteQuestionAsync(id);
         }
 
-        public async Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId)
+        public async Task<List<SurveyOption>> GetOptionAsync(int questionId)
         {
             return await _surveyRepository.GetOptionsForQuestionAsync(questionId);
         }
@@ -140,7 +111,7 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveySession> GetSessionByIdAsync(int id)
         {
-            return await _surveyRepository.GetSessionByIdAsync(id);
+            return await _surveyRepository.GetSessionAsync(id);
         }
 
         public async Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId)
@@ -155,30 +126,31 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveyResponse> RecordResponseAsync(int sessionId, int questionId, int optionId)
         {
+            var option = await _surveyRepository.GetOptionByIdAsync(optionId);
+            if (option == null)
+                throw new ArgumentException($"Invalid option ID: {optionId}");
+                
             var response = new SurveyResponse
             {
                 SessionId = sessionId,
                 QuestionId = questionId,
                 OptionId = optionId,
+                Points = option.Points,
+                SkinTypeId = option.SkinTypeId,
                 ResponseDate = DateTime.Now
             };
 
             return await _surveyRepository.AddResponseAsync(response);
         }
 
-        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
-        {
-            return await _surveyRepository.GetResponsesBySessionIdAsync(sessionId);
-        }
-
         public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
         {
-            return await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
+            return await _surveyRepository.GetRecommendedServicesAsync(resultId);
         }
 
-        public async Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId)
+        public async Task<List<SkincareService>> GetRecommendedServicesDetailsAsync(int resultId)
         {
-            var recommendedServices = await _surveyRepository.GetRecommendedServicesByResultIdAsync(resultId);
+            var recommendedServices = await _surveyRepository.GetRecommendedServicesAsync(resultId);
             if (recommendedServices == null || !recommendedServices.Any())
             {
                 return new List<SkincareService>();
@@ -191,66 +163,6 @@ namespace SkinCareBookingSystem.Service.Service
             return services;
         }
 
-        public async Task<SurveyQuestion> GetFirstQuestionAsync()
-        {
-            var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
-            return allQuestions.FirstOrDefault(q => q.QuestionId.StartsWith("Q1"));
-        }
-
-        public async Task<object> GetNextQuestionOrResultAsync(int sessionId, int currentQuestionId, int selectedOptionId)
-        {
-            // Record the response
-            await RecordResponseAsync(sessionId, currentQuestionId, selectedOptionId);
-            
-            // Get the selected option
-            var option = await _surveyRepository.GetOptionByIdAsync(selectedOptionId);
-            if (option == null)
-                return null;
-            
-            // If next question ID refers to a result, process completion
-            var nextId = option.NextQuestionId;
-            if (nextId.StartsWith("RESULT_"))
-            {
-                var result = await GetResultByResultIdAsync(nextId);
-                if (result != null)
-                {
-                    await CompleteSessionAsync(sessionId, result.Id);
-                    return new { 
-                        isResult = true,
-                        result = result,
-                        recommendedServices = await GetRecommendedServicesDetailsByResultIdAsync(result.Id)
-                    };
-                }
-            }
-            else
-            {
-                // Get the next question
-                var nextQuestion = await GetQuestionByQuestionIdAsync(nextId);
-                if (nextQuestion != null)
-                {
-                    var options = await GetOptionsForQuestionAsync(nextQuestion.Id);
-                    return new {
-                        isResult = false,
-                        questionId = nextQuestion.Id,
-                        question = nextQuestion.QuestionText,
-                        options = options
-                    };
-                }
-            }
-            
-            return null;
-        }
-
-        public async Task<SurveyResult> ProcessSurveyCompletionAsync(int sessionId, string resultId)
-        {
-            var result = await GetResultByResultIdAsync(resultId);
-            if (result == null)
-                return null;
-                
-            await CompleteSessionAsync(sessionId, result.Id);
-            return result;
-        }
-
         public async Task<SkincareService> GetServiceByIdAsync(int serviceId)
         {
             return await _surveyRepository.GetServiceByIdAsync(serviceId);
@@ -258,7 +170,6 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task AddRecommendedServiceAsync(int surveyResultId, int serviceId, int priority)
         {
-            // Logic to add a recommended service
             var recommendedService = new RecommendedService
             {
                 SurveyResultId = surveyResultId,
@@ -276,7 +187,7 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task UpdateRecommendedServiceAsync(int id, int serviceId, int priority)
         {
-            var existingService = (await _surveyRepository.GetRecommendedServicesByResultIdAsync(id))
+            var existingService = (await _surveyRepository.GetRecommendedServicesAsync(id))
                 .FirstOrDefault(s => s.Id == id);
 
             if (existingService == null)
@@ -288,6 +199,164 @@ namespace SkinCareBookingSystem.Service.Service
             existingService.Priority = priority;
 
             await _surveyRepository.UpdateRecommendedServiceAsync(existingService);
+        }
+
+        public async Task<object> GetNextQuestionAsync(int sessionId)
+        {
+            var session = await _surveyRepository.GetSessionAsync(sessionId);
+            if (session == null)
+                return null;
+
+            var responses = await _surveyRepository.GetResponsesAsync(sessionId);
+            
+            var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
+            
+            var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
+            
+            var nextQuestion = allQuestions
+                .Where(q => !answeredQuestionIds.Contains(q.Id) && q.IsActive)
+                .OrderBy(q => q.Id)
+                .FirstOrDefault();
+
+            if (nextQuestion == null)
+            {
+                var result = await GetSkinTypeByScoreAsync(sessionId);
+                if (result != null)
+                {
+                    await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
+                    var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
+                    
+                    return new
+                    {
+                        isResult = true,
+                        sessionId = session.Id,
+                        skinTypeScores = await GetSkinTypeScoresAsync(sessionId),
+                        result = new
+                        {
+                            id = result.Id,
+                            resultId = result.ResultId,
+                            skinType = result.SkinType,
+                            resultText = result.ResultText,
+                            recommendationText = result.RecommendationText
+                        },
+                        recommendedServices = recommendedServices
+                    };
+                }
+                else
+                {
+                    return new
+                    {
+                        isResult = true,
+                        isEnd = true,
+                        sessionId = session.Id,
+                        message = "Survey completed no result."
+                    };
+                }
+            }
+            else
+            {
+                var options = await _surveyRepository.GetOptionsForQuestionAsync(nextQuestion.Id);
+                return new
+                {
+                    isResult = false,
+                    questionId = nextQuestion.Id,
+                    questionText = nextQuestion.QuestionText,
+                    options = options.Select(o => new 
+                    {
+                        id = o.Id,
+                        text = o.OptionText,
+                        skinTypeId = o.SkinTypeId,
+                        points = o.Points
+                    }).ToList()
+                };
+            }
+        }
+
+        public async Task<object> ProcessSurveyAnswerAsync(int sessionId, int questionId, int optionId)
+        {
+            var response = await RecordResponseAsync(sessionId, questionId, optionId);
+            
+            if (!string.IsNullOrEmpty(response.SkinTypeId))
+            {
+                await UpdateSkinTypeScoreAsync(sessionId, response.SkinTypeId, response.Points);
+            }
+            
+            var nextQuestion = await GetNextQuestionAsync(sessionId);
+            
+            if (nextQuestion == null)
+            {
+                return new
+                {
+                    isResult = true,
+                    isEnd = true,
+                    sessionId = sessionId,
+                    message = "Survey completed."
+                };
+            }
+            
+            return nextQuestion;
+        }
+
+        public async Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd)
+        {
+            return await _surveyRepository.UpdateSkinTypeScoreAsync(sessionId, skinTypeId, pointsToAdd);
+        }
+        
+        public async Task<List<UserSkinTypeScore>> GetSkinTypeScoresAsync(int sessionId)
+        {
+            return await _surveyRepository.GetSkinTypeScoresAsync(sessionId);
+        }
+        
+        public async Task<SurveyResult> GetSkinTypeByScoreAsync(int sessionId)
+        {
+            var winningSkinTypeId = await _surveyRepository.GetSkinTypeAsync(sessionId);
+            
+            if (string.IsNullOrEmpty(winningSkinTypeId))
+                return null;
+                
+            var allResults = await _surveyRepository.GetAllResultsAsync();
+            var matchingResult = allResults.FirstOrDefault(r => r.ResultId == winningSkinTypeId);
+            
+            return matchingResult;
+        }
+
+        public async Task<List<object>> GetSessionResponsesWithScoresAsync(int sessionId)
+        {
+            var responses = await _surveyRepository.GetResponsesAsync(sessionId);
+            if (responses == null || !responses.Any())
+                return new List<object>();
+            
+            var result = new List<object>();
+            
+            foreach (var response in responses)
+            {
+                var question = await _surveyRepository.GetQuestionByIdAsync(response.QuestionId);
+                var option = await _surveyRepository.GetOptionByIdAsync(response.OptionId);
+                
+                if (question != null && option != null)
+                {
+                    result.Add(new
+                    {
+                        responseId = response.Id,
+                        responseDate = response.ResponseDate,
+                        question = new
+                        {
+                            id = question.Id,
+                            questionId = question.QuestionId,
+                            questionText = question.QuestionText
+                        },
+                        selectedOption = new
+                        {
+                            id = option.Id,
+                            optionText = option.OptionText,
+                            points = response.Points,
+                            skinTypeId = response.SkinTypeId
+                        }
+                    });
+                }
+            }
+            
+            return result;
         }
     }
 }

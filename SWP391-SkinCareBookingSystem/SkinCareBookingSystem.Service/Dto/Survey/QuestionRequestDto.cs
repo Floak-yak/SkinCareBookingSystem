@@ -7,6 +7,6 @@ namespace SkinCareBookingSystem.Service.Dto.Survey
         public string QuestionId { get; set; }
         public string QuestionText { get; set; }
         public bool IsActive { get; set; } = true;
-        public List<QuestionOptionDto> Options { get; set; } = new List<QuestionOptionDto>();
+        public List<OptionDto> Options { get; set; } = new List<OptionDto>();
     }
 }
