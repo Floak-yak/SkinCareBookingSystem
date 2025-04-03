@@ -128,7 +128,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 return null;
             }
 
-            // Update the properties of the existing result
             existingResult.SkinType = result.SkinType;
             existingResult.ResultText = result.ResultText;
             existingResult.RecommendationText = result.RecommendationText;
@@ -156,7 +155,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return session;
         }
 
-        public async Task<SurveySession> GetSessionByIdAsync(int id)
+        public async Task<SurveySession> GetSessionAsync(int id)
         {
             return await _context.SurveySessions
                 .Include(s => s.Responses)
@@ -194,7 +193,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return response;
         }
 
-        public async Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId)
+        public async Task<List<SurveyResponse>> GetResponsesAsync(int sessionId)
         {
             return await _context.SurveyResponses
                 .Where(r => r.SessionId == sessionId)
@@ -212,7 +211,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId)
+        public async Task<List<RecommendedService>> GetRecommendedServicesAsync(int resultId)
         {
             return await _context.RecommendedServices
                 .Where(rs => rs.SurveyResultId == resultId)
@@ -241,6 +240,58 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             _context.RecommendedServices.Update(recommendedService);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<UserSkinTypeScore> AddSkinTypeScoreAsync(UserSkinTypeScore score)
+        {
+            _context.UserSkinTypeScores.Add(score);
+            await _context.SaveChangesAsync();
+            return score;
+        }
+        
+        public async Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd)
+        {
+            var score = await _context.UserSkinTypeScores
+                .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.SkinTypeId == skinTypeId);
+                
+            if (score == null)
+            {
+                score = new UserSkinTypeScore
+                {
+                    SessionId = sessionId,
+                    SkinTypeId = skinTypeId,
+                    Score = pointsToAdd
+                };
+                _context.UserSkinTypeScores.Add(score);
+            }
+            else
+            {
+                score.Score += pointsToAdd;
+                _context.Entry(score).State = EntityState.Modified;
+            }
+            
+            await _context.SaveChangesAsync();
+            return score;
+        }
+        
+        public async Task<List<UserSkinTypeScore>> GetSkinTypeScoresAsync(int sessionId)
+        {
+            return await _context.UserSkinTypeScores
+                .Where(s => s.SessionId == sessionId)
+                .ToListAsync();
+        }
+        
+        public async Task<string> GetSkinTypeAsync(int sessionId)
+        {
+            var scores = await _context.UserSkinTypeScores
+                .Where(s => s.SessionId == sessionId)
+                .ToListAsync();
+                
+            if (scores == null || !scores.Any())
+                return null;
+                
+            var winningScore = scores.OrderByDescending(s => s.Score).FirstOrDefault();
+            return winningScore?.SkinTypeId;
         }
     }
 }

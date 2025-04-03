@@ -16,7 +16,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question);
         Task<bool> DeleteQuestionAsync(int id);
 
-        Task<List<SurveyOption>> GetOptionsForQuestionAsync(int questionId);
+        Task<List<SurveyOption>> GetOptionAsync(int questionId);
         Task<SurveyOption> AddOptionAsync(SurveyOption option);
         Task<SurveyOption> UpdateOptionAsync(SurveyOption option);
         Task<bool> DeleteOptionAsync(int id);
@@ -34,16 +34,19 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId);
 
         Task<SurveyResponse> RecordResponseAsync(int sessionId, int questionId, int optionId);
-        Task<List<SurveyResponse>> GetResponsesBySessionIdAsync(int sessionId);
 
-        Task<SurveyQuestion> GetFirstQuestionAsync();
-        Task<object> GetNextQuestionOrResultAsync(int sessionId, int currentQuestionId, int selectedOptionId);
-        Task<SurveyResult> ProcessSurveyCompletionAsync(int sessionId, string resultId);
+        Task<object> GetNextQuestionAsync(int sessionId);
+        Task<object> ProcessSurveyAnswerAsync(int sessionId, int questionId, int optionId);
+
         Task<SkincareService> GetServiceByIdAsync(int serviceId);
         Task AddRecommendedServiceAsync(int surveyResultId, int serviceId, int priority);
         Task<List<RecommendedService>> GetRecommendedServicesByResultIdAsync(int resultId);
-        Task<List<SkincareService>> GetRecommendedServicesDetailsByResultIdAsync(int resultId);
+        Task<List<SkincareService>> GetRecommendedServicesDetailsAsync(int resultId);
         Task<bool> DeleteRecommendedServiceAsync(int id);
         Task UpdateRecommendedServiceAsync(int id, int serviceId, int priority);
+        
+        Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd);
+        Task<List<UserSkinTypeScore>> GetSkinTypeScoresAsync(int sessionId);
+        Task<SurveyResult> GetSkinTypeByScoreAsync(int sessionId);
     }
 }

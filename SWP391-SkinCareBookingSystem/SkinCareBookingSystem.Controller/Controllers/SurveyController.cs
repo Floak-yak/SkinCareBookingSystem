@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SkinCareBookingSystem.BusinessObject.Entity;
-using SkinCareBookingSystem.Repositories.Repositories;
-using SkinCareBookingSystem.Repositories.Interfaces;
-using SkinCareBookingSystem.Service.Service;
 using SkinCareBookingSystem.Service.Interfaces;
 using System.Security.Claims;
 using SkinCareBookingSystem.Service.Dto.Survey;
-using SkinCareBookingSystem.Repositories.Data;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -15,14 +11,10 @@ namespace SkinCareBookingSystem.Controller.Controllers
     public class SurveyController : ControllerBase
     {
         private readonly ISurveyService _surveyService;
-        private readonly ISurveyRepository _surveyRepository;
-        private readonly AppDbContext _context;
 
-        public SurveyController(ISurveyService surveyService, ISurveyRepository surveyRepository, AppDbContext context)
+        public SurveyController(ISurveyService surveyService)
         {
             _surveyService = surveyService;
-            _surveyRepository = surveyRepository;
-            _context = context;
         }
 
         private int? GetCurrentUserId()
@@ -42,22 +34,17 @@ namespace SkinCareBookingSystem.Controller.Controllers
             {
                 var userId = GetCurrentUserId();
                 var session = await _surveyService.StartSessionAsync(userId);
-                var firstQuestion = await _surveyService.GetFirstQuestionAsync();
                 
-                if (firstQuestion == null)
+                var nextQuestionData = await _surveyService.GetNextQuestionAsync(session.Id);
+                if (nextQuestionData == null)
                 {
                     return NotFound("No survey questions found");
                 }
-
-                var options = await _surveyService.GetOptionsForQuestionAsync(firstQuestion.Id);
                 
                 return Ok(new 
                 { 
                     sessionId = session.Id,
-                    questionId = firstQuestion.Id,
-                    questionIdString = firstQuestion.QuestionId,
-                    question = firstQuestion.QuestionText,
-                    options = options.Select(o => new { id = o.Id, text = o.OptionText }).ToList()
+                    nextQuestionData
                 });
             }
             catch (Exception ex)
@@ -76,14 +63,15 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest("Invalid request parameters");
                 }
 
-                // Record the response
-                await _surveyService.RecordResponseAsync(request.SessionId, request.QuestionId, request.OptionId);
-                
-                // Get the next question or result
-                var nextStep = await _surveyService.GetNextQuestionOrResultAsync(
+                var nextStep = await _surveyService.ProcessSurveyAnswerAsync(
                     request.SessionId, 
                     request.QuestionId, 
                     request.OptionId);
+                
+                if (nextStep == null)
+                {
+                    return BadRequest("Failed to process answer");
+                }
                 
                 return Ok(nextStep);
             }
@@ -115,7 +103,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return NotFound("Survey result not found");
                 }
 
-                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsByResultIdAsync(result.Id);
+                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsAsync(result.Id);
                 
                 return Ok(new
                 {
@@ -195,94 +183,50 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 var errors = new List<string>();
                 var warnings = new List<string>();
 
-                // Get all questions and options
                 var allQuestions = await _surveyService.GetAllQuestionsAsync();
-                
-                // Check if there are any questions
                 if (allQuestions.Count == 0)
                 {
                     errors.Add("No survey questions found in the database");
                     return Ok(new { isValid = false, errors, warnings });
                 }
 
-                // Check if there's a valid first question
-                var firstQuestion = allQuestions.FirstOrDefault(q => q.QuestionId == "Q1" || q.QuestionId.StartsWith("Q1_"));
-                if (firstQuestion == null)
+                if (!allQuestions.Any(q => q.IsActive))
                 {
-                    errors.Add("Missing first question (Q1) in the database");
+                    errors.Add("No active questions found");
                 }
 
-                // Get all results
                 var allResults = await _surveyService.GetAllResultsAsync();
                 if (allResults.Count == 0)
                 {
                     errors.Add("No survey results found in the database");
                 }
 
-                // Check option references
                 foreach (var question in allQuestions)
                 {
-                    var options = await _surveyService.GetOptionsForQuestionAsync(question.Id);
+                    var options = await _surveyService.GetOptionAsync(question.Id);
                     
                     if (options.Count == 0)
                     {
                         errors.Add($"Question '{question.QuestionId}' has no options");
-                        continue;
                     }
-
+                    
                     foreach (var option in options)
                     {
-                        var nextId = option.NextQuestionId;
-                        
-                        // Check if the next question/result exists
-                        if (nextId.StartsWith("RESULT_"))
+                        if (string.IsNullOrEmpty(option.SkinTypeId))
                         {
-                            var resultExists = allResults.Any(r => r.ResultId == nextId);
-                            if (!resultExists)
-                            {
-                                errors.Add($"Option '{option.OptionText}' in question '{question.QuestionId}' references non-existent result '{nextId}'");
-                            }
+                            warnings.Add($"Option '{option.OptionText}' (ID: {option.Id}) has no skin type associated");
                         }
                         else
                         {
-                            var nextQuestionExists = allQuestions.Any(q => q.QuestionId == nextId);
-                            if (!nextQuestionExists)
+                            var matchingResult = allResults.FirstOrDefault(r => r.ResultId == option.SkinTypeId);
+                            if (matchingResult == null)
                             {
-                                errors.Add($"Option '{option.OptionText}' in question '{question.QuestionId}' references non-existent question '{nextId}'");
+                                errors.Add($"Option '{option.OptionText}' (ID: {option.Id}) references non-existent skin type '{option.SkinTypeId}'");
                             }
                         }
                     }
                 }
 
-                // Check for unreachable questions
-                var reachableQuestions = new HashSet<string>();
-                if (firstQuestion != null)
-                {
-                    await FindReachableQuestions(firstQuestion.QuestionId, allQuestions, reachableQuestions);
-                }
-
-                foreach (var question in allQuestions)
-                {
-                    if (!reachableQuestions.Contains(question.QuestionId))
-                    {
-                        warnings.Add($"Question '{question.QuestionId}' is not reachable from the first question");
-                    }
-                }
-
-                // Check for cycles (this is simplistic and might not detect all cycles)
-                foreach (var question in allQuestions)
-                {
-                    var visited = new HashSet<string>();
-                    var path = new List<string>();
-                    var cyclePath = await DetectCycle(question.QuestionId, allQuestions, visited, path);
-                    if (cyclePath != null)
-                    {
-                        warnings.Add($"Potential cycle detected: {string.Join(" → ", cyclePath)}");
-                        break; // One potential cycle is enough to report
-                    }
-                }
-
-                // Check for missing recommended services for results
                 foreach (var result in allResults)
                 {
                     var services = await _surveyService.GetRecommendedServicesByResultIdAsync(result.Id);
@@ -303,7 +247,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     {
                         totalQuestions = allQuestions.Count,
                         totalResults = allResults.Count,
-                        unreachableQuestions = allQuestions.Count - reachableQuestions.Count
+                        activeQuestions = allQuestions.Count(q => q.IsActive)
                     }
                 });
             }
@@ -311,60 +255,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
             {
                 return StatusCode(500, $"Error verifying survey: {ex.Message}");
             }
-        }
-
-        private async Task FindReachableQuestions(string questionId, List<SurveyQuestion> allQuestions, HashSet<string> reachable)
-        {
-            if (reachable.Contains(questionId) || questionId.StartsWith("RESULT_"))
-                return;
-
-            reachable.Add(questionId);
-            
-            var question = allQuestions.FirstOrDefault(q => q.QuestionId == questionId);
-            if (question == null)
-                return;
-
-            var options = await _surveyService.GetOptionsForQuestionAsync(question.Id);
-            foreach (var option in options)
-            {
-                await FindReachableQuestions(option.NextQuestionId, allQuestions, reachable);
-            }
-        }
-
-        private async Task<List<string>> DetectCycle(string currentId, List<SurveyQuestion> allQuestions, HashSet<string> visited, List<string> path)
-        {
-            if (currentId.StartsWith("RESULT_")) return null; // Results don't have next questions
-            
-            var question = allQuestions.FirstOrDefault(q => q.QuestionId == currentId);
-            if (question == null) return null; // Non-existent question
-            
-            if (visited.Contains(currentId))
-            {
-                // Find the start of the cycle
-                int cycleStart = path.IndexOf(currentId);
-                if (cycleStart >= 0)
-                {
-                    return path.GetRange(cycleStart, path.Count - cycleStart);
-                }
-                return null;
-            }
-
-            visited.Add(currentId);
-            path.Add(currentId);
-
-            var options = await _surveyService.GetOptionsForQuestionAsync(question.Id);
-            foreach (var option in options)
-            {
-                var cyclePath = await DetectCycle(option.NextQuestionId, allQuestions, visited, path);
-                if (cyclePath != null)
-                {
-                    return cyclePath;
-                }
-            }
-
-            // Backtrack
-            path.RemoveAt(path.Count - 1);
-            return null;
         }
 
         #region Admin API
@@ -423,14 +313,15 @@ namespace SkinCareBookingSystem.Controller.Controllers
                         {
                             QuestionId = addedQuestion.Id,
                             OptionText = optionDto.OptionText,
-                            NextQuestionId = optionDto.NextQuestionId
+                            Points = optionDto.Points,
+                            SkinTypeId = optionDto.SkinTypeId
                         };
                         await _surveyService.AddOptionAsync(option);
                     }
                 }
 
                 var questionWithOptions = await _surveyService.GetQuestionByIdAsync(addedQuestion.Id);
-                var options = await _surveyService.GetOptionsForQuestionAsync(addedQuestion.Id);
+                var options = await _surveyService.GetOptionAsync(addedQuestion.Id);
 
                 return Ok(new
                 {
@@ -443,7 +334,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     {
                         id = o.Id,
                         optionText = o.OptionText,
-                        nextQuestionId = o.NextQuestionId
+                        points = o.Points,
+                        skinTypeId = o.SkinTypeId
                     }).ToList()
                 });
             }
@@ -477,7 +369,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
                 if (request.Options != null)
                 {
-                    var existingOptions = await _surveyService.GetOptionsForQuestionAsync(id);
+                    var existingOptions = await _surveyService.GetOptionAsync(id);
                     
                     foreach (var optionDto in request.Options.Where(o => o.IsDeleted))
                     {
@@ -495,7 +387,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
                             if (existingOption != null)
                             {
                                 existingOption.OptionText = optionDto.OptionText;
-                                existingOption.NextQuestionId = optionDto.NextQuestionId;
+                                existingOption.Points = optionDto.Points;
+                                existingOption.SkinTypeId = optionDto.SkinTypeId;
                                 await _surveyService.UpdateOptionAsync(existingOption);
                             }
                         }
@@ -505,7 +398,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
                             {
                                 QuestionId = id,
                                 OptionText = optionDto.OptionText,
-                                NextQuestionId = optionDto.NextQuestionId
+                                Points = optionDto.Points,
+                                SkinTypeId = optionDto.SkinTypeId
                             };
                             await _surveyService.AddOptionAsync(newOption);
                         }
@@ -513,7 +407,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 }
 
                 var questionWithOptions = await _surveyService.GetQuestionByIdAsync(id);
-                var options = await _surveyService.GetOptionsForQuestionAsync(id);
+                var options = await _surveyService.GetOptionAsync(id);
 
                 return Ok(new
                 {
@@ -526,7 +420,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     {
                         id = o.Id,
                         optionText = o.OptionText,
-                        nextQuestionId = o.NextQuestionId
+                        points = o.Points,
+                        skinTypeId = o.SkinTypeId
                     }).ToList()
                 });
             }
@@ -565,7 +460,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
                 foreach (var result in results)
                 {
-                    var recommendedServices = await _surveyService.GetRecommendedServicesDetailsByResultIdAsync(result.Id);
+                    var recommendedServices = await _surveyService.GetRecommendedServicesDetailsAsync(result.Id);
 
                     enrichedResults.Add(new
                     {
@@ -665,7 +560,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 }
 
                 var resultWithServices = await _surveyService.GetResultByIdAsync(id);
-                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsByResultIdAsync(id);
+                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsAsync(id);
 
                 return Ok(new
                 {
