@@ -3,6 +3,7 @@ using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Service.Interfaces;
 using System.Security.Claims;
 using SkinCareBookingSystem.Service.Dto.Survey;
+using System.Linq;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -520,6 +521,58 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return StatusCode(500, new { message = "An error occurred while fetching survey results.", error = ex.Message });
             }
         }
+        
+        [HttpPost("admin/results")]
+        public async Task<ActionResult<object>> CreateSurveyResult([FromBody] SurveyResultUpdateDto request)
+        {
+            try
+            {
+                var newResult = new SurveyResult
+                {
+                    ResultId = request.ResultId,
+                    ResultText = request.ResultText,
+                    SkinType = request.SkinType,
+                    RecommendationText = request.RecommendationText,
+                    CreatedDate = DateTime.Now
+                };
+
+                var createdResult = await _surveyService.AddResultAsync(newResult);
+
+                if (request.RecommendedServices != null && request.RecommendedServices.Any())
+                {
+                    foreach (var serviceDto in request.RecommendedServices.Where(s => !s.IsDeleted))
+                    {
+                        await _surveyService.AddRecommendedServiceAsync(
+                            createdResult.Id,
+                            serviceDto.ServiceId,
+                            serviceDto.Priority);
+                    }
+                }
+
+                var resultWithServices = await _surveyService.GetResultByIdAsync(createdResult.Id);
+                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsAsync(createdResult.Id);
+
+                return Ok(new
+                {
+                    id = resultWithServices.Id,
+                    resultId = resultWithServices.ResultId,
+                    resultText = resultWithServices.ResultText,
+                    skinType = resultWithServices.SkinType,
+                    recommendationText = resultWithServices.RecommendationText,
+                    recommendedServices = recommendedServices.Select(s => new
+                    {
+                        id = s.Id,
+                        serviceName = s.ServiceName,
+                        serviceDescription = s.ServiceDescription,
+                        price = s.Price
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error creating result.", error = ex.Message });
+            }
+        }
 
         [HttpPost("admin/recommended-service")]
         public async Task<IActionResult> AddRecommendedService([FromBody] RecommendedServiceDto dto)
@@ -615,6 +668,34 @@ namespace SkinCareBookingSystem.Controller.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "An error occurred while updating the survey result.", error = ex.Message });
+            }
+        }
+        
+        [HttpDelete("admin/results/{id}")]
+        public async Task<ActionResult> DeleteSurveyResult(int id)
+        {
+            try
+            {
+                var existingResult = await _surveyService.GetResultByIdAsync(id);
+                if (existingResult == null)
+                {
+                    return NotFound("Survey result not found.");
+                }
+
+                var recommendedServices = await _surveyService.GetRecommendedServicesByResultIdAsync(id);
+                
+                foreach (var service in recommendedServices)
+                {
+                    await _surveyService.DeleteRecommendedServiceAsync(service.Id);
+                }
+                
+                await _surveyService.DeleteResultAsync(id);
+                
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error deleting result.", error = ex.Message });
             }
         }
         #endregion
