@@ -11,7 +11,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
     {
         Task<List<SurveyQuestion>> GetAllQuestionsAsync();
         Task<SurveyQuestion> GetQuestionByIdAsync(int id);
-        Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId);
         Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question);
         Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question);
         Task<bool> DeleteQuestionAsync(int id);
@@ -44,7 +43,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         Task<bool> DeleteRecommendedServiceAsync(int id);
         Task UpdateRecommendedServiceAsync(RecommendedService recommendedService);
         
-        Task<UserSkinTypeScore> AddSkinTypeScoreAsync(UserSkinTypeScore score);
         Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd);
         Task<List<UserSkinTypeScore>> GetSkinTypeScoresAsync(int sessionId);
         Task<string> GetSkinTypeAsync(int sessionId);

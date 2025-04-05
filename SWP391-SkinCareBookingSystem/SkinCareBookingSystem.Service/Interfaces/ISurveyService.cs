@@ -11,7 +11,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
     {
         Task<List<SurveyQuestion>> GetAllQuestionsAsync();
         Task<SurveyQuestion> GetQuestionByIdAsync(int id);
-        Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId);
         Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question);
         Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question);
         Task<bool> DeleteQuestionAsync(int id);

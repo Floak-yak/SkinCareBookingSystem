@@ -28,13 +28,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 .FirstOrDefaultAsync(q => q.Id == id);
         }
 
-        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
-        {
-            return await _context.SurveyQuestions
-                .Include(q => q.Options)
-                .FirstOrDefaultAsync(q => q.QuestionId == questionId);
-        }
-
         public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
         {
             _context.SurveyQuestions.Add(question);
@@ -244,13 +237,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<UserSkinTypeScore> AddSkinTypeScoreAsync(UserSkinTypeScore score)
-        {
-            _context.UserSkinTypeScores.Add(score);
-            await _context.SaveChangesAsync();
-            return score;
-        }
-        
         public async Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd)
         {
             var score = await _context.UserSkinTypeScores
