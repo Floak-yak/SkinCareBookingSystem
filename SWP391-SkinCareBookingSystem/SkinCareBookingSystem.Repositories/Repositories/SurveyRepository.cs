@@ -68,7 +68,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyOption> GetOptionByIdAsync(int id)
         {
-            return await _context.SurveyOptions.FindAsync(id);
+            return await _context.SurveyOptions
+                .Include(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(o => o.Id == id);
         }
 
         public async Task<SurveyOption> AddOptionAsync(SurveyOption option)
@@ -292,6 +294,42 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                 
             var winningScore = scores.OrderByDescending(s => s.Score).FirstOrDefault();
             return winningScore?.SkinTypeId;
+        }
+
+        public async Task<List<OptionSkinTypePoints>> GetOptionSkinTypePointsAsync(int optionId)
+        {
+            return await _context.OptionSkinTypePoints
+                .Where(p => p.OptionId == optionId)
+                .ToListAsync();
+        }
+
+        public async Task<OptionSkinTypePoints> GetOptionSkinTypePointByIdAsync(int id)
+        {
+            return await _context.OptionSkinTypePoints.FindAsync(id);
+        }
+
+        public async Task<OptionSkinTypePoints> AddOptionSkinTypePointsAsync(OptionSkinTypePoints points)
+        {
+            _context.OptionSkinTypePoints.Add(points);
+            await _context.SaveChangesAsync();
+            return points;
+        }
+
+        public async Task<OptionSkinTypePoints> UpdateOptionSkinTypePointsAsync(OptionSkinTypePoints points)
+        {
+            _context.Entry(points).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return points;
+        }
+
+        public async Task<bool> DeleteOptionSkinTypePointsAsync(int id)
+        {
+            var points = await _context.OptionSkinTypePoints.FindAsync(id);
+            if (points == null) return false;
+
+            _context.OptionSkinTypePoints.Remove(points);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

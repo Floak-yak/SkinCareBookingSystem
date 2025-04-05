@@ -162,6 +162,31 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("Images");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.OptionSkinTypePoints", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SkinTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OptionId");
+
+                    b.ToTable("OptionSkinTypePoints");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
                 {
                     b.Property<int>("Id")
@@ -740,6 +765,17 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.OptionSkinTypePoints", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", "Option")
+                        .WithMany("SkinTypePoints")
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Option");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
                 {
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Category", "Category")
@@ -1001,6 +1037,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", b =>
                 {
                     b.Navigation("Responses");
+
+                    b.Navigation("SkinTypePoints");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", b =>

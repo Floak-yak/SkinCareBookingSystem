@@ -213,16 +213,27 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     
                     foreach (var option in options)
                     {
-                        if (string.IsNullOrEmpty(option.SkinTypeId))
+                        var skinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(option.Id);
+                        if (skinTypePoints == null || !skinTypePoints.Any())
                         {
-                            warnings.Add($"Option '{option.OptionText}' (ID: {option.Id}) has no skin type associated");
+                            warnings.Add($"Option '{option.OptionText}' (ID: {option.Id}) has no skin type points associated");
                         }
                         else
                         {
-                            var matchingResult = allResults.FirstOrDefault(r => r.ResultId == option.SkinTypeId);
-                            if (matchingResult == null)
+                            foreach (var skinTypePoint in skinTypePoints)
                             {
-                                errors.Add($"Option '{option.OptionText}' (ID: {option.Id}) references non-existent skin type '{option.SkinTypeId}'");
+                                if (string.IsNullOrEmpty(skinTypePoint.SkinTypeId))
+                                {
+                                    errors.Add($"Option '{option.OptionText}' (ID: {option.Id}) has skin type point with empty skin type ID");
+                                }
+                                else
+                                {
+                                    var matchingResult = allResults.FirstOrDefault(r => r.ResultId == skinTypePoint.SkinTypeId);
+                                    if (matchingResult == null)
+                                    {
+                                        errors.Add($"Option '{option.OptionText}' (ID: {option.Id}) has skin type point referencing non-existent skin type '{skinTypePoint.SkinTypeId}'");
+                                    }
+                                }
                             }
                         }
                     }
@@ -348,10 +359,25 @@ namespace SkinCareBookingSystem.Controller.Controllers
                         {
                             QuestionId = addedQuestion.Id,
                             OptionText = optionDto.OptionText,
-                            Points = optionDto.Points,
-                            SkinTypeId = optionDto.SkinTypeId
+                            Points = optionDto.Points
                         };
-                        await _surveyService.AddOptionAsync(option);
+                        
+                        var addedOption = await _surveyService.AddOptionAsync(option);
+                        
+                        if (optionDto.SkinTypePoints != null && optionDto.SkinTypePoints.Any())
+                        {
+                            foreach (var skinTypePoint in optionDto.SkinTypePoints)
+                            {
+                                var optionSkinTypePoints = new OptionSkinTypePoints
+                                {
+                                    OptionId = addedOption.Id,
+                                    SkinTypeId = skinTypePoint.SkinTypeId,
+                                    Points = skinTypePoint.Points
+                                };
+                                
+                                await _surveyService.AddOptionSkinTypePointsAsync(optionSkinTypePoints);
+                            }
+                        }
                     }
                 }
 
@@ -365,13 +391,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     questionText = questionWithOptions.QuestionText,
                     isActive = questionWithOptions.IsActive,
                     createdDate = questionWithOptions.CreatedDate,
-                    options = options.Select(o => new
-                    {
-                        id = o.Id,
-                        optionText = o.OptionText,
-                        points = o.Points,
-                        skinTypeId = o.SkinTypeId
-                    }).ToList()
+                    options = await GetFormattedOptionsAsync(options)
                 });
             }
             catch (Exception ex)
@@ -406,37 +426,101 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 {
                     var existingOptions = await _surveyService.GetOptionAsync(id);
                     
+                    // Handle deleted options
                     foreach (var optionDto in request.Options.Where(o => o.IsDeleted))
                     {
                         if (optionDto.Id.HasValue)
                         {
+                            // Delete all skin type points for this option first
+                            var skinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(optionDto.Id.Value);
+                            foreach (var point in skinTypePoints)
+                            {
+                                await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
+                            }
+                            
                             await _surveyService.DeleteOptionAsync(optionDto.Id.Value);
                         }
                     }
 
+                    // Handle updated or new options
                     foreach (var optionDto in request.Options.Where(o => !o.IsDeleted))
                     {
                         if (optionDto.Id.HasValue)
                         {
+                            // Update existing option
                             var existingOption = existingOptions.FirstOrDefault(o => o.Id == optionDto.Id);
                             if (existingOption != null)
                             {
                                 existingOption.OptionText = optionDto.OptionText;
                                 existingOption.Points = optionDto.Points;
-                                existingOption.SkinTypeId = optionDto.SkinTypeId;
                                 await _surveyService.UpdateOptionAsync(existingOption);
+                                
+                                // Handle skin type points for existing option
+                                var existingSkinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(existingOption.Id);
+                                
+                                // Delete removed skin type points
+                                foreach (var point in existingSkinTypePoints)
+                                {
+                                    if (!optionDto.SkinTypePoints.Any(sp => sp.Id == point.Id && !sp.IsDeleted))
+                                    {
+                                        await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
+                                    }
+                                }
+                                
+                                // Update or add skin type points
+                                foreach (var skinTypePointDto in optionDto.SkinTypePoints.Where(sp => !sp.IsDeleted))
+                                {
+                                    if (skinTypePointDto.Id.HasValue)
+                                    {
+                                        // Update existing skin type point
+                                        var existingPoint = existingSkinTypePoints.FirstOrDefault(p => p.Id == skinTypePointDto.Id);
+                                        if (existingPoint != null)
+                                        {
+                                            existingPoint.SkinTypeId = skinTypePointDto.SkinTypeId;
+                                            existingPoint.Points = skinTypePointDto.Points;
+                                            await _surveyService.UpdateOptionSkinTypePointsAsync(existingPoint);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Add new skin type point
+                                        var newPoint = new OptionSkinTypePoints
+                                        {
+                                            OptionId = existingOption.Id,
+                                            SkinTypeId = skinTypePointDto.SkinTypeId,
+                                            Points = skinTypePointDto.Points
+                                        };
+                                        await _surveyService.AddOptionSkinTypePointsAsync(newPoint);
+                                    }
+                                }
                             }
                         }
                         else
                         {
+                            // Add new option
                             var newOption = new SurveyOption
                             {
                                 QuestionId = id,
                                 OptionText = optionDto.OptionText,
-                                Points = optionDto.Points,
-                                SkinTypeId = optionDto.SkinTypeId
+                                Points = optionDto.Points
                             };
-                            await _surveyService.AddOptionAsync(newOption);
+                            var addedOption = await _surveyService.AddOptionAsync(newOption);
+                            
+                            // Add skin type points if provided
+                            if (optionDto.SkinTypePoints != null && optionDto.SkinTypePoints.Any())
+                            {
+                                foreach (var skinTypePoint in optionDto.SkinTypePoints.Where(sp => !sp.IsDeleted))
+                                {
+                                    var optionSkinTypePoints = new OptionSkinTypePoints
+                                    {
+                                        OptionId = addedOption.Id,
+                                        SkinTypeId = skinTypePoint.SkinTypeId,
+                                        Points = skinTypePoint.Points
+                                    };
+                                    
+                                    await _surveyService.AddOptionSkinTypePointsAsync(optionSkinTypePoints);
+                                }
+                            }
                         }
                     }
                 }
@@ -451,19 +535,39 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     questionText = questionWithOptions.QuestionText,
                     isActive = questionWithOptions.IsActive,
                     createdDate = questionWithOptions.CreatedDate,
-                    options = options.Select(o => new
-                    {
-                        id = o.Id,
-                        optionText = o.OptionText,
-                        points = o.Points,
-                        skinTypeId = o.SkinTypeId
-                    }).ToList()
+                    options = await GetFormattedOptionsAsync(options)
                 });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+        }
+
+        // Helper method to format options with their skin type points
+        private async Task<List<object>> GetFormattedOptionsAsync(List<SurveyOption> options)
+        {
+            var formattedOptions = new List<object>();
+            
+            foreach (var option in options)
+            {
+                var skinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(option.Id);
+                
+                formattedOptions.Add(new
+                {
+                    id = option.Id,
+                    optionText = option.OptionText,
+                    points = option.Points,
+                    skinTypePoints = skinTypePoints.Select(sp => new
+                    {
+                        id = sp.Id,
+                        skinTypeId = sp.SkinTypeId,
+                        points = sp.Points
+                    }).ToList()
+                });
+            }
+            
+            return formattedOptions;
         }
 
         [HttpDelete("admin/question/{id}")]
