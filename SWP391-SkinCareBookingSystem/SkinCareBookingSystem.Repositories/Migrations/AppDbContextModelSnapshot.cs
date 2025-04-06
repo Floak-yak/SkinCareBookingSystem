@@ -423,9 +423,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Points")
-                        .HasColumnType("int");
-
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
@@ -472,9 +469,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("OptionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Points")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionId")

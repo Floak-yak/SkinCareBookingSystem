@@ -18,9 +18,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyQuestions
                 .Include(q => q.Options)
-                    .ThenInclude(o => o.Question)
-                .Include(q => q.Options)
-                    .ThenInclude(o => o.Responses)
                 .Include(q => q.Options)
                     .ThenInclude(o => o.SkinTypePoints)
                 .ToListAsync();
@@ -30,9 +27,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyQuestions
                 .Include(q => q.Options)
-                    .ThenInclude(o => o.Question)
-                .Include(q => q.Options)
-                    .ThenInclude(o => o.Responses)
                 .Include(q => q.Options)
                     .ThenInclude(o => o.SkinTypePoints)
                 .FirstOrDefaultAsync(q => q.Id == id);
@@ -66,8 +60,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyOptions
                 .Where(o => o.QuestionId == questionId)
-                .Include(o => o.Question)
-                .Include(o => o.Responses)
                 .Include(o => o.SkinTypePoints)
                 .ToListAsync();
         }
