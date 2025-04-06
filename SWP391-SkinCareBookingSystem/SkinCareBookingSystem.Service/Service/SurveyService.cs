@@ -146,7 +146,6 @@ namespace SkinCareBookingSystem.Service.Service
                 SessionId = sessionId,
                 QuestionId = questionId,
                 OptionId = optionId,
-                Points = option.Points,
                 SkinTypeId = primarySkinType?.SkinTypeId ?? string.Empty,
                 ResponseDate = DateTime.Now
             };
@@ -235,21 +234,17 @@ namespace SkinCareBookingSystem.Service.Service
                 
             if (nextQuestion == null)
             {
-                // Check if there's a tie in skin type scores
                 var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
                 var maxScore = skinTypeScores.Max(s => s.Score);
                 var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
                 
-                // If there's a tie and we've answered at least 10 questions, try to get more questions
                 if (topSkinTypes.Count > 1 && answeredQuestionIds.Count >= 10)
                 {
-                    // Get additional questions that haven't been answered yet
                     nextQuestion = allQuestions
                         .Where(q => !selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
                         .OrderBy(_ => Guid.NewGuid())
                         .FirstOrDefault();
                         
-                    // If we found an additional question, add it to the selected questions
                     if (nextQuestion != null)
                     {
                         selectedQuestionId.Add(nextQuestion.Id);
@@ -258,7 +253,6 @@ namespace SkinCareBookingSystem.Service.Service
                     }
                 }
                 
-                // If we still don't have a next question, try to get a result
                 if (nextQuestion == null)
                 {
                     var result = await GetSkinTypeByScoreAsync(sessionId);
@@ -337,7 +331,6 @@ namespace SkinCareBookingSystem.Service.Service
                     {
                         id = option.Id,
                         text = option.OptionText,
-                        points = option.Points,
                         skinTypePoints = skinTypePoints.Select(sp => new
                         {
                             id = sp.Id,
@@ -373,7 +366,6 @@ namespace SkinCareBookingSystem.Service.Service
                 }
             }
             
-            // Check if we've answered all pre-selected questions
             var session = await _surveyRepository.GetSessionAsync(sessionId);
             var responses = await _surveyRepository.GetResponsesAsync(sessionId);
             var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
@@ -382,18 +374,14 @@ namespace SkinCareBookingSystem.Service.Service
                 ? session.SelectedQuestionId.Split(',').Select(int.Parse).ToList() 
                 : new List<int>();
                 
-            // Check if we've answered all pre-selected questions
             bool allPreSelectedQuestionsAnswered = selectedQuestionId.All(id => answeredQuestionIds.Contains(id));
             
-            // If we've answered all pre-selected questions, check if there's a tie in skin type scores
             if (allPreSelectedQuestionsAnswered)
             {
-                // Check if there's a tie in skin type scores
                 var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
                 var maxScore = skinTypeScores.Max(s => s.Score);
                 var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
                 
-                // If there's no tie, complete the survey
                 if (topSkinTypes.Count == 1)
                 {
                     var result = await GetSkinTypeByScoreAsync(sessionId);
@@ -419,7 +407,6 @@ namespace SkinCareBookingSystem.Service.Service
                         };
                     }
                 }
-                // If there's a tie, we'll continue with more questions in GetNextQuestionAsync
             }
             
             var nextQuestion = await GetNextQuestionAsync(sessionId);
@@ -491,7 +478,6 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             id = option.Id,
                             optionText = option.OptionText,
-                            points = response.Points,
                             skinTypeId = response.SkinTypeId,
                             skinTypePoints = skinTypePoints.Select(sp => new
                             {

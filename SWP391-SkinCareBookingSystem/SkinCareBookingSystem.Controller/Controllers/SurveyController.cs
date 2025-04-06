@@ -358,8 +358,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                         var option = new SurveyOption
                         {
                             QuestionId = addedQuestion.Id,
-                            OptionText = optionDto.OptionText,
-                            Points = optionDto.Points
+                            OptionText = optionDto.OptionText
                         };
                         
                         var addedOption = await _surveyService.AddOptionAsync(option);
@@ -452,7 +451,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
                             if (existingOption != null)
                             {
                                 existingOption.OptionText = optionDto.OptionText;
-                                existingOption.Points = optionDto.Points;
                                 await _surveyService.UpdateOptionAsync(existingOption);
                                 
                                 // Handle skin type points for existing option
@@ -477,7 +475,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
                                         if (existingPoint != null)
                                         {
                                             existingPoint.SkinTypeId = skinTypePointDto.SkinTypeId;
-                                            existingPoint.Points = skinTypePointDto.Points;
                                             await _surveyService.UpdateOptionSkinTypePointsAsync(existingPoint);
                                         }
                                     }
@@ -501,8 +498,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                             var newOption = new SurveyOption
                             {
                                 QuestionId = id,
-                                OptionText = optionDto.OptionText,
-                                Points = optionDto.Points
+                                OptionText = optionDto.OptionText
                             };
                             var addedOption = await _surveyService.AddOptionAsync(newOption);
                             
@@ -557,7 +553,6 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 {
                     id = option.Id,
                     optionText = option.OptionText,
-                    points = option.Points,
                     skinTypePoints = skinTypePoints.Select(sp => new
                     {
                         id = sp.Id,

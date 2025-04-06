@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SkinCareBookingSystem.BusinessObject.Entity
 {
@@ -15,7 +12,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         // Relationships
-        public ICollection<SurveyOption>? Options { get; set; }
-        public ICollection<SurveyResponse>? Responses { get; set; }
+        public ICollection<SurveyOption> Options { get; set; }
+        public ICollection<SurveyResponse> Responses { get; set; }
     }
 } 
