@@ -170,7 +170,8 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId)
         {
             var session = await _context.SurveySessions.FindAsync(sessionId);
-            if (session == null) return null;
+            if (session == null)
+                return null;
 
             session.SurveyResultId = resultId;
             session.IsCompleted = true;
@@ -181,13 +182,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             return session;
         }
 
-        public async Task<SurveyResponse> AddResponseAsync(SurveyResponse response)
+        public async Task<SurveySession> UpdateSessionAsync(SurveySession session)
         {
-            _context.SurveyResponses.Add(response);
+            _context.Entry(session).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return response;
+            return session;
         }
 
+        public async Task<SurveyResponse> AddResponseAsync(SurveyResponse response)
         public async Task<List<SurveyResponse>> GetResponsesAsync(int sessionId)
         {
             return await _context.SurveyResponses
@@ -278,8 +280,16 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             if (scores == null || !scores.Any())
                 return null;
                 
-            var winningScore = scores.OrderByDescending(s => s.Score).FirstOrDefault();
-            return winningScore?.SkinTypeId;
+            var maxScore = scores.Max(s => s.Score);
+            
+            var topSkinTypes = scores.Where(s => s.Score == maxScore).ToList();
+            
+            if (topSkinTypes.Count > 1)
+            {
+                return null;
+            }
+            
+            return topSkinTypes.FirstOrDefault()?.SkinTypeId;
         }
 
         public async Task<List<OptionSkinTypePoints>> GetOptionSkinTypePointsAsync(int optionId)

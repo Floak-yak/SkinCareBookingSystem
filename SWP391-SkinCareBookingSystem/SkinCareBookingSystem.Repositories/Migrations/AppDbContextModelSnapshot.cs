@@ -557,6 +557,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("SelectedQuestionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("SurveyResultId")
                         .HasColumnType("int");
 

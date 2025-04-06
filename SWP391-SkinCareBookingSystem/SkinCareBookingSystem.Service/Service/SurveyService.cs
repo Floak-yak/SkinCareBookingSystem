@@ -27,11 +27,6 @@ namespace SkinCareBookingSystem.Service.Service
             return await _surveyRepository.GetQuestionByIdAsync(id);
         }
 
-        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
-        {
-            return await _surveyRepository.GetQuestionByQuestionIdAsync(questionId);
-        }
-
         public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
         {
             return await _surveyRepository.AddQuestionAsync(question);
@@ -105,7 +100,19 @@ namespace SkinCareBookingSystem.Service.Service
                 IsCompleted = false,
                 CompletedDate = DateTime.Now
             };
-
+            
+            var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
+            var activeQuestions = allQuestions.Where(q => q.IsActive).ToList();
+            
+            var random = new Random();
+            var selectedQuestions = activeQuestions
+                .OrderBy(x => random.Next())
+                .Take(10)
+                .Select(q => q.Id)
+                .ToList();
+            
+            session.SelectedQuestionId = string.Join(",", selectedQuestions);
+            
             return await _surveyRepository.CreateSessionAsync(session);
         }
 
@@ -215,13 +222,80 @@ namespace SkinCareBookingSystem.Service.Service
             
             var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
             
+            var selectedQuestionId = session.SelectedQuestionId != null 
+                ? session.SelectedQuestionId.Split(',').Select(int.Parse).ToList() 
+                : new List<int>();
+            
             var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
             
             var nextQuestion = allQuestions
-                .Where(q => !answeredQuestionIds.Contains(q.Id) && q.IsActive)
+                .Where(q => selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
                 .OrderBy(_ => Guid.NewGuid())
                 .FirstOrDefault();
-
+                
+            if (nextQuestion == null)
+            {
+                // Check if there's a tie in skin type scores
+                var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                var maxScore = skinTypeScores.Max(s => s.Score);
+                var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
+                
+                // If there's a tie and we've answered at least 10 questions, try to get more questions
+                if (topSkinTypes.Count > 1 && answeredQuestionIds.Count >= 10)
+                {
+                    // Get additional questions that haven't been answered yet
+                    nextQuestion = allQuestions
+                        .Where(q => !selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
+                        .OrderBy(_ => Guid.NewGuid())
+                        .FirstOrDefault();
+                        
+                    // If we found an additional question, add it to the selected questions
+                    if (nextQuestion != null)
+                    {
+                        selectedQuestionId.Add(nextQuestion.Id);
+                        session.SelectedQuestionId = string.Join(",", selectedQuestionId);
+                        await _surveyRepository.UpdateSessionAsync(session);
+                    }
+                }
+                
+                // If we still don't have a next question, try to get a result
+                if (nextQuestion == null)
+                {
+                    var result = await GetSkinTypeByScoreAsync(sessionId);
+                    if (result != null)
+                    {
+                        await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
+                        var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
+                        
+                        return new
+                        {
+                            isResult = true,
+                            sessionId = session.Id,
+                            skinTypeScores = await GetSkinTypeScoresAsync(sessionId),
+                            result = new
+                            {
+                                id = result.Id,
+                                resultId = result.ResultId,
+                                skinType = result.SkinType,
+                                resultText = result.ResultText,
+                                recommendationText = result.RecommendationText
+                            },
+                            recommendedServices = recommendedServices
+                        };
+                    }
+                    else
+                    {
+                        return new
+                        {
+                            isResult = true,
+                            isEnd = true,
+                            sessionId = session.Id,
+                            message = "Survey completed no result."
+                        };
+                    }
+                }
+            }
+            
             if (nextQuestion == null)
             {
                 var result = await GetSkinTypeByScoreAsync(sessionId);
@@ -233,17 +307,9 @@ namespace SkinCareBookingSystem.Service.Service
                     return new
                     {
                         isResult = true,
+                        isEnd = true,
                         sessionId = session.Id,
-                        skinTypeScores = await GetSkinTypeScoresAsync(sessionId),
-                        result = new
-                        {
-                            id = result.Id,
-                            resultId = result.ResultId,
-                            skinType = result.SkinType,
-                            resultText = result.ResultText,
-                            recommendationText = result.RecommendationText
-                        },
-                        recommendedServices = recommendedServices
+                        message = "Survey completed no result."
                     };
                 }
                 else
@@ -305,6 +371,55 @@ namespace SkinCareBookingSystem.Service.Service
                 {
                     await UpdateSkinTypeScoreAsync(sessionId, skinTypePoint.SkinTypeId, skinTypePoint.Points);
                 }
+            }
+            
+            // Check if we've answered all pre-selected questions
+            var session = await _surveyRepository.GetSessionAsync(sessionId);
+            var responses = await _surveyRepository.GetResponsesAsync(sessionId);
+            var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
+            
+            var selectedQuestionId = session.SelectedQuestionId != null 
+                ? session.SelectedQuestionId.Split(',').Select(int.Parse).ToList() 
+                : new List<int>();
+                
+            // Check if we've answered all pre-selected questions
+            bool allPreSelectedQuestionsAnswered = selectedQuestionId.All(id => answeredQuestionIds.Contains(id));
+            
+            // If we've answered all pre-selected questions, check if there's a tie in skin type scores
+            if (allPreSelectedQuestionsAnswered)
+            {
+                // Check if there's a tie in skin type scores
+                var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                var maxScore = skinTypeScores.Max(s => s.Score);
+                var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
+                
+                // If there's no tie, complete the survey
+                if (topSkinTypes.Count == 1)
+                {
+                    var result = await GetSkinTypeByScoreAsync(sessionId);
+                    if (result != null)
+                    {
+                        await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
+                        var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
+                        
+                        return new
+                        {
+                            isResult = true,
+                            sessionId = session.Id,
+                            skinTypeScores = skinTypeScores,
+                            result = new
+                            {
+                                id = result.Id,
+                                resultId = result.ResultId,
+                                skinType = result.SkinType,
+                                resultText = result.ResultText,
+                                recommendationText = result.RecommendationText
+                            },
+                            recommendedServices = recommendedServices
+                        };
+                    }
+                }
+                // If there's a tie, we'll continue with more questions in GetNextQuestionAsync
             }
             
             var nextQuestion = await GetNextQuestionAsync(sessionId);

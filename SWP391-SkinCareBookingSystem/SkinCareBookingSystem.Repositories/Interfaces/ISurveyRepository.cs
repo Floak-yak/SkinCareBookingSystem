@@ -32,6 +32,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         Task<SurveySession> GetSessionAsync(int id);
         Task<List<SurveySession>> GetSessionsByUserIdAsync(int userId);
         Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId);
+        Task<SurveySession> UpdateSessionAsync(SurveySession session);
 
         Task<SurveyResponse> AddResponseAsync(SurveyResponse response);
         Task<List<SurveyResponse>> GetResponsesAsync(int sessionId);

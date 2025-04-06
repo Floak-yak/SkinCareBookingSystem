@@ -20,5 +20,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         
         public ICollection<SurveyResponse> Responses { get; set; }
         public ICollection<UserSkinTypeScore> SkinTypeScores { get; set; }
+        
+        public string SelectedQuestionId { get; set; }
     }
 } 
