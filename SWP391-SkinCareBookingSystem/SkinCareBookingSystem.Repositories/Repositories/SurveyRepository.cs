@@ -18,6 +18,11 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyQuestions
                 .Include(q => q.Options)
+                    .ThenInclude(o => o.Question)
+                .Include(q => q.Options)
+                    .ThenInclude(o => o.Responses)
+                .Include(q => q.Options)
+                    .ThenInclude(o => o.SkinTypePoints)
                 .ToListAsync();
         }
 
@@ -25,6 +30,11 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyQuestions
                 .Include(q => q.Options)
+                    .ThenInclude(o => o.Question)
+                .Include(q => q.Options)
+                    .ThenInclude(o => o.Responses)
+                .Include(q => q.Options)
+                    .ThenInclude(o => o.SkinTypePoints)
                 .FirstOrDefaultAsync(q => q.Id == id);
         }
 
@@ -56,6 +66,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyOptions
                 .Where(o => o.QuestionId == questionId)
+                .Include(o => o.Question)
+                .Include(o => o.Responses)
+                .Include(o => o.SkinTypePoints)
                 .ToListAsync();
         }
 
@@ -190,6 +203,12 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         }
 
         public async Task<SurveyResponse> AddResponseAsync(SurveyResponse response)
+        {
+            _context.SurveyResponses.Add(response);
+            await _context.SaveChangesAsync();
+            return response;
+        }
+
         public async Task<List<SurveyResponse>> GetResponsesAsync(int sessionId)
         {
             return await _context.SurveyResponses

@@ -305,12 +305,34 @@ namespace SkinCareBookingSystem.Controller.Controllers
 
         #region Admin API
         [HttpGet("admin/questions")]
-        public async Task<ActionResult<List<SurveyQuestion>>> GetAllQuestions()
+        public async Task<ActionResult<List<object>>> GetAllQuestions()
         {
             try
             {
                 var questions = await _surveyService.GetAllQuestionsAsync();
-                return Ok(questions);
+                
+                var result = questions.Select(q => new
+                {
+                    q.Id,
+                    q.QuestionId,
+                    q.QuestionText,
+                    q.IsActive,
+                    q.CreatedDate,
+                    Options = q.Options.Select(o => new
+                    {
+                        o.Id,
+                        o.OptionText,
+                        o.QuestionId,
+                        SkinTypePoints = o.SkinTypePoints.Select(sp => new
+                        {
+                            sp.Id,
+                            sp.SkinTypeId,
+                            sp.Points
+                        }).ToList()
+                    }).ToList()
+                }).ToList();
+                
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -319,7 +341,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpGet("admin/question/{id}")]
-        public async Task<ActionResult<SurveyQuestion>> GetQuestionById(int id)
+        public async Task<ActionResult<object>> GetQuestionById(int id)
         {
             try
             {
@@ -328,7 +350,29 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 {
                     return NotFound("Question not found");
                 }
-                return Ok(question);
+                
+                var result = new
+                {
+                    question.Id,
+                    question.QuestionId,
+                    question.QuestionText,
+                    question.IsActive,
+                    question.CreatedDate,
+                    Options = question.Options.Select(o => new
+                    {
+                        o.Id,
+                        o.OptionText,
+                        o.QuestionId,
+                        SkinTypePoints = o.SkinTypePoints.Select(sp => new
+                        {
+                            sp.Id,
+                            sp.SkinTypeId,
+                            sp.Points
+                        }).ToList()
+                    }).ToList()
+                };
+                
+                return Ok(result);
             }
             catch (Exception ex)
             {
