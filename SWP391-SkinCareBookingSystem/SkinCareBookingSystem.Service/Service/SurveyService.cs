@@ -279,6 +279,21 @@ namespace SkinCareBookingSystem.Service.Service
                     }
                     else
                     {
+                        var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                        if (finalSkinTypeScores.Any())
+                        {
+                            var finalMaxScore = finalSkinTypeScores.Max(s => s.Score);
+                            var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                            
+                            var allResults = await _surveyRepository.GetAllResultsAsync();
+                            var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                            
+                            if (matchingResult != null)
+                            {
+                                await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                            }
+                        }
+                        
                         return new
                         {
                             isResult = true,
@@ -303,11 +318,26 @@ namespace SkinCareBookingSystem.Service.Service
                         isResult = true,
                         isEnd = true,
                         sessionId = session.Id,
-                        message = "Survey completed no result."
+                        message = "Survey completed."
                     };
                 }
                 else
                 {
+                    var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                    if (finalSkinTypeScores.Any())
+                    {
+                        var finalMaxScore = finalSkinTypeScores.Max(s => s.Score);
+                        var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                        
+                        var allResults = await _surveyRepository.GetAllResultsAsync();
+                        var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                        
+                        if (matchingResult != null)
+                        {
+                            await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                        }
+                    }
+                    
                     return new
                     {
                         isResult = true,
@@ -413,6 +443,18 @@ namespace SkinCareBookingSystem.Service.Service
             
             if (nextQuestion == null)
             {
+                var sessionSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                var sessionMaxScore = sessionSkinTypeScores.Max(s => s.Score);
+                var topSkinTypeId = sessionSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                
+                var allResults = await _surveyRepository.GetAllResultsAsync();
+                var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                
+                if (matchingResult != null)
+                {
+                    await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                }
+                
                 return new
                 {
                     isResult = true,
