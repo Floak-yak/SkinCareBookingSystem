@@ -24,8 +24,8 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         // GET: api/SurveyResults/recommended-services?skinType
-        [HttpGet("recommended-services")]
-        public async Task<IActionResult> GetRecommendedServicesBySkinType([FromQuery] string skinType)
+        [HttpGet("recommended-services/{skinType}")]
+        public async Task<IActionResult> GetRecommendedServicesBySkinType(string skinType)
         {
             try
             {
