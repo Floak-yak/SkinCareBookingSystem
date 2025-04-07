@@ -565,6 +565,9 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("int");
+
                     b.Property<long>("OrderCode")
                         .HasColumnType("bigint");
 
@@ -582,6 +585,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ImageId");
 
                     b.HasIndex("UserId");
 
@@ -622,6 +627,14 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("PaymentNumber")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -924,11 +937,17 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Transaction", b =>
                 {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.Image", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId");
+
                     b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.User", "User")
                         .WithMany("Transactions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Image");
 
                     b.Navigation("User");
                 });
