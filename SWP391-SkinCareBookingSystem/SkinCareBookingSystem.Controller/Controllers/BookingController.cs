@@ -69,12 +69,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
         [HttpPut("CompletePayment")]
         public async Task<IActionResult> CompletePayment([FromQuery] int bookingId)
         {
-            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
-            if (responses is null)
+            var responses = await _bookingService.CompletePayment(bookingId);
+            if (responses)
             {
-                return NotFound();
+                return BadRequest("Complete fail");
             }
-            return Ok(responses);
+            return Ok("Complete success");
         }
 
         [HttpGet("GetPayBackCancelBookingByUserId")]

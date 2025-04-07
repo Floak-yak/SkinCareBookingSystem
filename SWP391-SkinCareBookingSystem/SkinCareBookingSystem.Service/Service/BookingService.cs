@@ -549,9 +549,19 @@ namespace SkinCareBookingSystem.Service.Service
             return responses;
         }
 
-        public Task<bool> CompletePayment(int bookingId)
+        public async Task<bool> CompletePayment(int bookingId)
         {
-            throw new NotImplementedException();
+            Booking booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
+            if (booking is null)
+                throw new InvalidOperationException("Invalid bookingId");
+            Transaction transaction = await _transactionRepository.GetTransactionByBookingId(bookingId);
+            if (transaction is null)
+                throw new Exception("Invalid data of booking");
+            if (transaction.Image is null)
+                return false;
+            transaction.TranctionStatus = TranctionStatus.PaidBack;
+            _transactionRepository.Update(transaction);
+            return await _transactionRepository.SaveChange();
         }
     }
 }

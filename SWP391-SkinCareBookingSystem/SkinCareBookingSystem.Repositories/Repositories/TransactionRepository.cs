@@ -43,7 +43,14 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<bool> SaveChange() =>
             await _context.SaveChangesAsync() > 0;
 
-        public void Update(Transaction transaction) =>
-            _context.Transactions.Update(transaction);
+        public void Update(Transaction transaction)
+        {
+            if (transaction != null)
+            {
+                if (_context.Attach(transaction).State == EntityState.Modified)
+                    _context.Transactions.Update(transaction);
+            }            
+        }
+            
     }
 }
