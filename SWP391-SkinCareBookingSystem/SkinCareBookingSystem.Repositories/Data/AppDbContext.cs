@@ -27,13 +27,13 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<ServicesDetail> ServicesDetails { get; set; }
 
-        // Survey-related entities
         public DbSet<SurveyQuestion> SurveyQuestions { get; set; }
         public DbSet<SurveyOption> SurveyOptions { get; set; }
         public DbSet<SurveyResult> SurveyResults { get; set; }
         public DbSet<SurveySession> SurveySessions { get; set; }
         public DbSet<SurveyResponse> SurveyResponses { get; set; }
         public DbSet<RecommendedService> RecommendedServices { get; set; }
+        public DbSet<UserSkinTypeScore> UserSkinTypeScores { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -178,6 +178,12 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .WithMany()
                 .HasForeignKey(rs => rs.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserSkinTypeScore>()
+                .HasOne(uss => uss.Session)
+                .WithMany(s => s.SkinTypeScores)
+                .HasForeignKey(uss => uss.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

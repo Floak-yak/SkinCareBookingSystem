@@ -9,13 +9,13 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     public class SurveyQuestion
     {
         public int Id { get; set; }
-        public string QuestionId { get; set; } // Matches the ID in the Node (e.g., Q1, Q2, etc.)
+        public string QuestionId { get; set; }
         public string QuestionText { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         // Relationships
-        public ICollection<SurveyOption> Options { get; set; }
-        public ICollection<SurveyResponse> Responses { get; set; }
+        public ICollection<SurveyOption>? Options { get; set; }
+        public ICollection<SurveyResponse>? Responses { get; set; }
     }
 } 
