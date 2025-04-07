@@ -263,6 +263,7 @@ namespace SkinCareBookingSystem.Service.Service
                         
                         return new
                         {
+                            success = true,
                             isResult = true,
                             sessionId = session.Id,
                             skinTypeScores = await GetSkinTypeScoresAsync(sessionId),
@@ -291,11 +292,30 @@ namespace SkinCareBookingSystem.Service.Service
                             if (matchingResult != null)
                             {
                                 await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                                
+                                return new
+                                {
+                                    success = true,
+                                    isResult = true,
+                                    isEnd = true,
+                                    sessionId = session.Id,
+                                    message = "Survey completed",
+                                    skinType = matchingResult.SkinType,
+                                    result = new
+                                    {
+                                        id = matchingResult.Id,
+                                        resultId = matchingResult.ResultId,
+                                        skinType = matchingResult.SkinType,
+                                        resultText = matchingResult.ResultText,
+                                        recommendationText = matchingResult.RecommendationText
+                                    }
+                                };
                             }
                         }
                         
                         return new
                         {
+                            success = false,
                             isResult = true,
                             isEnd = true,
                             sessionId = session.Id,
@@ -315,10 +335,20 @@ namespace SkinCareBookingSystem.Service.Service
                     
                     return new
                     {
+                        success = true,
                         isResult = true,
                         isEnd = true,
                         sessionId = session.Id,
-                        message = "Survey completed."
+                        message = "Survey completed.",
+                        result = new
+                        {
+                            id = result.Id,
+                            resultId = result.ResultId,
+                            skinType = result.SkinType,
+                            resultText = result.ResultText,
+                            recommendationText = result.RecommendationText
+                        },
+                        recommendedServices = recommendedServices
                     };
                 }
                 else
@@ -335,11 +365,30 @@ namespace SkinCareBookingSystem.Service.Service
                         if (matchingResult != null)
                         {
                             await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                            
+                            return new
+                            {
+                                success = true,
+                                isResult = true,
+                                isEnd = true,
+                                sessionId = session.Id,
+                                message = "Survey completed",
+                                skinType = matchingResult.SkinType,
+                                result = new
+                                {
+                                    id = matchingResult.Id,
+                                    resultId = matchingResult.ResultId,
+                                    skinType = matchingResult.SkinType,
+                                    resultText = matchingResult.ResultText,
+                                    recommendationText = matchingResult.RecommendationText
+                                }
+                            };
                         }
                     }
                     
                     return new
                     {
+                        success = false,
                         isResult = true,
                         isEnd = true,
                         sessionId = session.Id,
@@ -372,6 +421,7 @@ namespace SkinCareBookingSystem.Service.Service
                 
                 return new
                 {
+                    success = true,
                     isResult = false,
                     questionId = nextQuestion.Id,
                     questionText = nextQuestion.QuestionText,
@@ -422,6 +472,7 @@ namespace SkinCareBookingSystem.Service.Service
                         
                         return new
                         {
+                            success = true,
                             isResult = true,
                             sessionId = session.Id,
                             skinTypeScores = skinTypeScores,
@@ -453,14 +504,25 @@ namespace SkinCareBookingSystem.Service.Service
                 if (matchingResult != null)
                 {
                     await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                    
+                    return new
+                    {
+                        success = true,
+                        isResult = true,
+                        isEnd = true,
+                        sessionId = sessionId,
+                        message = "Survey completed",
+                        skinType = matchingResult.SkinType
+                    };
                 }
                 
                 return new
                 {
+                    success = false,
                     isResult = true,
                     isEnd = true,
                     sessionId = sessionId,
-                    message = "Survey completed."
+                    message = "Survey completed failed."
                 };
             }
             

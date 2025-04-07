@@ -108,6 +108,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 
                 return Ok(new
                 {
+                    success = true,
                     sessionId = session.Id,
                     completedDate = session.CompletedDate,
                     result = new
