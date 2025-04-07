@@ -17,5 +17,6 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<Transaction> GetTransactionByABookingIdAndUserId(int userId, int bookingId);    
         public Task<List<Transaction>> GetAllTransactions();    
         public Task<Transaction> GetTransactionByBookingId(int bookingId);  
+        public Task<List<Transaction>> GetTransactionsByBookingId(List<int> bookingId);
     }
 }

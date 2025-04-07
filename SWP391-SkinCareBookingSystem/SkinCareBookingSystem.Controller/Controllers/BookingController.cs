@@ -33,6 +33,61 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok(responses);
         }
 
+        [HttpGet("GetPayBackCancelBookings")]
+        public async Task<IActionResult> GetPayBackCancelBookings()
+        {
+            var responses = await _bookingService.GetPayBackCancelBookings();
+            if (responses is null)
+            {
+                return NotFound();
+            }
+            return Ok(responses);
+        }
+
+        [HttpGet("GetPaidCancelBookings")]
+        public async Task<IActionResult> GetPaidCancelBookings()
+        {
+            var responses = await _bookingService.GetPaidCancelBookings();
+            if (responses is null)
+            {
+                return NotFound();
+            }
+            return Ok(responses);
+        }
+
+        [HttpPost("UploadImage")]
+        public async Task<IActionResult> UploadImage([FromQuery] int bookingId)
+        {
+            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
+            if (responses is null)
+            {
+                return NotFound();
+            }
+            return Ok(responses);
+        }
+
+        [HttpPut("CompletePayment")]
+        public async Task<IActionResult> CompletePayment([FromQuery] int bookingId)
+        {
+            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
+            if (responses is null)
+            {
+                return NotFound();
+            }
+            return Ok(responses);
+        }
+
+        [HttpGet("GetPayBackCancelBookingByUserId")]
+        public async Task<IActionResult> GetPayBackCancelBookingByUserId([FromQuery] int userId)
+        {
+            var responses = await _bookingService.GetCancelBookingByUserId(userId);
+            if (responses is null)
+            {
+                return NotFound();
+            }
+            return Ok(responses);
+        }
+
         [HttpPut("SkinTherapistCheckout")]
         public async Task<IActionResult> SkinTherapistCheckout([FromQuery] int skinTherapistId, int scheduleLogId)
         {

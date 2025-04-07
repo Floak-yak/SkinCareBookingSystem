@@ -21,6 +21,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
     }
     public enum TranctionStatus
     {
+        PaidBack = 2,
+        WattingForPayBack = -2,
         Paid = 1,
         Pending = 0,
         Cancel = - 1,

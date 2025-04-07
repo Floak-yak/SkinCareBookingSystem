@@ -37,6 +37,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<Transaction> GetTransactionByBookingId(int bookingId) =>
             await _context.Transactions.FirstOrDefaultAsync(t => t.BookingId == bookingId);
 
+        public async Task<List<Transaction>> GetTransactionsByBookingId(List<int> bookingIds) =>
+            await _context.Transactions.Where(t => t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)).ToListAsync();
+
         public async Task<bool> SaveChange() =>
             await _context.SaveChangesAsync() > 0;
 
