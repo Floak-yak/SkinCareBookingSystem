@@ -56,6 +56,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public void Update(User user)
         {
+            if (_context.Attach(user).State == EntityState.Modified)
             _context.Users.Update(user);
         }
 

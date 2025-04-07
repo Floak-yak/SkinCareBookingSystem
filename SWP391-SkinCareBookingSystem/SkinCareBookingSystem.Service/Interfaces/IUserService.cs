@@ -31,5 +31,6 @@ namespace SkinCareBookingSystem.Service.Interfaces
         public Task<bool> UploadAvatarForUser(UploadAvatarForUserRequest request);
         public Task<bool> UpdateUserDescription(UpdateUserDescriptionRequest request);
         public Task<bool> RemoveUser(RemoveUserRequest request);
+        public Task<bool> UpdateUserProfile(UpdateUserProfileRequest request);
     }
 }
