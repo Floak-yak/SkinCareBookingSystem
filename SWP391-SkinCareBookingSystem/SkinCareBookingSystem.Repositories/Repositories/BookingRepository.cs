@@ -92,5 +92,19 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             _context.Bookings.Remove(booking);
             return await SaveChange();
         }
+
+        public async Task<List<Booking>> GetCancelBookings() =>
+            await _context.Bookings
+            .Include(b => b.User)
+            .OrderByDescending(b => b.CreatedTime)
+            .Where(b => b.Status == BookingStatus.Cancel)
+            .ToListAsync();
+
+        public async Task<List<Booking>> GetCancelBookingByUserId(int userId) =>
+            await _context.Bookings
+            .Include(b => b.User)
+            .OrderByDescending(b => b.CreatedTime)
+            .Where(b => b.UserId == userId && b.Status == BookingStatus.Cancel)
+            .ToListAsync();
     }
 }

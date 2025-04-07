@@ -112,5 +112,10 @@ namespace SkinCareBookingSystem.Service.Service
                 Size = size
             };
         }
+
+        public Task<bool> UploadImage(int bookingId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

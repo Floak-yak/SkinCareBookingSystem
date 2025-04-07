@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.BusinessObject.Helper;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Repositories;
 using SkinCareBookingSystem.Service.Dto;
@@ -234,21 +235,19 @@ namespace SkinCareBookingSystem.Service.Service
             if (booking is null || booking.UserId != userId)
                 return false;
 
-            //TimeSpan tDiff = DateTime.UtcNow - booking.CreatedTime;
-            //if (tDiff.TotalDays > 1)
-            //    return false;
+            if (booking.Status == BookingStatus.Checkin || booking.Status == BookingStatus.Completed)
+                return false;
+
+            booking.Status = BookingStatus.Cancel;
 
             Transaction transaction = await _transactionRepository.GetTransactionByABookingIdAndUserId(userId, bookingId);
             if (transaction is null) return false;
             if (transaction.TranctionStatus is TranctionStatus.Paid)
             {
-                return false;
+                transaction.TranctionStatus = TranctionStatus.WattingForPayBack;
             }
 
-            if (booking.Status == BookingStatus.Checkin || booking.Status == BookingStatus.Completed)
-                return false;
-
-            booking.Status = BookingStatus.Cancel;
+            _transactionRepository.Update(transaction);
             _bookingRepository.UpdateBooking(booking);
 
             ScheduleLog scheduleLog = await _scheduleLogRepository.GetScheduleLogById(booking.BookingServiceSchedules.FirstOrDefault().ScheduleLogId);
@@ -416,6 +415,106 @@ namespace SkinCareBookingSystem.Service.Service
             }
             _bookingRepository.UpdateBooking(bookings);
             return await _bookingRepository.SaveChange();
+        }
+
+        public async Task<List<GetPaybackCancelBookingsResponse>> GetPaidCancelBookings()
+        {
+            List<GetPaybackCancelBookingsResponse> responses = new();
+            try
+            {
+                List<Booking> bookings = await _bookingRepository.GetCancelBookings();
+                List<int> bookingIdList = new();
+                foreach (var booking in bookings)
+                {
+                    bookingIdList.Add(booking.Id);
+                }
+                List<Transaction> transactions = await _transactionRepository.GetTransactionsByBookingId(bookingIdList);
+                foreach (Transaction transaction in transactions)
+                {
+                    Booking booking = bookings.FirstOrDefault(b => b.Id == transaction.BookingId);
+                    if (booking is null)
+                    {
+                        throw new Exception("Invalid data of booking");
+                    }
+                    if (transaction.TranctionStatus != TranctionStatus.PaidBack)
+                        bookings.Remove(booking);
+                    else
+                    {
+                        responses.Add(new GetPaybackCancelBookingsResponse()
+                        {
+                            date = booking.Date,
+                            Email = booking.User.Email,
+                            FullName = booking.User.FullName,
+                            PaymentMethod = booking.User.PaymentMethod,
+                            PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
+                            PhoneNumber = booking.User.PhoneNumber,
+                            TotalAmount = transaction.TotalMoney,
+                            YearOfBirth = booking.User.YearOfBirth
+                        });
+                        bookings.Remove(booking);
+                    }                        
+                }                
+            }
+            catch
+            {
+                throw new Exception("Invalid data of booking");
+            }            
+            return responses;
+        }
+
+        public async Task<List<GetPaybackCancelBookingsResponse>> GetPayBackCancelBookings()
+        {
+            List<GetPaybackCancelBookingsResponse> responses = new();
+            try
+            {
+                List<Booking> bookings = await _bookingRepository.GetCancelBookings();
+                List<int> bookingIdList = new();
+                foreach (var booking in bookings)
+                {
+                    bookingIdList.Add(booking.Id);
+                }
+                List<Transaction> transactions = await _transactionRepository.GetTransactionsByBookingId(bookingIdList);
+                foreach (Transaction transaction in transactions)
+                {
+                    Booking booking = bookings.FirstOrDefault(b => b.Id == transaction.BookingId);
+                    if (booking is null)
+                    {
+                        throw new Exception("Invalid data of booking");
+                    }
+                    if (transaction.TranctionStatus != TranctionStatus.WattingForPayBack)
+                        bookings.Remove(booking);
+                    else
+                    {
+                        responses.Add(new GetPaybackCancelBookingsResponse()
+                        {
+                            date = booking.Date,
+                            Email = booking.User.Email,
+                            FullName = booking.User.FullName,
+                            PaymentMethod = booking.User.PaymentMethod,
+                            PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
+                            PhoneNumber = booking.User.PhoneNumber,
+                            TotalAmount = transaction.TotalMoney,
+                            YearOfBirth = booking.User.YearOfBirth
+                        });
+                        bookings.Remove(booking);
+                    }
+                }
+            }
+            catch
+            {
+                throw new Exception("Invalid data of booking");
+            }
+            return responses;
+        }
+
+        public Task<List<GetCancelBookingByUserIdResponse>> GetCancelBookingByUserId(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> CompletePayment(int bookingId)
+        {
+            throw new NotImplementedException();
         }
     }
 }
