@@ -17,11 +17,13 @@ namespace SkinCareBookingSystem.Service.Service
     {
         private readonly IImageRepository _imageRepository;
         private readonly IMapper _mapper;
+        private readonly ITransactionRepository _transactionRepository;
 
-        public ImageService(IImageRepository imageRepository, IMapper mapper)
+        public ImageService(IImageRepository imageRepository, IMapper mapper, ITransactionRepository transactionRepository)
         {
             _imageRepository = imageRepository;
             _mapper = mapper;
+            _transactionRepository = transactionRepository;
         }
 
         public async Task<StoreImageResponse> StoreImage(IFormFile imageRequest, string? description)
@@ -113,9 +115,24 @@ namespace SkinCareBookingSystem.Service.Service
             };
         }
 
-        public Task<bool> UploadImage(int bookingId)
+        public async Task<bool> UploadImage(int bookingId, IFormFile image)
         {
-            throw new NotImplementedException();
+            using var memoryStream = new MemoryStream();
+            await image.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+            Image imageStore = new()
+            {
+                Bytes = fileBytes,
+                Size = Math.Round(image.Length / 1024m, 2),
+                Description = DateTime.Now.ToString(),
+                FileExtension = Path.GetExtension(image.FileName)
+            };
+            _imageRepository.CreateImage(imageStore);
+            Transaction transaction = await _transactionRepository.GetTransactionByBookingId(bookingId);
+            if (transaction is null)
+                return false;
+            transaction.Image = imageStore;
+            return await _imageRepository.SaveChange();
         }
     }
 }

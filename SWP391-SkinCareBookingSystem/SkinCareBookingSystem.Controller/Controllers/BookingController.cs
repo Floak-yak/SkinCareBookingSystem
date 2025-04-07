@@ -14,12 +14,14 @@ namespace SkinCareBookingSystem.Controller.Controllers
         private readonly ITransactionService _transactionService;
         private readonly IMapper _mapper;
         private readonly IBookingService _bookingService;
+        private readonly IImageService _imageService;
 
-        public BookingController(IBookingService bookingService, IMapper mapper, ITransactionService transactionService)
+        public BookingController(IBookingService bookingService, IMapper mapper, ITransactionService transactionService, IImageService imageService)
         {
             _transactionService = transactionService;
             _mapper = mapper;
             _bookingService = bookingService;
+            _imageService = imageService;
         }
 
         [HttpGet("Gets")]
@@ -56,21 +58,21 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("UploadImage")]
-        public async Task<IActionResult> UploadImage([FromQuery] int bookingId)
+        public async Task<IActionResult> UploadImage([FromForm] UploadImageForTransactionRequest request)
         {
-            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
-            if (responses is null)
+            var responses = await _imageService.UploadImage(request.BookingId, request.Image);
+            if (!responses)
             {
-                return NotFound();
+                return BadRequest("Upload fail");
             }
-            return Ok(responses);
+            return Ok("Upload success");
         }
 
         [HttpPut("CompletePayment")]
         public async Task<IActionResult> CompletePayment([FromQuery] int bookingId)
         {
             var responses = await _bookingService.CompletePayment(bookingId);
-            if (responses)
+            if (!responses)
             {
                 return BadRequest("Complete fail");
             }
