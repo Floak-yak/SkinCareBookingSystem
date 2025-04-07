@@ -500,9 +500,9 @@ namespace SkinCareBookingSystem.Service.Service
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
-                throw new Exception("Invalid data of booking");
+                throw e;
             }
             return responses;
         }
@@ -542,9 +542,9 @@ namespace SkinCareBookingSystem.Service.Service
                     }
                 }
             }
-            catch
+            catch(Exception e)
             {
-                throw new Exception("Invalid data of booking");
+                throw e;
             }
             return responses;
         }
