@@ -9,6 +9,7 @@ using SkinCareBookingSystem.Service.Service;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -148,12 +149,63 @@ namespace SkinCareBookingSystem.Controller.Controllers
         public async Task<IActionResult> ChangePassword(int userId, string oldPassword, string newPassword)
         {
             if (string.IsNullOrEmpty(oldPassword) || string.IsNullOrEmpty(newPassword))
-                return BadRequest("OldPassword, newPassword must no be empty");
+                return BadRequest("OldPassword, newPassword must not be empty");
             if (!await _userService.ChangePassword(userId, oldPassword, newPassword))
             {
                 return BadRequest("Change password fail");
             }
             return Ok("Change password success");
+        }
+
+        [HttpPut("UpdateUserProfile")]
+        public async Task<IActionResult> UpdateUserProfile([FromForm] UpdateUserProfileRequest request)
+        {
+            if (request is null)
+                return BadRequest("Request must not be null");
+
+            if (request.userId <= 0)
+                return BadRequest("Invalid userId");
+
+            if (string.IsNullOrEmpty(request.FullName))
+                return BadRequest("FullName must not be empty");
+
+            if (request.YearOfBirth == default)
+                return BadRequest("YearOfBirth must be a valid date");
+
+            int age = DateTime.Now.Year - request.YearOfBirth.Year;
+            if (age < 6 || age > 100)
+                return BadRequest("Age must be between 6 and 100 years");
+
+            if (string.IsNullOrEmpty(request.Email))
+                return BadRequest("Email must not be empty");
+
+            var emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+            if (!Regex.IsMatch(request.Email, emailPattern))
+                return BadRequest("Email format is invalid");
+
+            if (string.IsNullOrEmpty(request.PhoneNumber))
+                return BadRequest("PhoneNumber must not be empty");
+
+            if (string.IsNullOrEmpty(request.PaymentMethod))
+                return BadRequest("PaymentMethod must not be empty");
+
+            if (string.IsNullOrEmpty(request.PaymentNumber))
+                return BadRequest("PaymentNumber must not be empty");
+
+            if (request.Image == null || request.Image.Length == 0)
+                return BadRequest("Image must be uploaded");
+            try
+            {
+                if (!await _userService.UpdateUserProfile(request))
+                {
+                    return BadRequest("Update fail");
+                }
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
+            return Ok("Update success");
         }
 
         [HttpPut("UpdateAvatarForUser")]

@@ -101,6 +101,9 @@ namespace SkinCareBookingSystem.Service.Service
             {
                 foreach (var scheduleLog in schedule.ScheduleLogs)
                 {
+                    bool IsScheduleLogNull = scheduleLog.BookingServiceSchedules.FirstOrDefault(b => !b.ScheduleLog.IsCancel) == null;
+                    if (IsScheduleLogNull)
+                        continue;
                     scheduleLog.ServiceName = skincareServiceList.FirstOrDefault(sk => sk.Id == scheduleLog.BookingServiceSchedules.FirstOrDefault(b => !b.ScheduleLog.IsCancel).ServiceId).ServiceName;
                 }
             }

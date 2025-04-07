@@ -245,7 +245,7 @@ namespace SkinCareBookingSystem.Service.Service
                 return false;
             }
 
-            if (booking.Status == BookingStatus.Waitting || booking.Status == BookingStatus.Completed)
+            if (booking.Status == BookingStatus.Checkin || booking.Status == BookingStatus.Completed)
                 return false;
 
             booking.Status = BookingStatus.Cancel;
@@ -402,6 +402,20 @@ namespace SkinCareBookingSystem.Service.Service
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public async Task<bool> UserCheckin(int userId)
+        {
+            User user = await _userRepository.GetUserById(userId);
+            if (user is null)
+                throw new InvalidOperationException("Invalid userId");
+            List<Booking> bookings = user.Bookings.Where(b => b.Date.Day == DateTime.Now.Day).ToList();
+            foreach (var booking in bookings)
+            {
+                booking.Status = BookingStatus.Checkin;
+            }
+            _bookingRepository.UpdateBooking(bookings);
+            return await _bookingRepository.SaveChange();
         }
     }
 }

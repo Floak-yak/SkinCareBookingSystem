@@ -33,7 +33,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok(responses);
         }
 
-        [HttpGet("SkinTherapistCheckout")]
+        [HttpPut("SkinTherapistCheckout")]
         public async Task<IActionResult> SkinTherapistCheckout([FromQuery] int skinTherapistId, int scheduleLogId)
         {
             if (skinTherapistId <= 0)
@@ -45,6 +45,27 @@ namespace SkinCareBookingSystem.Controller.Controllers
             {
                 result = await _bookingService.SkinTherapistCheckout(skinTherapistId, scheduleLogId);
             } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            if (!result)
+            {
+                return BadRequest("Checkout fail");
+            }
+            return Ok("Checkout success");
+        }
+
+        [HttpPut("SkinTherapistCheckin")]
+        public async Task<IActionResult> SkinTherapistCheckin([FromQuery] int userId)
+        {
+            if (userId <= 0)
+                return BadRequest("Invalid userId");
+            bool result;
+            try
+            {
+                result = await _bookingService.UserCheckin(userId);
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

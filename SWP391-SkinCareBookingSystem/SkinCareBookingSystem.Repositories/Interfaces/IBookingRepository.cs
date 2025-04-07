@@ -16,6 +16,7 @@ namespace SkinCareBookingSystem.Repositories.Interfaces
         public Task<bool> DeleteBooking(int bookingId);
         public Task<bool> DeleteBooking(Booking booking);
         public void UpdateBooking(Booking booking);
+        public void UpdateBooking(List<Booking> bookings);
         public void CreateBooking(Booking booking);
         public Task<bool> SaveChange();
         public Task<User> GetRandomSkinTherapistAsync();

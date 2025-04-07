@@ -17,6 +17,7 @@ using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.User;
 using Azure.Core;
 using System.Data;
+using SkinCareBookingSystem.BusinessObject.Helper;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -494,6 +495,20 @@ namespace SkinCareBookingSystem.Service.Service
             User user = await _userRepository.GetUserById(request.UserId);
             if (user is null || user.Role != (Role)3) return false;
             user.Description = request.Description;
+            _userRepository.Update(user);
+            return await _userRepository.SaveChange();
+        }
+
+        public async Task<bool> UpdateUserProfile(UpdateUserProfileRequest request)
+        {
+            User user = await _userRepository.GetUserById(request.userId);
+            user.FullName = request.FullName;
+            user.YearOfBirth = request.YearOfBirth;
+            user.Email = request.Email;
+            user.PhoneNumber = request.PhoneNumber;
+            user.PaymentMethod = request.PaymentMethod;
+            user.PaymentNumber = EncryptionHelper.Encrypt(request.PaymentNumber);
+
             _userRepository.Update(user);
             return await _userRepository.SaveChange();
         }
