@@ -14,12 +14,14 @@ namespace SkinCareBookingSystem.Controller.Controllers
         private readonly ITransactionService _transactionService;
         private readonly IMapper _mapper;
         private readonly IBookingService _bookingService;
+        private readonly IImageService _imageService;
 
-        public BookingController(IBookingService bookingService, IMapper mapper, ITransactionService transactionService)
+        public BookingController(IBookingService bookingService, IMapper mapper, ITransactionService transactionService, IImageService imageService)
         {
             _transactionService = transactionService;
             _mapper = mapper;
             _bookingService = bookingService;
+            _imageService = imageService;
         }
 
         [HttpGet("Gets")]
@@ -56,25 +58,25 @@ namespace SkinCareBookingSystem.Controller.Controllers
         }
 
         [HttpPost("UploadImage")]
-        public async Task<IActionResult> UploadImage([FromQuery] int bookingId)
+        public async Task<IActionResult> UploadImage([FromForm] UploadImageForTransactionRequest request)
         {
-            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
-            if (responses is null)
+            var responses = await _imageService.UploadImage(request.BookingId, request.Image);
+            if (!responses)
             {
-                return NotFound();
+                return BadRequest("Upload fail");
             }
-            return Ok(responses);
+            return Ok("Upload success");
         }
 
         [HttpPut("CompletePayment")]
         public async Task<IActionResult> CompletePayment([FromQuery] int bookingId)
         {
-            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
-            if (responses is null)
+            var responses = await _bookingService.CompletePayment(bookingId);
+            if (!responses)
             {
-                return NotFound();
+                return BadRequest("Complete fail");
             }
-            return Ok(responses);
+            return Ok("Complete success");
         }
 
         [HttpGet("GetPayBackCancelBookingByUserId")]
@@ -227,15 +229,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest(new { success = false, message = "Cannot cancel a completed booking" });
                 }
 
-                if (booking.Status == BookingStatus.Waitting)
+                if (booking.Status == BookingStatus.Checkin)
                 {
-                    return BadRequest(new { success = false, message = "Cannot cancel a paid booking" });
-                }
-
-                TimeSpan timeSinceCreation = DateTime.UtcNow - booking.CreatedTime;
-                if (timeSinceCreation.TotalDays > 1)
-                {
-                    return BadRequest(new { success = false, message = "Booking can only be cancelled within 24 hours of creation" });
+                    return BadRequest(new { success = false, message = "Cannot cancel a checkin booking" });
                 }
 
                 bool result = await _bookingService.CancelBooking(bookingId, userId);

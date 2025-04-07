@@ -18,6 +18,7 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string QrCode { get; set; }
         public long OrderCode {  get; set; } 
         public List<Product>? Products { get; set; }
+        public Image Image { get; set; }
     }
     public enum TranctionStatus
     {
