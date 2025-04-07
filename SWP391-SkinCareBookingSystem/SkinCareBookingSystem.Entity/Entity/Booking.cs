@@ -27,5 +27,6 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         Pending = 0,
         Completed = 1,
         Waitting = 2,
+        Checkin = 3,
     }
 }
