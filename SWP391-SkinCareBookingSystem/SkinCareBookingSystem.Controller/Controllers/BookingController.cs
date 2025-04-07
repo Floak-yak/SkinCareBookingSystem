@@ -229,15 +229,9 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return BadRequest(new { success = false, message = "Cannot cancel a completed booking" });
                 }
 
-                if (booking.Status == BookingStatus.Waitting)
+                if (booking.Status == BookingStatus.Checkin)
                 {
-                    return BadRequest(new { success = false, message = "Cannot cancel a paid booking" });
-                }
-
-                TimeSpan timeSinceCreation = DateTime.UtcNow - booking.CreatedTime;
-                if (timeSinceCreation.TotalDays > 1)
-                {
-                    return BadRequest(new { success = false, message = "Booking can only be cancelled within 24 hours of creation" });
+                    return BadRequest(new { success = false, message = "Cannot cancel a checkin booking" });
                 }
 
                 bool result = await _bookingService.CancelBooking(bookingId, userId);
