@@ -507,9 +507,46 @@ namespace SkinCareBookingSystem.Service.Service
             return responses;
         }
 
-        public Task<List<GetCancelBookingByUserIdResponse>> GetCancelBookingByUserId(int userId)
+        public async Task<List<GetCancelBookingByUserIdResponse>> GetCancelBookingByUserId(int userId)
         {
-            throw new NotImplementedException();
+            List<GetCancelBookingByUserIdResponse> responses = new();
+            try
+            {
+                List<Booking> bookings = await _bookingRepository.GetCancelBookingByUserId(userId);
+                List<int> bookingIdList = new();
+                foreach (var booking in bookings)
+                {
+                    bookingIdList.Add(booking.Id);
+                }
+                List<Transaction> transactions = await _transactionRepository.GetTransactionsByBookingId(bookingIdList);
+                foreach (Transaction transaction in transactions)
+                {
+                    Booking booking = bookings.FirstOrDefault(b => b.Id == transaction.BookingId);
+                    if (booking is null)
+                    {
+                        throw new Exception("Invalid data of booking");
+                    }
+                    if (transaction.TranctionStatus != TranctionStatus.WattingForPayBack || transaction.TranctionStatus != TranctionStatus.PaidBack)
+                        bookings.Remove(booking);
+                    else
+                    {
+                        responses.Add(new GetCancelBookingByUserIdResponse()
+                        {
+                            CreatedTime = booking.CreatedTime,
+                            Date = booking.Date,
+                            ServiceName = booking.BookingServiceSchedules.FirstOrDefault(b => b.ScheduleLog.IsCancel).Service.ServiceName,
+                            TotalPrice = booking.TotalPrice,
+                            Status = transaction.TranctionStatus == TranctionStatus.PaidBack
+                        });
+                        bookings.Remove(booking);
+                    }
+                }
+            }
+            catch
+            {
+                throw new Exception("Invalid data of booking");
+            }
+            return responses;
         }
 
         public Task<bool> CompletePayment(int bookingId)

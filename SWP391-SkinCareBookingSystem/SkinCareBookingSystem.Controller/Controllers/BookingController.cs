@@ -77,12 +77,10 @@ namespace SkinCareBookingSystem.Controller.Controllers
             return Ok(responses);
         }
 
-
-
-        [HttpGet("GetPaidCancelBookingByUserId")]
-        public async Task<IActionResult> GetPaidCancelBookingByUserId([FromQuery] int userId)
+        [HttpGet("GetPayBackCancelBookingByUserId")]
+        public async Task<IActionResult> GetPayBackCancelBookingByUserId([FromQuery] int userId)
         {
-            List<GetBookingsResponse> responses = await _bookingService.GetBookingsAsync();
+            var responses = await _bookingService.GetCancelBookingByUserId(userId);
             if (responses is null)
             {
                 return NotFound();
