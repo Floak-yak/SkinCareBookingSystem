@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using SkinCareBookingSystem.BusinessObject.Helper;
 using SkinCareBookingSystem.Service.Dto;
 using SkinCareBookingSystem.Service.Dto.BookingDto;
 using SkinCareBookingSystem.Service.Dto.ImageDto;
@@ -16,7 +17,10 @@ namespace SkinCareBookingSystem.Service.Mapper
     {
         public MappingProfile()
         {
-            CreateMap<User, ViewUser>().ReverseMap();
+            CreateMap<User, ViewUser>().ForMember(d => d.PaymentNumber, 
+                            opt => opt.MapFrom(src => src.PaymentNumber != null
+                           ? EncryptionHelper.Decrypt(src.PaymentNumber)
+                           : null)).ReverseMap();
             CreateMap<GetBookingsResponse, Booking>().ReverseMap();
             CreateMap<GetProductResponse, Product>().ReverseMap();
             CreateMap<User, UserResponse>().ReverseMap();
