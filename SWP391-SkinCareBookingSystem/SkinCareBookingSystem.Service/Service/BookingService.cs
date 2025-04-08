@@ -539,6 +539,8 @@ namespace SkinCareBookingSystem.Service.Service
             try
             {
                 List<Booking> bookings = await _bookingRepository.GetCancelBookingByUserId(userId);
+                if (bookings is null)
+                    throw new InvalidOperationException("Invalid userId");
                 List<int> bookingIdList = new();
                 foreach (var booking in bookings)
                 {
