@@ -162,6 +162,31 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.ToTable("Images");
                 });
 
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.OptionSkinTypePoints", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SkinTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OptionId");
+
+                    b.ToTable("OptionSkinTypePoints");
+                });
+
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
                 {
                     b.Property<int>("Id")
@@ -398,15 +423,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Points")
-                        .HasColumnType("int");
-
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
-
-                    b.Property<string>("SkinTypeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -451,9 +469,6 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("OptionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Points")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionId")
@@ -535,6 +550,10 @@ namespace SkinCareBookingSystem.Repositories.Migrations
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("SelectedQuestionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SurveyResultId")
                         .HasColumnType("int");
@@ -749,6 +768,17 @@ namespace SkinCareBookingSystem.Repositories.Migrations
                     b.Navigation("Image");
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.OptionSkinTypePoints", b =>
+                {
+                    b.HasOne("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", "Option")
+                        .WithMany("SkinTypePoints")
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Option");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.Post", b =>
@@ -1018,6 +1048,8 @@ namespace SkinCareBookingSystem.Repositories.Migrations
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyOption", b =>
                 {
                     b.Navigation("Responses");
+
+                    b.Navigation("SkinTypePoints");
                 });
 
             modelBuilder.Entity("SkinCareBookingSystem.BusinessObject.Entity.SurveyQuestion", b =>

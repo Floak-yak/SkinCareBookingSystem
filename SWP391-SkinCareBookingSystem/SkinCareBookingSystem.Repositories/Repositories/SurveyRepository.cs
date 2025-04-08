@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Data;
@@ -8,16 +9,43 @@ namespace SkinCareBookingSystem.Repositories.Repositories
     public class SurveyRepository: ISurveyRepository
     {
         private readonly AppDbContext _context;
+        private IDbContextTransaction _currentTransaction;
 
         public SurveyRepository(AppDbContext context)
         {
             _context = context;
         }
 
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            _currentTransaction = await _context.Database.BeginTransactionAsync();
+            return _currentTransaction;
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            if (_currentTransaction != null)
+            {
+                await _currentTransaction.CommitAsync();
+                _currentTransaction = null;
+            }
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            if (_currentTransaction != null)
+            {
+                await _currentTransaction.RollbackAsync();
+                _currentTransaction = null;
+            }
+        }
+
         public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
         {
             return await _context.SurveyQuestions
                 .Include(q => q.Options)
+                .Include(q => q.Options)
+                    .ThenInclude(o => o.SkinTypePoints)
                 .ToListAsync();
         }
 
@@ -25,14 +53,9 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyQuestions
                 .Include(q => q.Options)
-                .FirstOrDefaultAsync(q => q.Id == id);
-        }
-
-        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
-        {
-            return await _context.SurveyQuestions
                 .Include(q => q.Options)
-                .FirstOrDefaultAsync(q => q.QuestionId == questionId);
+                    .ThenInclude(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(q => q.Id == id);
         }
 
         public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
@@ -44,9 +67,22 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
         {
-            _context.Entry(question).State = EntityState.Modified;
+            var existingQuestion = await _context.SurveyQuestions
+                .Include(q => q.Options)
+                .ThenInclude(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(q => q.Id == question.Id);
+
+            if (existingQuestion == null)
+                return null;
+
+            existingQuestion.QuestionId = question.QuestionId;
+            existingQuestion.QuestionText = question.QuestionText;
+            existingQuestion.IsActive = question.IsActive;
+
+            _context.SurveyQuestions.Update(existingQuestion);
             await _context.SaveChangesAsync();
-            return question;
+            
+            return existingQuestion;
         }
 
         public async Task<bool> DeleteQuestionAsync(int id)
@@ -63,12 +99,15 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         {
             return await _context.SurveyOptions
                 .Where(o => o.QuestionId == questionId)
+                .Include(o => o.SkinTypePoints)
                 .ToListAsync();
         }
 
         public async Task<SurveyOption> GetOptionByIdAsync(int id)
         {
-            return await _context.SurveyOptions.FindAsync(id);
+            return await _context.SurveyOptions
+                .Include(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(o => o.Id == id);
         }
 
         public async Task<SurveyOption> AddOptionAsync(SurveyOption option)
@@ -80,9 +119,18 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyOption> UpdateOptionAsync(SurveyOption option)
         {
-            _context.Entry(option).State = EntityState.Modified;
+            var existingOption = await _context.SurveyOptions
+                .Include(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(o => o.Id == option.Id);
+                
+            if (existingOption == null)
+                return null;
+                
+            existingOption.OptionText = option.OptionText;
+            
+            _context.SurveyOptions.Update(existingOption);
             await _context.SaveChangesAsync();
-            return option;
+            return existingOption;
         }
 
         public async Task<bool> DeleteOptionAsync(int id)
@@ -175,12 +223,20 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<SurveySession> CompleteSessionAsync(int sessionId, int resultId)
         {
             var session = await _context.SurveySessions.FindAsync(sessionId);
-            if (session == null) return null;
+            if (session == null)
+                return null;
 
             session.SurveyResultId = resultId;
             session.IsCompleted = true;
             session.CompletedDate = DateTime.Now;
 
+            _context.Entry(session).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return session;
+        }
+
+        public async Task<SurveySession> UpdateSessionAsync(SurveySession session)
+        {
             _context.Entry(session).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return session;
@@ -242,13 +298,6 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<UserSkinTypeScore> AddSkinTypeScoreAsync(UserSkinTypeScore score)
-        {
-            _context.UserSkinTypeScores.Add(score);
-            await _context.SaveChangesAsync();
-            return score;
-        }
-        
         public async Task<UserSkinTypeScore> UpdateSkinTypeScoreAsync(int sessionId, string skinTypeId, int pointsToAdd)
         {
             var score = await _context.UserSkinTypeScores
@@ -290,8 +339,76 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             if (scores == null || !scores.Any())
                 return null;
                 
-            var winningScore = scores.OrderByDescending(s => s.Score).FirstOrDefault();
-            return winningScore?.SkinTypeId;
+            var maxScore = scores.Max(s => s.Score);
+            
+            var topSkinTypes = scores.Where(s => s.Score == maxScore).ToList();
+            
+            if (topSkinTypes.Count > 1)
+            {
+                return null;
+            }
+            
+            return topSkinTypes.FirstOrDefault()?.SkinTypeId;
+        }
+
+        public async Task<List<OptionSkinTypePoints>> GetOptionSkinTypePointsAsync(int optionId)
+        {
+            return await _context.OptionSkinTypePoints
+                .Where(p => p.OptionId == optionId)
+                .ToListAsync();
+        }
+
+        public async Task<OptionSkinTypePoints> GetOptionSkinTypePointByIdAsync(int id)
+        {
+            return await _context.OptionSkinTypePoints.FindAsync(id);
+        }
+
+        public async Task<OptionSkinTypePoints> AddOptionSkinTypePointsAsync(OptionSkinTypePoints points)
+        {
+            _context.OptionSkinTypePoints.Add(points);
+            await _context.SaveChangesAsync();
+            return points;
+        }
+
+        public async Task<OptionSkinTypePoints> UpdateOptionSkinTypePointsAsync(OptionSkinTypePoints points)
+        {
+            var existingPoints = await _context.OptionSkinTypePoints.FindAsync(points.Id);
+            if (existingPoints == null)
+                return null;
+                
+            existingPoints.SkinTypeId = points.SkinTypeId;
+            existingPoints.Points = points.Points;
+            
+            _context.OptionSkinTypePoints.Update(existingPoints);
+            await _context.SaveChangesAsync();
+            return existingPoints;
+        }
+
+        public async Task<bool> DeleteOptionSkinTypePointsAsync(int id)
+        {
+            var points = await _context.OptionSkinTypePoints.FindAsync(id);
+            if (points == null) return false;
+
+            _context.OptionSkinTypePoints.Remove(points);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<SurveyResponse>> GetResponsesByOptionIdAsync(int optionId)
+        {
+            return await _context.SurveyResponses
+                .Where(r => r.OptionId == optionId)
+                .ToListAsync();
+        }
+
+        public async Task<bool> DeleteResponseAsync(int responseId)
+        {
+            var response = await _context.SurveyResponses.FindAsync(responseId);
+            if (response == null) return false;
+
+            _context.SurveyResponses.Remove(response);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

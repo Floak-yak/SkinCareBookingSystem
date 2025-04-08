@@ -34,6 +34,7 @@ namespace SkinCareBookingSystem.Repositories.Data
         public DbSet<SurveyResponse> SurveyResponses { get; set; }
         public DbSet<RecommendedService> RecommendedServices { get; set; }
         public DbSet<UserSkinTypeScore> UserSkinTypeScores { get; set; }
+        public DbSet<OptionSkinTypePoints> OptionSkinTypePoints { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -183,6 +184,12 @@ namespace SkinCareBookingSystem.Repositories.Data
                 .HasOne(uss => uss.Session)
                 .WithMany(s => s.SkinTypeScores)
                 .HasForeignKey(uss => uss.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            modelBuilder.Entity<OptionSkinTypePoints>()
+                .HasOne(osp => osp.Option)
+                .WithMany(o => o.SkinTypePoints)
+                .HasForeignKey(osp => osp.OptionId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

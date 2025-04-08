@@ -23,6 +23,50 @@ namespace SkinCareBookingSystem.Controller.Controllers
             _surveyService = surveyService;
         }
 
+        // GET: api/SurveyResults/recommended-services?skinType
+        [HttpGet("recommended-services/{skinType}")]
+        public async Task<IActionResult> GetRecommendedServicesBySkinType(string skinType)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(skinType))
+                {
+                    return BadRequest(new { success = false, message = "Skintype required" });
+                }
+
+                skinType = skinType.ToUpper();
+
+                var allResults = await _surveyService.GetAllResultsAsync();
+                var matchingResult = allResults.FirstOrDefault(r => r.SkinType.ToUpper() == skinType || r.ResultId.ToUpper() == skinType);
+
+                if (matchingResult == null)
+                {
+                    return NotFound(new { success = false, message = $"No result found for skin type: {skinType}" });
+                }
+
+                var recommendedServices = await _surveyService.GetRecommendedServicesDetailsAsync(matchingResult.Id);
+
+                return Ok(new 
+                {  
+                    skinType = matchingResult.SkinType,
+                    resultId = matchingResult.ResultId,
+                    resultText = matchingResult.ResultText,
+                    recommendationText = matchingResult.RecommendationText,
+                    recommendedServices = recommendedServices.Select(s => new
+                    {
+                        id = s.Id,
+                        name = s.ServiceName,
+                        description = s.ServiceDescription,
+                        price = s.Price
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Internal server error: {ex.Message}" });
+            }
+        }
+
         // GET: api/SurveyResults/recommended-service
         [HttpGet("recommended-service")]
         public async Task<IActionResult> GetRecommendedServices()

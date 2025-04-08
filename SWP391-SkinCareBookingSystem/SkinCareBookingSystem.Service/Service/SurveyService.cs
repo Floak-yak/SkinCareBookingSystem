@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -17,6 +18,22 @@ namespace SkinCareBookingSystem.Service.Service
         {
             _surveyRepository = surveyRepository;
         }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _surveyRepository.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            await _surveyRepository.CommitTransactionAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            await _surveyRepository.RollbackTransactionAsync();
+        }
+
         public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
         {
             return await _surveyRepository.GetAllQuestionsAsync();
@@ -27,11 +44,6 @@ namespace SkinCareBookingSystem.Service.Service
             return await _surveyRepository.GetQuestionByIdAsync(id);
         }
 
-        public async Task<SurveyQuestion> GetQuestionByQuestionIdAsync(string questionId)
-        {
-            return await _surveyRepository.GetQuestionByQuestionIdAsync(questionId);
-        }
-
         public async Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question)
         {
             return await _surveyRepository.AddQuestionAsync(question);
@@ -39,7 +51,20 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
         {
-            return await _surveyRepository.UpdateQuestionAsync(question);
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+            
+            if (string.IsNullOrWhiteSpace(question.QuestionText))
+                throw new ArgumentException("Question text cannot be empty");
+            
+            if (string.IsNullOrWhiteSpace(question.QuestionId))
+                throw new ArgumentException("Question ID cannot be empty");
+            
+            var result = await _surveyRepository.UpdateQuestionAsync(question);
+            if (result == null)
+                throw new KeyNotFoundException($"Question with ID {question.Id} not found");
+            
+            return result;
         }
 
         public async Task<bool> DeleteQuestionAsync(int id)
@@ -105,7 +130,19 @@ namespace SkinCareBookingSystem.Service.Service
                 IsCompleted = false,
                 CompletedDate = DateTime.Now
             };
-
+            
+            var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
+            var activeQuestions = allQuestions.Where(q => q.IsActive).ToList();
+            
+            var random = new Random();
+            var selectedQuestions = activeQuestions
+                .OrderBy(x => random.Next())
+                .Take(5)
+                .Select(q => q.Id)
+                .ToList();
+            
+            session.SelectedQuestionId = string.Join(",", selectedQuestions);
+            
             return await _surveyRepository.CreateSessionAsync(session);
         }
 
@@ -129,14 +166,17 @@ namespace SkinCareBookingSystem.Service.Service
             var option = await _surveyRepository.GetOptionByIdAsync(optionId);
             if (option == null)
                 throw new ArgumentException($"Invalid option ID: {optionId}");
-                
+            
+            var skinTypePoints = await _surveyRepository.GetOptionSkinTypePointsAsync(optionId);
+            
+            var primarySkinType = skinTypePoints.OrderByDescending(sp => sp.Points).FirstOrDefault();
+            
             var response = new SurveyResponse
             {
                 SessionId = sessionId,
                 QuestionId = questionId,
                 OptionId = optionId,
-                Points = option.Points,
-                SkinTypeId = option.SkinTypeId,
+                SkinTypeId = primarySkinType?.SkinTypeId ?? string.Empty,
                 ResponseDate = DateTime.Now
             };
 
@@ -211,13 +251,94 @@ namespace SkinCareBookingSystem.Service.Service
             
             var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
             
+            var selectedQuestionId = session.SelectedQuestionId != null 
+                ? session.SelectedQuestionId.Split(',').Select(int.Parse).ToList() 
+                : new List<int>();
+            
             var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
             
             var nextQuestion = allQuestions
-                .Where(q => !answeredQuestionIds.Contains(q.Id) && q.IsActive)
+                .Where(q => selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
                 .OrderBy(q => q.Id)
                 .FirstOrDefault();
-
+                
+            if (nextQuestion == null)
+            {
+                var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                var maxScore = skinTypeScores.Max(s => s.Score);
+                var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
+                
+                if (topSkinTypes.Count > 1 && answeredQuestionIds.Count >= 5)
+                {
+                    nextQuestion = allQuestions
+                        .Where(q => !selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
+                        .OrderBy(_ => Guid.NewGuid())
+                        .FirstOrDefault();
+                        
+                    if (nextQuestion != null)
+                    {
+                        selectedQuestionId.Add(nextQuestion.Id);
+                        session.SelectedQuestionId = string.Join(",", selectedQuestionId);
+                        await _surveyRepository.UpdateSessionAsync(session);
+                    }
+                }
+                
+                if (nextQuestion == null)
+                {
+                    var result = await GetSkinTypeByScoreAsync(sessionId);
+                    if (result != null)
+                    {
+                        await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
+                        var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
+                        
+                        return new
+                        {
+                            success = true,
+                            isResult = true,
+                            isCompleted = true,
+                            sessionId = session.Id,
+                            message = "Survey completed."
+                        };
+                    }
+                    else
+                    {
+                        var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                        if (finalSkinTypeScores.Any())
+                        {
+                            var finalMaxScore = finalSkinTypeScores.Max(s => s.Score);
+                            var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                            
+                            var allResults = await _surveyRepository.GetAllResultsAsync();
+                            var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                            
+                            if (matchingResult != null)
+                            {
+                                await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                                
+                                return new
+                                {
+                                    success = true,
+                                    isResult = true,
+                                    isCompleted = true,
+                                    isEnd = true,
+                                    sessionId = session.Id,
+                                    message = "Survey completed."
+                                };
+                            }
+                        }
+                        
+                        return new
+                        {
+                            success = false,
+                            isResult = true,
+                            isEnd = true,
+                            sessionId = session.Id,
+                            message = "Survey completed no result."
+                        };
+                    }
+                }
+            }
+            
             if (nextQuestion == null)
             {
                 var result = await GetSkinTypeByScoreAsync(sessionId);
@@ -228,24 +349,42 @@ namespace SkinCareBookingSystem.Service.Service
                     
                     return new
                     {
+                        success = true,
                         isResult = true,
+                        isCompleted = true,
                         sessionId = session.Id,
-                        skinTypeScores = await GetSkinTypeScoresAsync(sessionId),
-                        result = new
-                        {
-                            id = result.Id,
-                            resultId = result.ResultId,
-                            skinType = result.SkinType,
-                            resultText = result.ResultText,
-                            recommendationText = result.RecommendationText
-                        },
-                        recommendedServices = recommendedServices
+                        message = "Survey completed."
                     };
                 }
                 else
                 {
+                    var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                    if (finalSkinTypeScores.Any())
+                    {
+                        var finalMaxScore = finalSkinTypeScores.Max(s => s.Score);
+                        var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                        
+                        var allResults = await _surveyRepository.GetAllResultsAsync();
+                        var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                        
+                        if (matchingResult != null)
+                        {
+                            await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                            
+                            return new
+                            {
+                                success = true,
+                                isResult = true,
+                                isCompleted = true,
+                                sessionId = session.Id,
+                                message = "Survey completed."
+                            };
+                        }
+                    }
+                    
                     return new
                     {
+                        success = false,
                         isResult = true,
                         isEnd = true,
                         sessionId = session.Id,
@@ -256,41 +395,122 @@ namespace SkinCareBookingSystem.Service.Service
             else
             {
                 var options = await _surveyRepository.GetOptionsForQuestionAsync(nextQuestion.Id);
+                var formattedOptions = new List<object>();
+                
+                foreach (var option in options)
+                {
+                    // Get skin type points for this option
+                    var skinTypePoints = await _surveyRepository.GetOptionSkinTypePointsAsync(option.Id);
+                    
+                    formattedOptions.Add(new 
+                    {
+                        id = option.Id,
+                        text = option.OptionText,
+                        skinTypePoints = skinTypePoints.Select(sp => new
+                        {
+                            id = sp.Id,
+                            skinTypeId = sp.SkinTypeId,
+                            points = sp.Points
+                        }).ToList()
+                    });
+                }
+                
                 return new
                 {
+                    success = true,
                     isResult = false,
                     questionId = nextQuestion.Id,
                     questionText = nextQuestion.QuestionText,
-                    options = options.Select(o => new 
-                    {
-                        id = o.Id,
-                        text = o.OptionText,
-                        skinTypeId = o.SkinTypeId,
-                        points = o.Points
-                    }).ToList()
+                    options = formattedOptions
                 };
             }
         }
 
         public async Task<object> ProcessSurveyAnswerAsync(int sessionId, int questionId, int optionId)
         {
+            var option = await _surveyRepository.GetOptionByIdAsync(optionId);
+            if (option == null) 
+                return null;
+                
             var response = await RecordResponseAsync(sessionId, questionId, optionId);
             
-            if (!string.IsNullOrEmpty(response.SkinTypeId))
+            if (option.SkinTypePoints != null && option.SkinTypePoints.Any())
             {
-                await UpdateSkinTypeScoreAsync(sessionId, response.SkinTypeId, response.Points);
+                foreach (var skinTypePoint in option.SkinTypePoints)
+                {
+                    await UpdateSkinTypeScoreAsync(sessionId, skinTypePoint.SkinTypeId, skinTypePoint.Points);
+                }
+            }
+            
+            var session = await _surveyRepository.GetSessionAsync(sessionId);
+            var responses = await _surveyRepository.GetResponsesAsync(sessionId);
+            var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
+            
+            var selectedQuestionId = session.SelectedQuestionId != null 
+                ? session.SelectedQuestionId.Split(',').Select(int.Parse).ToList() 
+                : new List<int>();
+                
+            bool allPreSelectedQuestionsAnswered = selectedQuestionId.All(id => answeredQuestionIds.Contains(id));
+            
+            if (allPreSelectedQuestionsAnswered)
+            {
+                var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                var maxScore = skinTypeScores.Max(s => s.Score);
+                var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
+                
+                if (topSkinTypes.Count == 1)
+                {
+                    var result = await GetSkinTypeByScoreAsync(sessionId);
+                    if (result != null)
+                    {
+                        await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
+                        var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
+                        
+                        return new
+                        {
+                            success = true,
+                            isResult = true,
+                            isCompleted = true,
+                            sessionId = session.Id,
+                            message = "Survey completed."
+                        };
+                    }
+                }
             }
             
             var nextQuestion = await GetNextQuestionAsync(sessionId);
             
             if (nextQuestion == null)
             {
+                var sessionSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                var sessionMaxScore = sessionSkinTypeScores.Max(s => s.Score);
+                var topSkinTypeId = sessionSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                
+                var allResults = await _surveyRepository.GetAllResultsAsync();
+                var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                
+                if (matchingResult != null)
+                {
+                    await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                    
+                    return new
+                    {
+                        success = true,
+                        isResult = true,
+                        isCompleted = true,
+                        isEnd = true,
+                        sessionId = sessionId,
+                        message = "Survey completed."
+                    };
+                }
+                
                 return new
                 {
+                    success = false,
                     isResult = true,
                     isEnd = true,
                     sessionId = sessionId,
-                    message = "Survey completed."
+                    message = "Survey completed failed."
                 };
             }
             
@@ -335,6 +555,7 @@ namespace SkinCareBookingSystem.Service.Service
                 
                 if (question != null && option != null)
                 {
+                    var skinTypePoints = await _surveyRepository.GetOptionSkinTypePointsAsync(option.Id);
                     result.Add(new
                     {
                         responseId = response.Id,
@@ -349,14 +570,54 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             id = option.Id,
                             optionText = option.OptionText,
-                            points = response.Points,
-                            skinTypeId = response.SkinTypeId
+                            skinTypeId = response.SkinTypeId,
+                            skinTypePoints = skinTypePoints.Select(sp => new
+                            {
+                                id = sp.Id,
+                                skinTypeId = sp.SkinTypeId,
+                                points = sp.Points
+                            }).ToList()
                         }
                     });
                 }
             }
             
             return result;
+        }
+
+        public async Task<List<OptionSkinTypePoints>> GetOptionSkinTypePointsAsync(int optionId)
+        {
+            return await _surveyRepository.GetOptionSkinTypePointsAsync(optionId);
+        }
+
+        public async Task<OptionSkinTypePoints> GetOptionSkinTypePointByIdAsync(int id)
+        {
+            return await _surveyRepository.GetOptionSkinTypePointByIdAsync(id);
+        }
+
+        public async Task<OptionSkinTypePoints> AddOptionSkinTypePointsAsync(OptionSkinTypePoints points)
+        {
+            return await _surveyRepository.AddOptionSkinTypePointsAsync(points);
+        }
+
+        public async Task<OptionSkinTypePoints> UpdateOptionSkinTypePointsAsync(OptionSkinTypePoints points)
+        {
+            return await _surveyRepository.UpdateOptionSkinTypePointsAsync(points);
+        }
+
+        public async Task<bool> DeleteOptionSkinTypePointsAsync(int id)
+        {
+            return await _surveyRepository.DeleteOptionSkinTypePointsAsync(id);
+        }
+
+        public async Task<List<SurveyResponse>> GetResponsesByOptionIdAsync(int optionId)
+        {
+            return await _surveyRepository.GetResponsesByOptionIdAsync(optionId);
+        }
+
+        public async Task<bool> DeleteResponseAsync(int responseId)
+        {
+            return await _surveyRepository.DeleteResponseAsync(responseId);
         }
     }
 }
