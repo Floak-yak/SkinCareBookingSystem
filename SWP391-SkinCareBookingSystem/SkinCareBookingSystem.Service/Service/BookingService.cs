@@ -552,7 +552,7 @@ namespace SkinCareBookingSystem.Service.Service
                     {
                         throw new Exception("Invalid data of booking");
                     }
-                    if (transaction.TranctionStatus != TranctionStatus.WattingForPayBack || transaction.TranctionStatus != TranctionStatus.PaidBack)
+                    if (transaction.TranctionStatus != TranctionStatus.WattingForPayBack && transaction.TranctionStatus != TranctionStatus.PaidBack)
                         bookings.Remove(booking);
                     else
                     {
