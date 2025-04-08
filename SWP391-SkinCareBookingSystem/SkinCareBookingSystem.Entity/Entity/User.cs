@@ -15,8 +15,8 @@ namespace SkinCareBookingSystem.BusinessObject.Entity
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string PhoneNumber { get; set; }
-        public string PaymentMethod { get; set; }
-        public byte[] PaymentNumber { get; set; }
+        public string? PaymentMethod { get; set; }
+        public byte[]? PaymentNumber { get; set; }
         public string? VerifyToken { get; set; }
         public bool IsVerified { get; set; }
         public string? Description { get; set; }
