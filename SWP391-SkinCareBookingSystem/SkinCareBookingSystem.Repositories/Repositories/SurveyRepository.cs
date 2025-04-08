@@ -67,22 +67,10 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
         {
-            var existingQuestion = await _context.SurveyQuestions
-                .Include(q => q.Options)
-                .ThenInclude(o => o.SkinTypePoints)
-                .FirstOrDefaultAsync(q => q.Id == question.Id);
-
-            if (existingQuestion == null)
-                return null;
-
-            existingQuestion.QuestionId = question.QuestionId;
-            existingQuestion.QuestionText = question.QuestionText;
-            existingQuestion.IsActive = question.IsActive;
-
-            _context.SurveyQuestions.Update(existingQuestion);
+            _context.SurveyQuestions.Update(question);
             await _context.SaveChangesAsync();
             
-            return existingQuestion;
+            return question;
         }
 
         public async Task<bool> DeleteQuestionAsync(int id)
