@@ -845,6 +845,55 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 return StatusCode(500, new { message = "An error deleting result.", error = ex.Message });
             }
         }
+
+        [HttpDelete("admin/question/{questionId}/option/{optionId}")]
+        public async Task<ActionResult> DeleteOption(int questionId, int optionId)
+        {
+            try
+            {
+                var question = await _surveyService.GetQuestionByIdAsync(questionId);
+                if (question == null)
+                {
+                    return NotFound("Question not found");
+                }
+
+                var options = await _surveyService.GetOptionAsync(questionId);
+                var optionToDel = options.FirstOrDefault(o => o.Id == optionId);
+                if (optionToDel == null)
+                {
+                    return NotFound("Option not found");
+                }
+
+                try
+                {
+                    await _surveyService.BeginTransactionAsync();
+
+                    var skinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(optionId);
+                    foreach (var point in skinTypePoints)
+                    {
+                        await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
+                    }
+
+                    var result = await _surveyService.DeleteOptionAsync(optionId);
+                    if (!result)
+                    {
+                        throw new Exception("Failed to delete option");
+                    }
+
+                    await _surveyService.CommitTransactionAsync();
+                    return NoContent();
+                }
+                catch (Exception ex)
+                {
+                    await _surveyService.RollbackTransactionAsync();
+                    throw new Exception($"Failed to delete option: {ex.Message}", ex);
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
         #endregion
     }
 }
