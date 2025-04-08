@@ -9,6 +9,7 @@ namespace SkinCareBookingSystem.Service.Dto.BookingDto
 {
     public class GetPaybackCancelBookingsResponse
     {
+        public int BookingId { get; set; }
         public string FullName { get; set; }
         public DateTime YearOfBirth { get; set; }
         public string Email { get; set; }
