@@ -59,5 +59,8 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<OptionSkinTypePoints> AddOptionSkinTypePointsAsync(OptionSkinTypePoints points);
         Task<OptionSkinTypePoints> UpdateOptionSkinTypePointsAsync(OptionSkinTypePoints points);
         Task<bool> DeleteOptionSkinTypePointsAsync(int id);
+
+        Task<List<SurveyResponse>> GetResponsesByOptionIdAsync(int optionId);
+        Task<bool> DeleteResponseAsync(int responseId);
     }
 }

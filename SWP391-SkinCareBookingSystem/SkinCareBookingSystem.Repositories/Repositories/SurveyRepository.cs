@@ -393,5 +393,22 @@ namespace SkinCareBookingSystem.Repositories.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<SurveyResponse>> GetResponsesByOptionIdAsync(int optionId)
+        {
+            return await _context.SurveyResponses
+                .Where(r => r.OptionId == optionId)
+                .ToListAsync();
+        }
+
+        public async Task<bool> DeleteResponseAsync(int responseId)
+        {
+            var response = await _context.SurveyResponses.FindAsync(responseId);
+            if (response == null) return false;
+
+            _context.SurveyResponses.Remove(response);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

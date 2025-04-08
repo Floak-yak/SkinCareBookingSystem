@@ -609,5 +609,15 @@ namespace SkinCareBookingSystem.Service.Service
         {
             return await _surveyRepository.DeleteOptionSkinTypePointsAsync(id);
         }
+
+        public async Task<List<SurveyResponse>> GetResponsesByOptionIdAsync(int optionId)
+        {
+            return await _surveyRepository.GetResponsesByOptionIdAsync(optionId);
+        }
+
+        public async Task<bool> DeleteResponseAsync(int responseId)
+        {
+            return await _surveyRepository.DeleteResponseAsync(responseId);
+        }
     }
 }

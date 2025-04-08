@@ -874,6 +874,12 @@ namespace SkinCareBookingSystem.Controller.Controllers
                         await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
                     }
 
+                    var responses = await _surveyService.GetResponsesByOptionIdAsync(optionId);
+                    foreach (var response in responses)
+                    {
+                        await _surveyService.DeleteResponseAsync(response.Id);
+                    }
+
                     var result = await _surveyService.DeleteOptionAsync(optionId);
                     if (!result)
                     {
