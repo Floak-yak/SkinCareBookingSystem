@@ -4,11 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace SkinCareBookingSystem.Service.Interfaces
 {
     public interface ISurveyService
     {
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        Task RollbackTransactionAsync();
+        
         Task<List<SurveyQuestion>> GetAllQuestionsAsync();
         Task<SurveyQuestion> GetQuestionByIdAsync(int id);
         Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question);

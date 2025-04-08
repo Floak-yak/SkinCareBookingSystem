@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.BusinessObject.Entity;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace SkinCareBookingSystem.Service.Service
 {
@@ -17,6 +18,22 @@ namespace SkinCareBookingSystem.Service.Service
         {
             _surveyRepository = surveyRepository;
         }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _surveyRepository.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            await _surveyRepository.CommitTransactionAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            await _surveyRepository.RollbackTransactionAsync();
+        }
+
         public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
         {
             return await _surveyRepository.GetAllQuestionsAsync();
@@ -34,7 +51,20 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
         {
-            return await _surveyRepository.UpdateQuestionAsync(question);
+            if (question == null)
+                throw new ArgumentNullException(nameof(question));
+            
+            if (string.IsNullOrWhiteSpace(question.QuestionText))
+                throw new ArgumentException("Question text cannot be empty");
+            
+            if (string.IsNullOrWhiteSpace(question.QuestionId))
+                throw new ArgumentException("Question ID cannot be empty");
+            
+            var result = await _surveyRepository.UpdateQuestionAsync(question);
+            if (result == null)
+                throw new KeyNotFoundException($"Question with ID {question.Id} not found");
+            
+            return result;
         }
 
         public async Task<bool> DeleteQuestionAsync(int id)

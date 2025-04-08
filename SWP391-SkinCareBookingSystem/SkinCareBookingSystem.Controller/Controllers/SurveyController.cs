@@ -4,6 +4,7 @@ using SkinCareBookingSystem.Service.Interfaces;
 using System.Security.Claims;
 using SkinCareBookingSystem.Service.Dto.Survey;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace SkinCareBookingSystem.Controller.Controllers
 {
@@ -460,110 +461,112 @@ namespace SkinCareBookingSystem.Controller.Controllers
                     return NotFound("Question not found");
                 }
 
-                existingQuestion.QuestionId = request.QuestionId;
-                existingQuestion.QuestionText = request.QuestionText;
-                existingQuestion.IsActive = request.IsActive;
-
-                var updatedQuestion = await _surveyService.UpdateQuestionAsync(existingQuestion);
-
-                if (request.Options != null)
+                try
                 {
-                    var existingOptions = await _surveyService.GetOptionAsync(id);
-                    
-                    // Handle deleted options
-                    foreach (var optionDto in request.Options.Where(o => o.IsDeleted))
-                    {
-                        if (optionDto.Id.HasValue)
-                        {
-                            // Delete all skin type points for this option first
-                            var skinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(optionDto.Id.Value);
-                            foreach (var point in skinTypePoints)
-                            {
-                                await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
-                            }
-                            
-                            await _surveyService.DeleteOptionAsync(optionDto.Id.Value);
-                        }
-                    }
+                    await _surveyService.BeginTransactionAsync();
 
-                    // Handle updated or new options
-                    foreach (var optionDto in request.Options.Where(o => !o.IsDeleted))
+                    existingQuestion.QuestionId = request.QuestionId;
+                    existingQuestion.QuestionText = request.QuestionText;
+                    existingQuestion.IsActive = request.IsActive;
+
+                    var updatedQuestion = await _surveyService.UpdateQuestionAsync(existingQuestion);
+
+                    if (request.Options != null)
                     {
-                        if (optionDto.Id.HasValue)
+                        var existingOptions = await _surveyService.GetOptionAsync(id);
+                        
+                        foreach (var optionDto in request.Options.Where(o => o.IsDeleted))
                         {
-                            // Update existing option
-                            var existingOption = existingOptions.FirstOrDefault(o => o.Id == optionDto.Id);
-                            if (existingOption != null)
+                            if (optionDto.Id.HasValue)
                             {
-                                existingOption.OptionText = optionDto.OptionText;
-                                await _surveyService.UpdateOptionAsync(existingOption);
-                                
-                                // Handle skin type points for existing option
-                                var existingSkinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(existingOption.Id);
-                                
-                                // Delete removed skin type points
-                                foreach (var point in existingSkinTypePoints)
+                                var skinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(optionDto.Id.Value);
+                                foreach (var point in skinTypePoints)
                                 {
-                                    if (!optionDto.SkinTypePoints.Any(sp => sp.Id == point.Id && !sp.IsDeleted))
-                                    {
-                                        await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
-                                    }
+                                    await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
                                 }
                                 
-                                // Update or add skin type points
-                                foreach (var skinTypePointDto in optionDto.SkinTypePoints.Where(sp => !sp.IsDeleted))
+                                await _surveyService.DeleteOptionAsync(optionDto.Id.Value);
+                            }
+                        }
+
+                        foreach (var optionDto in request.Options.Where(o => !o.IsDeleted))
+                        {
+                            if (optionDto.Id.HasValue)
+                            {
+                                var existingOption = existingOptions.FirstOrDefault(o => o.Id == optionDto.Id);
+                                if (existingOption != null)
                                 {
-                                    if (skinTypePointDto.Id.HasValue)
+                                    existingOption.OptionText = optionDto.OptionText;
+                                    await _surveyService.UpdateOptionAsync(existingOption);
+                                    
+                                    var existingSkinTypePoints = await _surveyService.GetOptionSkinTypePointsAsync(existingOption.Id);
+                                    
+                                    foreach (var point in existingSkinTypePoints)
                                     {
-                                        // Update existing skin type point
-                                        var existingPoint = existingSkinTypePoints.FirstOrDefault(p => p.Id == skinTypePointDto.Id);
-                                        if (existingPoint != null)
+                                        if (!optionDto.SkinTypePoints.Any(sp => sp.Id == point.Id && !sp.IsDeleted))
                                         {
-                                            existingPoint.SkinTypeId = skinTypePointDto.SkinTypeId;
-                                            await _surveyService.UpdateOptionSkinTypePointsAsync(existingPoint);
+                                            await _surveyService.DeleteOptionSkinTypePointsAsync(point.Id);
                                         }
                                     }
-                                    else
+                                    
+                                    foreach (var skinTypePointDto in optionDto.SkinTypePoints.Where(sp => !sp.IsDeleted))
                                     {
-                                        // Add new skin type point
-                                        var newPoint = new OptionSkinTypePoints
+                                        if (skinTypePointDto.Id.HasValue)
                                         {
-                                            OptionId = existingOption.Id,
-                                            SkinTypeId = skinTypePointDto.SkinTypeId,
-                                            Points = skinTypePointDto.Points
+                                            var existingPoint = existingSkinTypePoints.FirstOrDefault(p => p.Id == skinTypePointDto.Id);
+                                            if (existingPoint != null)
+                                            {
+                                                existingPoint.SkinTypeId = skinTypePointDto.SkinTypeId;
+                                                existingPoint.Points = skinTypePointDto.Points;
+                                                await _surveyService.UpdateOptionSkinTypePointsAsync(existingPoint);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            var newPoint = new OptionSkinTypePoints
+                                            {
+                                                OptionId = existingOption.Id,
+                                                SkinTypeId = skinTypePointDto.SkinTypeId,
+                                                Points = skinTypePointDto.Points
+                                            };
+                                            await _surveyService.AddOptionSkinTypePointsAsync(newPoint);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                var newOption = new SurveyOption
+                                {
+                                    QuestionId = id,
+                                    OptionText = optionDto.OptionText
+                                };
+                                var addedOption = await _surveyService.AddOptionAsync(newOption);
+                                
+                                if (optionDto.SkinTypePoints != null && optionDto.SkinTypePoints.Any())
+                                {
+                                    foreach (var skinTypePoint in optionDto.SkinTypePoints.Where(sp => !sp.IsDeleted))
+                                    {
+                                        var optionSkinTypePoints = new OptionSkinTypePoints
+                                        {
+                                            OptionId = addedOption.Id,
+                                            SkinTypeId = skinTypePoint.SkinTypeId,
+                                            Points = skinTypePoint.Points
                                         };
-                                        await _surveyService.AddOptionSkinTypePointsAsync(newPoint);
+                                        
+                                        await _surveyService.AddOptionSkinTypePointsAsync(optionSkinTypePoints);
                                     }
                                 }
                             }
                         }
-                        else
-                        {
-                            // Add new option
-                            var newOption = new SurveyOption
-                            {
-                                QuestionId = id,
-                                OptionText = optionDto.OptionText
-                            };
-                            var addedOption = await _surveyService.AddOptionAsync(newOption);
-                            
-                            // Add skin type points if provided
-                            if (optionDto.SkinTypePoints != null && optionDto.SkinTypePoints.Any())
-                            {
-                                foreach (var skinTypePoint in optionDto.SkinTypePoints.Where(sp => !sp.IsDeleted))
-                                {
-                                    var optionSkinTypePoints = new OptionSkinTypePoints
-                                    {
-                                        OptionId = addedOption.Id,
-                                        SkinTypeId = skinTypePoint.SkinTypeId,
-                                        Points = skinTypePoint.Points
-                                    };
-                                    
-                                    await _surveyService.AddOptionSkinTypePointsAsync(optionSkinTypePoints);
-                                }
-                            }
-                        }
                     }
+
+                    await _surveyService.CommitTransactionAsync();
+                }
+                catch (Exception ex)
+                {
+                    await _surveyService.RollbackTransactionAsync();
+                    throw new Exception($"Failed to update question: {ex.Message}", ex);
                 }
 
                 var questionWithOptions = await _surveyService.GetQuestionByIdAsync(id);

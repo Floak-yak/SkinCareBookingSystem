@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Repositories.Data;
@@ -8,10 +9,35 @@ namespace SkinCareBookingSystem.Repositories.Repositories
     public class SurveyRepository: ISurveyRepository
     {
         private readonly AppDbContext _context;
+        private IDbContextTransaction _currentTransaction;
 
         public SurveyRepository(AppDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            _currentTransaction = await _context.Database.BeginTransactionAsync();
+            return _currentTransaction;
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            if (_currentTransaction != null)
+            {
+                await _currentTransaction.CommitAsync();
+                _currentTransaction = null;
+            }
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            if (_currentTransaction != null)
+            {
+                await _currentTransaction.RollbackAsync();
+                _currentTransaction = null;
+            }
         }
 
         public async Task<List<SurveyQuestion>> GetAllQuestionsAsync()
@@ -41,9 +67,22 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question)
         {
-            _context.Entry(question).State = EntityState.Modified;
+            var existingQuestion = await _context.SurveyQuestions
+                .Include(q => q.Options)
+                .ThenInclude(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(q => q.Id == question.Id);
+
+            if (existingQuestion == null)
+                return null;
+
+            existingQuestion.QuestionId = question.QuestionId;
+            existingQuestion.QuestionText = question.QuestionText;
+            existingQuestion.IsActive = question.IsActive;
+
+            _context.SurveyQuestions.Update(existingQuestion);
             await _context.SaveChangesAsync();
-            return question;
+            
+            return existingQuestion;
         }
 
         public async Task<bool> DeleteQuestionAsync(int id)
@@ -80,9 +119,18 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<SurveyOption> UpdateOptionAsync(SurveyOption option)
         {
-            _context.Entry(option).State = EntityState.Modified;
+            var existingOption = await _context.SurveyOptions
+                .Include(o => o.SkinTypePoints)
+                .FirstOrDefaultAsync(o => o.Id == option.Id);
+                
+            if (existingOption == null)
+                return null;
+                
+            existingOption.OptionText = option.OptionText;
+            
+            _context.SurveyOptions.Update(existingOption);
             await _context.SaveChangesAsync();
-            return option;
+            return existingOption;
         }
 
         public async Task<bool> DeleteOptionAsync(int id)
@@ -324,9 +372,16 @@ namespace SkinCareBookingSystem.Repositories.Repositories
 
         public async Task<OptionSkinTypePoints> UpdateOptionSkinTypePointsAsync(OptionSkinTypePoints points)
         {
-            _context.Entry(points).State = EntityState.Modified;
+            var existingPoints = await _context.OptionSkinTypePoints.FindAsync(points.Id);
+            if (existingPoints == null)
+                return null;
+                
+            existingPoints.SkinTypeId = points.SkinTypeId;
+            existingPoints.Points = points.Points;
+            
+            _context.OptionSkinTypePoints.Update(existingPoints);
             await _context.SaveChangesAsync();
-            return points;
+            return existingPoints;
         }
 
         public async Task<bool> DeleteOptionSkinTypePointsAsync(int id)
