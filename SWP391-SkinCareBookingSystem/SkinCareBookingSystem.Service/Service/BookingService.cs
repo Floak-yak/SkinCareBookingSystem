@@ -452,7 +452,8 @@ namespace SkinCareBookingSystem.Service.Service
                                 PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
                                 PhoneNumber = booking.User.PhoneNumber,
                                 TotalAmount = transaction.TotalMoney,
-                                YearOfBirth = booking.User.YearOfBirth
+                                YearOfBirth = booking.User.YearOfBirth,
+                                Image = transaction.Image is null ? null : transaction.Image,
                             });
                         }
                         else
@@ -464,7 +465,8 @@ namespace SkinCareBookingSystem.Service.Service
                                 FullName = booking.User.FullName,
                                 PhoneNumber = booking.User.PhoneNumber,
                                 TotalAmount = transaction.TotalMoney,
-                                YearOfBirth = booking.User.YearOfBirth
+                                YearOfBirth = booking.User.YearOfBirth,
+                                Image = transaction.Image is null ? null : transaction.Image,
                             });
                         bookings.Remove(booking);
                     }                        
@@ -512,7 +514,8 @@ namespace SkinCareBookingSystem.Service.Service
                                 PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
                                 PhoneNumber = booking.User.PhoneNumber,
                                 TotalAmount = transaction.TotalMoney,
-                                YearOfBirth = booking.User.YearOfBirth
+                                YearOfBirth = booking.User.YearOfBirth,
+                                Image = transaction.Image is null ? null : transaction.Image,
                             });
                         }
                         else
@@ -525,6 +528,7 @@ namespace SkinCareBookingSystem.Service.Service
                                 PhoneNumber = booking.User.PhoneNumber,
                                 TotalAmount = transaction.TotalMoney,
                                 YearOfBirth = booking.User.YearOfBirth
+                                Image = transaction.Image is null ? null : transaction.Image,
                             });
                         bookings.Remove(booking);
                     }
