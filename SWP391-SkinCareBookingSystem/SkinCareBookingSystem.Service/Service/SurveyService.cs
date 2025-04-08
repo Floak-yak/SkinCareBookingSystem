@@ -259,7 +259,7 @@ namespace SkinCareBookingSystem.Service.Service
             
             var nextQuestion = allQuestions
                 .Where(q => selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
-                .OrderBy(_ => Guid.NewGuid())
+                .OrderBy(q => q.Id)
                 .FirstOrDefault();
                 
             if (nextQuestion == null)
