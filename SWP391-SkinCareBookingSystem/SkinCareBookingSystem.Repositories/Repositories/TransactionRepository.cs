@@ -35,7 +35,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
                     .FirstOrDefault(b => b.Id == bookingId) != null && t.UserId == userId);
 
         public async Task<Transaction> GetTransactionByBookingId(int bookingId) =>
-            await _context.Transactions.FirstOrDefaultAsync(t => t.BookingId == bookingId);
+            await _context.Transactions.Include(t => t.Image).FirstOrDefaultAsync(t => t.BookingId == bookingId);
 
         public async Task<List<Transaction>> GetTransactionsByBookingId(List<int> bookingIds) =>
             await _context.Transactions.Where(t => t.BookingId.HasValue && bookingIds.Contains(t.BookingId.Value)).ToListAsync();
