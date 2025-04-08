@@ -30,6 +30,7 @@ namespace SkinCareBookingSystem.Service.Mapper
             CreateMap<ScheduleLog, ScheduleLogDto>().ReverseMap();
             CreateMap<BookingServiceSchedule, BookingServiceScheduleResponse>().ReverseMap();
             CreateMap<SurveyOption, OptionUpdateDto>().ReverseMap();
+            CreateMap<SkinTypePointsDto, OptionSkinTypePoints>().ReverseMap();
         }
     }
 }

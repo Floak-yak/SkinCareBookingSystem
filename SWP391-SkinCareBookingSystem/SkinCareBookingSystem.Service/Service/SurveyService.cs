@@ -627,7 +627,31 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<bool> UpdateQuestion(SurveyQuestion surveyQuestion, QuestionUpdateDto request)
         {
             if (request == null) throw new ArgumentNullException("Request is null");
-            surveyQuestion.Options = _mapper.Map<List<SurveyOption>>(request.Options);
+            var options = _mapper.Map<List<SurveyOption>>(request.Options);
+            if (surveyQuestion.Options.Count < options.Count)
+            {
+                for (int i = surveyQuestion.Options.Count; i < options.Count; i++)
+                {
+                    surveyQuestion.Options.Add(options[i]);
+                }
+            }
+            else if (surveyQuestion.Options.Count > options.Count)
+            {
+                for (int i = options.Count; i < surveyQuestion.Options.Count; i++)
+                {
+                    surveyQuestion.Options.Remove(surveyQuestion.Options.ToList()[i]);
+                    if (surveyQuestion.Options.ToList()[i - 1].Responses != null)
+                        foreach (var it in surveyQuestion.Options.ToList()[i - 1].Responses)
+                        {
+                            _surveyRepository.DeleteResponseAsync(it.Id);
+                        }
+                }
+            }
+            for (int i = 0; i < surveyQuestion.Options.Count; i++)
+            {
+                surveyQuestion.Options.ToList()[i].OptionText = options[i].OptionText;
+                surveyQuestion.Options.ToList()[i].SkinTypePoints = options[i].SkinTypePoints;
+            }
             var result = await _surveyRepository.UpdateQuestionAsync(surveyQuestion);
             if (result != null)
                 return true;
