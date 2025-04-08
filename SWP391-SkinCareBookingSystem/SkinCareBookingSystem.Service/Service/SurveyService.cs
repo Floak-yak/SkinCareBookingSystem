@@ -7,16 +7,20 @@ using SkinCareBookingSystem.Repositories.Interfaces;
 using SkinCareBookingSystem.Service.Interfaces;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using Microsoft.EntityFrameworkCore.Storage;
+using SkinCareBookingSystem.Service.Dto.Survey;
+using AutoMapper;
 
 namespace SkinCareBookingSystem.Service.Service
 {
     public class SurveyService : ISurveyService
     {
         private readonly ISurveyRepository _surveyRepository;
+        private readonly IMapper _mapper;
 
-        public SurveyService(ISurveyRepository surveyRepository)
+        public SurveyService(ISurveyRepository surveyRepository, IMapper mapper)
         {
             _surveyRepository = surveyRepository;
+            _mapper = mapper;
         }
 
         public async Task<IDbContextTransaction> BeginTransactionAsync()
@@ -618,6 +622,16 @@ namespace SkinCareBookingSystem.Service.Service
         public async Task<bool> DeleteResponseAsync(int responseId)
         {
             return await _surveyRepository.DeleteResponseAsync(responseId);
+        }
+
+        public async Task<bool> UpdateQuestion(SurveyQuestion surveyQuestion, QuestionUpdateDto request)
+        {
+            if (request == null) throw new ArgumentNullException("Request is null");
+            surveyQuestion.Options = _mapper.Map<List<SurveyOption>>(request.Options);
+            var result = await _surveyRepository.UpdateQuestionAsync(surveyQuestion);
+            if (result != null)
+                return true;
+            return false;
         }
     }
 }

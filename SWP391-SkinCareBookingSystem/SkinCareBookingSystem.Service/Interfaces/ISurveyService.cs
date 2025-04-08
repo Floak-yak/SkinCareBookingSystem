@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SkinCareBookingSystem.BusinessObject.Entity;
 using Microsoft.EntityFrameworkCore.Storage;
+using SkinCareBookingSystem.Service.Dto.Survey;
 
 namespace SkinCareBookingSystem.Service.Interfaces
 {
@@ -19,6 +20,7 @@ namespace SkinCareBookingSystem.Service.Interfaces
         Task<SurveyQuestion> AddQuestionAsync(SurveyQuestion question);
         Task<SurveyQuestion> UpdateQuestionAsync(SurveyQuestion question);
         Task<bool> DeleteQuestionAsync(int id);
+        Task<bool> UpdateQuestion(SurveyQuestion surveyQuestion, QuestionUpdateDto request);
 
         Task<List<SurveyOption>> GetOptionAsync(int questionId);
         Task<SurveyOption> AddOptionAsync(SurveyOption option);
