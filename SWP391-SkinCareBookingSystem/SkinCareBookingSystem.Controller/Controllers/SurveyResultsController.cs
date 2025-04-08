@@ -47,8 +47,7 @@ namespace SkinCareBookingSystem.Controller.Controllers
                 var recommendedServices = await _surveyService.GetRecommendedServicesDetailsAsync(matchingResult.Id);
 
                 return Ok(new 
-                { 
-                    success = true, 
+                {  
                     skinType = matchingResult.SkinType,
                     resultId = matchingResult.ResultId,
                     resultText = matchingResult.ResultText,
