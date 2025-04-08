@@ -560,7 +560,7 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             CreatedTime = booking.CreatedTime,
                             Date = booking.Date,
-                            ServiceName = booking.BookingServiceSchedules.FirstOrDefault(b => b.ScheduleLog.IsCancel).Service.ServiceName,
+                            ServiceName = booking.BookingServiceSchedules.First().Service.ServiceName,
                             TotalPrice = booking.TotalPrice,
                             Status = transaction.TranctionStatus == TranctionStatus.PaidBack
                         });
