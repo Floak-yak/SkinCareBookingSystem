@@ -107,7 +107,7 @@ namespace SkinCareBookingSystem.Service.Service
             var random = new Random();
             var selectedQuestions = activeQuestions
                 .OrderBy(x => random.Next())
-                .Take(10)
+                .Take(5)
                 .Select(q => q.Id)
                 .ToList();
             
@@ -238,7 +238,7 @@ namespace SkinCareBookingSystem.Service.Service
                 var maxScore = skinTypeScores.Max(s => s.Score);
                 var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
                 
-                if (topSkinTypes.Count > 1 && answeredQuestionIds.Count >= 10)
+                if (topSkinTypes.Count > 1 && answeredQuestionIds.Count >= 5)
                 {
                     nextQuestion = allQuestions
                         .Where(q => !selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
