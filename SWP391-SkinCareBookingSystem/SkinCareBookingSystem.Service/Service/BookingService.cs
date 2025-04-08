@@ -444,6 +444,7 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             responses.Add(new GetPaybackCancelBookingsResponse()
                             {
+                                BookingId = booking.Id,
                                 date = booking.Date,
                                 Email = booking.User.Email,
                                 FullName = booking.User.FullName,
@@ -457,6 +458,7 @@ namespace SkinCareBookingSystem.Service.Service
                         else
                             responses.Add(new GetPaybackCancelBookingsResponse()
                             {
+                                BookingId = booking.Id,
                                 date = booking.Date,
                                 Email = booking.User.Email,
                                 FullName = booking.User.FullName,
@@ -502,6 +504,7 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             responses.Add(new GetPaybackCancelBookingsResponse()
                             {
+                                BookingId = booking.Id,
                                 date = booking.Date,
                                 Email = booking.User.Email,
                                 FullName = booking.User.FullName,
@@ -515,6 +518,7 @@ namespace SkinCareBookingSystem.Service.Service
                         else
                             responses.Add(new GetPaybackCancelBookingsResponse()
                             {
+                                BookingId = booking.Id,
                                 date = booking.Date,
                                 Email = booking.User.Email,
                                 FullName = booking.User.FullName,
