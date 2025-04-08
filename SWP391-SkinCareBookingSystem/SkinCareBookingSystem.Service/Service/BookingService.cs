@@ -440,17 +440,30 @@ namespace SkinCareBookingSystem.Service.Service
                         bookings.Remove(booking);
                     else
                     {
-                        responses.Add(new GetPaybackCancelBookingsResponse()
+                        if (booking.User.PaymentMethod != null && booking.User.PaymentNumber != null)
                         {
-                            date = booking.Date,
-                            Email = booking.User.Email,
-                            FullName = booking.User.FullName,
-                            PaymentMethod = booking.User.PaymentMethod,
-                            PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
-                            PhoneNumber = booking.User.PhoneNumber,
-                            TotalAmount = transaction.TotalMoney,
-                            YearOfBirth = booking.User.YearOfBirth
-                        });
+                            responses.Add(new GetPaybackCancelBookingsResponse()
+                            {
+                                date = booking.Date,
+                                Email = booking.User.Email,
+                                FullName = booking.User.FullName,
+                                PaymentMethod = booking.User.PaymentMethod,
+                                PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
+                                PhoneNumber = booking.User.PhoneNumber,
+                                TotalAmount = transaction.TotalMoney,
+                                YearOfBirth = booking.User.YearOfBirth
+                            });
+                        }
+                        else
+                            responses.Add(new GetPaybackCancelBookingsResponse()
+                            {
+                                date = booking.Date,
+                                Email = booking.User.Email,
+                                FullName = booking.User.FullName,
+                                PhoneNumber = booking.User.PhoneNumber,
+                                TotalAmount = transaction.TotalMoney,
+                                YearOfBirth = booking.User.YearOfBirth
+                            });
                         bookings.Remove(booking);
                     }                        
                 }                
@@ -485,17 +498,30 @@ namespace SkinCareBookingSystem.Service.Service
                         bookings.Remove(booking);
                     else
                     {
-                        responses.Add(new GetPaybackCancelBookingsResponse()
+                        if (booking.User.PaymentMethod != null && booking.User.PaymentNumber != null)
                         {
-                            date = booking.Date,
-                            Email = booking.User.Email,
-                            FullName = booking.User.FullName,
-                            PaymentMethod = booking.User.PaymentMethod,
-                            PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
-                            PhoneNumber = booking.User.PhoneNumber,
-                            TotalAmount = transaction.TotalMoney,
-                            YearOfBirth = booking.User.YearOfBirth
-                        });
+                            responses.Add(new GetPaybackCancelBookingsResponse()
+                            {
+                                date = booking.Date,
+                                Email = booking.User.Email,
+                                FullName = booking.User.FullName,
+                                PaymentMethod = booking.User.PaymentMethod,
+                                PaymentNumber = EncryptionHelper.Decrypt(booking.User.PaymentNumber),
+                                PhoneNumber = booking.User.PhoneNumber,
+                                TotalAmount = transaction.TotalMoney,
+                                YearOfBirth = booking.User.YearOfBirth
+                            });
+                        }
+                        else
+                            responses.Add(new GetPaybackCancelBookingsResponse()
+                            {
+                                date = booking.Date,
+                                Email = booking.User.Email,
+                                FullName = booking.User.FullName,
+                                PhoneNumber = booking.User.PhoneNumber,
+                                TotalAmount = transaction.TotalMoney,
+                                YearOfBirth = booking.User.YearOfBirth
+                            });
                         bookings.Remove(booking);
                     }
                 }
