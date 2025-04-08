@@ -265,17 +265,9 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             success = true,
                             isResult = true,
+                            isCompleted = true,
                             sessionId = session.Id,
-                            skinTypeScores = await GetSkinTypeScoresAsync(sessionId),
-                            result = new
-                            {
-                                id = result.Id,
-                                resultId = result.ResultId,
-                                skinType = result.SkinType,
-                                resultText = result.ResultText,
-                                recommendationText = result.RecommendationText
-                            },
-                            recommendedServices = recommendedServices
+                            message = "Survey completed."
                         };
                     }
                     else
@@ -297,18 +289,10 @@ namespace SkinCareBookingSystem.Service.Service
                                 {
                                     success = true,
                                     isResult = true,
+                                    isCompleted = true,
                                     isEnd = true,
                                     sessionId = session.Id,
-                                    message = "Survey completed",
-                                    skinType = matchingResult.SkinType,
-                                    result = new
-                                    {
-                                        id = matchingResult.Id,
-                                        resultId = matchingResult.ResultId,
-                                        skinType = matchingResult.SkinType,
-                                        resultText = matchingResult.ResultText,
-                                        recommendationText = matchingResult.RecommendationText
-                                    }
+                                    message = "Survey completed."
                                 };
                             }
                         }
@@ -337,18 +321,9 @@ namespace SkinCareBookingSystem.Service.Service
                     {
                         success = true,
                         isResult = true,
-                        isEnd = true,
+                        isCompleted = true,
                         sessionId = session.Id,
-                        message = "Survey completed.",
-                        result = new
-                        {
-                            id = result.Id,
-                            resultId = result.ResultId,
-                            skinType = result.SkinType,
-                            resultText = result.ResultText,
-                            recommendationText = result.RecommendationText
-                        },
-                        recommendedServices = recommendedServices
+                        message = "Survey completed."
                     };
                 }
                 else
@@ -370,18 +345,9 @@ namespace SkinCareBookingSystem.Service.Service
                             {
                                 success = true,
                                 isResult = true,
-                                isEnd = true,
+                                isCompleted = true,
                                 sessionId = session.Id,
-                                message = "Survey completed",
-                                skinType = matchingResult.SkinType,
-                                result = new
-                                {
-                                    id = matchingResult.Id,
-                                    resultId = matchingResult.ResultId,
-                                    skinType = matchingResult.SkinType,
-                                    resultText = matchingResult.ResultText,
-                                    recommendationText = matchingResult.RecommendationText
-                                }
+                                message = "Survey completed."
                             };
                         }
                     }
@@ -474,17 +440,9 @@ namespace SkinCareBookingSystem.Service.Service
                         {
                             success = true,
                             isResult = true,
+                            isCompleted = true,
                             sessionId = session.Id,
-                            skinTypeScores = skinTypeScores,
-                            result = new
-                            {
-                                id = result.Id,
-                                resultId = result.ResultId,
-                                skinType = result.SkinType,
-                                resultText = result.ResultText,
-                                recommendationText = result.RecommendationText
-                            },
-                            recommendedServices = recommendedServices
+                            message = "Survey completed."
                         };
                     }
                 }
@@ -509,10 +467,10 @@ namespace SkinCareBookingSystem.Service.Service
                     {
                         success = true,
                         isResult = true,
+                        isCompleted = true,
                         isEnd = true,
                         sessionId = sessionId,
-                        message = "Survey completed",
-                        skinType = matchingResult.SkinType
+                        message = "Survey completed."
                     };
                 }
                 
