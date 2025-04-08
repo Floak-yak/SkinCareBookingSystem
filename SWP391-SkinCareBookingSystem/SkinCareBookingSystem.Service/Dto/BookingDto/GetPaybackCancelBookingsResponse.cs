@@ -18,6 +18,6 @@ namespace SkinCareBookingSystem.Service.Dto.BookingDto
         public string? PaymentNumber { get; set; }
         public DateTime date { get; set; }
         public Decimal TotalAmount { get; set; }
-        public Image? Image { get; set; }
+        public int? ImageId { get; set; }
     }
 }
