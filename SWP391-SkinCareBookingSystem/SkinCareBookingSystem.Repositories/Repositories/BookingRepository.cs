@@ -103,7 +103,7 @@ namespace SkinCareBookingSystem.Repositories.Repositories
         public async Task<List<Booking>> GetCancelBookingByUserId(int userId) =>
             await _context.Bookings
             .Include(b => b.User)
-            .Include(b => b.BookingServiceSchedules)
+            .Include(b => b.BookingServiceSchedules).ThenInclude(bss => bss.Service)
             .OrderByDescending(b => b.CreatedTime)
             .Where(b => b.UserId == userId && b.Status == BookingStatus.Cancel)
             .ToListAsync();
