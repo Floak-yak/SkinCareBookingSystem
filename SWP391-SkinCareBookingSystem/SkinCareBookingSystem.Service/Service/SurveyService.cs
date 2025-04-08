@@ -243,38 +243,49 @@ namespace SkinCareBookingSystem.Service.Service
 
         public async Task<object> GetNextQuestionAsync(int sessionId)
         {
+            // Get session information
             var session = await _surveyRepository.GetSessionAsync(sessionId);
             if (session == null)
                 return null;
 
+            // Get answered questions
             var responses = await _surveyRepository.GetResponsesAsync(sessionId);
-            
             var answeredQuestionIds = responses.Select(r => r.QuestionId).ToList();
             
+            // Get selected questions
             var selectedQuestionId = session.SelectedQuestionId != null 
                 ? session.SelectedQuestionId.Split(',').Select(int.Parse).ToList() 
                 : new List<int>();
             
+            // Get all questions
             var allQuestions = await _surveyRepository.GetAllQuestionsAsync();
             
+            // Try to find next question from pre-selected questions
             var nextQuestion = allQuestions
                 .Where(q => selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
                 .OrderBy(q => q.Id)
                 .FirstOrDefault();
-                
+            
+            // If no pre-selected questions left, check if we need a tie-breaker question
             if (nextQuestion == null)
             {
+                // Check if there's a tie in skin type scores
                 var skinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+                if (!skinTypeScores.Any())
+                    return CreateSurveyCompletedResponse(session.Id, false, true, "Survey completed no result.");
+                
                 var maxScore = skinTypeScores.Max(s => s.Score);
                 var topSkinTypes = skinTypeScores.Where(s => s.Score == maxScore).ToList();
                 
+                // If there's a tie and we've answered at least 5 questions, find a tie-breaker
                 if (topSkinTypes.Count > 1 && answeredQuestionIds.Count >= 5)
                 {
                     nextQuestion = allQuestions
                         .Where(q => !selectedQuestionId.Contains(q.Id) && !answeredQuestionIds.Contains(q.Id) && q.IsActive)
                         .OrderBy(_ => Guid.NewGuid())
                         .FirstOrDefault();
-                        
+                    
+                    // Update session with the new tie-breaker question
                     if (nextQuestion != null)
                     {
                         selectedQuestionId.Add(nextQuestion.Id);
@@ -283,147 +294,98 @@ namespace SkinCareBookingSystem.Service.Service
                     }
                 }
                 
+                // If we still don't have a next question, complete the survey
                 if (nextQuestion == null)
                 {
-                    var result = await GetSkinTypeByScoreAsync(sessionId);
-                    if (result != null)
-                    {
-                        await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
-                        var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
-                        
-                        return new
-                        {
-                            success = true,
-                            isResult = true,
-                            isCompleted = true,
-                            sessionId = session.Id,
-                            message = "Survey completed."
-                        };
-                    }
-                    else
-                    {
-                        var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
-                        if (finalSkinTypeScores.Any())
-                        {
-                            var finalMaxScore = finalSkinTypeScores.Max(s => s.Score);
-                            var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
-                            
-                            var allResults = await _surveyRepository.GetAllResultsAsync();
-                            var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
-                            
-                            if (matchingResult != null)
-                            {
-                                await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
-                                
-                                return new
-                                {
-                                    success = true,
-                                    isResult = true,
-                                    isCompleted = true,
-                                    isEnd = true,
-                                    sessionId = session.Id,
-                                    message = "Survey completed."
-                                };
-                            }
-                        }
-                        
-                        return new
-                        {
-                            success = false,
-                            isResult = true,
-                            isEnd = true,
-                            sessionId = session.Id,
-                            message = "Survey completed no result."
-                        };
-                    }
+                    return await CompleteSurveyAsync(sessionId, session);
                 }
             }
             
-            if (nextQuestion == null)
+            // Format and return the next question with its options
+            if (nextQuestion != null)
             {
-                var result = await GetSkinTypeByScoreAsync(sessionId);
-                if (result != null)
+                return await FormatQuestionWithOptionsAsync(nextQuestion);
+            }
+            
+            // If we get here with no question, complete the survey
+            return await CompleteSurveyAsync(sessionId, session);
+        }
+        
+        // Helper method to format a question with its options
+        private async Task<object> FormatQuestionWithOptionsAsync(SurveyQuestion question)
+        {
+            var options = await _surveyRepository.GetOptionsForQuestionAsync(question.Id);
+            var formattedOptions = new List<object>();
+            
+            foreach (var option in options)
+            {
+                var skinTypePoints = await _surveyRepository.GetOptionSkinTypePointsAsync(option.Id);
+                
+                formattedOptions.Add(new 
                 {
-                    await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
-                    var recommendedServices = await GetRecommendedServicesDetailsAsync(result.Id);
-                    
-                    return new
+                    id = option.Id,
+                    text = option.OptionText,
+                    skinTypePoints = skinTypePoints.Select(sp => new
                     {
-                        success = true,
-                        isResult = true,
-                        isCompleted = true,
-                        sessionId = session.Id,
-                        message = "Survey completed."
-                    };
-                }
-                else
+                        id = sp.Id,
+                        skinTypeId = sp.SkinTypeId,
+                        points = sp.Points
+                    }).ToList()
+                });
+            }
+            
+            return new
+            {
+                success = true,
+                isResult = false,
+                questionId = question.Id,
+                questionText = question.QuestionText,
+                options = formattedOptions
+            };
+        }
+        
+        // Helper method to complete the survey and return the result
+        private async Task<object> CompleteSurveyAsync(int sessionId, SurveySession session)
+        {
+            // Try to determine skin type by score
+            var result = await GetSkinTypeByScoreAsync(sessionId);
+            if (result != null)
+            {
+                await _surveyRepository.CompleteSessionAsync(sessionId, result.Id);
+                return CreateSurveyCompletedResponse(session.Id, true, true, "Survey completed.");
+            }
+            
+            // If no clear skin type, find the top skin type by score
+            var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
+            if (finalSkinTypeScores.Any())
+            {
+                var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
+                var allResults = await _surveyRepository.GetAllResultsAsync();
+                var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
+                
+                if (matchingResult != null)
                 {
-                    var finalSkinTypeScores = await GetSkinTypeScoresAsync(sessionId);
-                    if (finalSkinTypeScores.Any())
-                    {
-                        var finalMaxScore = finalSkinTypeScores.Max(s => s.Score);
-                        var topSkinTypeId = finalSkinTypeScores.OrderByDescending(s => s.Score).First().SkinTypeId;
-                        
-                        var allResults = await _surveyRepository.GetAllResultsAsync();
-                        var matchingResult = allResults.FirstOrDefault(r => r.ResultId == topSkinTypeId);
-                        
-                        if (matchingResult != null)
-                        {
-                            await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
-                            
-                            return new
-                            {
-                                success = true,
-                                isResult = true,
-                                isCompleted = true,
-                                sessionId = session.Id,
-                                message = "Survey completed."
-                            };
-                        }
-                    }
-                    
-                    return new
-                    {
-                        success = false,
-                        isResult = true,
-                        isEnd = true,
-                        sessionId = session.Id,
-                        message = "Survey completed no result."
-                    };
+                    await _surveyRepository.CompleteSessionAsync(sessionId, matchingResult.Id);
+                    return CreateSurveyCompletedResponse(session.Id, true, true, "Survey completed.");
                 }
             }
-            else
+            
+            // If we get here, we couldn't determine a result
+            return CreateSurveyCompletedResponse(session.Id, false, true, "Survey completed no result.");
+        }
+        
+        // Helper method to create a survey completed response
+        private object CreateSurveyCompletedResponse(int sessionId, bool success, bool isCompleted, string message)
+        {
+            return new
             {
-                var options = await _surveyRepository.GetOptionsForQuestionAsync(nextQuestion.Id);
-                var formattedOptions = new List<object>();
-                
-                foreach (var option in options)
-                {
-                    // Get skin type points for this option
-                    var skinTypePoints = await _surveyRepository.GetOptionSkinTypePointsAsync(option.Id);
-                    
-                    formattedOptions.Add(new 
-                    {
-                        id = option.Id,
-                        text = option.OptionText,
-                        skinTypePoints = skinTypePoints.Select(sp => new
-                        {
-                            id = sp.Id,
-                            skinTypeId = sp.SkinTypeId,
-                            points = sp.Points
-                        }).ToList()
-                    });
-                }
-                
-                return new
-                {
-                    success = true,
-                    isResult = false,
-                    questionId = nextQuestion.Id,
-                    questionText = nextQuestion.QuestionText,
-                    options = formattedOptions
-                };
-            }
+                success,
+                isResult = true,
+                isCompleted,
+                isEnd = true,
+                sessionId,
+                message
+            };
         }
 
         public async Task<object> ProcessSurveyAnswerAsync(int sessionId, int questionId, int optionId)
