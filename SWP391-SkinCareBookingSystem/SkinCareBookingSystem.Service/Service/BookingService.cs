@@ -316,6 +316,8 @@ namespace SkinCareBookingSystem.Service.Service
             Booking booking = await _bookingRepository.GetBookingByScheduleLogId(scheduleLogId);
             if (scheduleLog is null)
                 throw new Exception("Booking not found");
+            if (booking.Status != BookingStatus.Checkin)
+                return false;
             booking.Status = BookingStatus.Completed;
             _bookingRepository.UpdateBooking(booking);
             return await _bookingRepository.SaveChange();
