@@ -17,7 +17,7 @@ namespace SkinCareBookingSystem.BusinessObject.Helper
         {
             using (Aes aes = Aes.Create())
             {
-                aes.Key = Encoding.UTF8.GetBytes(EncryptionKey);
+                aes.Key = Convert.FromBase64String(EncryptionKey);
                 aes.IV = Convert.FromBase64String(IV);
                 aes.Mode = CipherMode.CBC;
 
@@ -34,7 +34,7 @@ namespace SkinCareBookingSystem.BusinessObject.Helper
         {
             using (Aes aes = Aes.Create())
             {
-                aes.Key = Encoding.UTF8.GetBytes(EncryptionKey);
+                aes.Key = Convert.FromBase64String(EncryptionKey);
                 aes.IV = Convert.FromBase64String(IV);
                 aes.Mode = CipherMode.CBC;
 
